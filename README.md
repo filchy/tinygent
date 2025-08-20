@@ -1,1 +1,38 @@
 # tinygent
+
+Tinygent is a lightweight, easy-to-use, and efficient library for building and deploying generative AI applications. It provides a simple interface for working with various models and tools, making it ideal for developers who want to quickly prototype and deploy AI solutions.
+
+## Getting Started
+
+### Prerequisites
+
+Before you begin using tinygent, ensure that you meet the following software prerequisites.
+
+- Install [Git](https://git-scm.com/)
+- Install [Git Large File Storage](https://git-lfs.github.com/) (LFS)
+- Install [uv](https://docs.astral.sh/uv/getting-started/installation/)
+
+### Install From Source
+
+1. Clone the tinygent repository to your local machine.
+    ```bash
+    git clone git@github.com:filchy/tinygent.git tinygent
+    cd tinygent
+    ```
+
+2. Create a Python environment.
+    ```bash
+    uv venv --seed .venv
+    source .venv/bin/activate
+    ```
+
+3. Install the tinygent library.
+    To install the tinygent library along with all of the optional dependencies. Including developer tools (`--all-groups`) and all of the dependencies needed for profiling and plugins (`--all-extras`) in the source repository, run the following:
+    ```bash
+    uv sync --all-groups --all-extras
+    ```
+
+4. Install tinygent in editable mode (development mode), so that changes in the source code are immediately reflected:
+    ```bash
+    uv pip install -e .
+    ```
