@@ -10,8 +10,6 @@ from typing import Callable
 from typing import cast
 from typing import TextIO
 
-from pydantic_core import PydanticUndefined
-
 
 @dataclasses.dataclass
 class ToolInfo:
