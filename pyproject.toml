@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Tiny agentic framework for building AI agents which can do more than tiny tasks."
 readme = "README.md"
 requires-python = "==3.12.*"
-dependencies = []
+dependencies = [
+    "pydantic>=2.11.7",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["tinygent"]
