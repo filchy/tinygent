@@ -39,7 +39,7 @@ class ToolInfo:
 
         is_coroutin = inspect.iscoroutinefunction(fn)
         is_generator = inspect.isgeneratorfunction(fn)
-        is_async_gen = inspect.isasyncgenfunction(fn)
+        is_async_generator = inspect.isasyncgenfunction(fn)
 
         sig = inspect.signature(fn)
 
@@ -73,15 +73,33 @@ class ToolInfo:
         else:
             input_schema = None
 
+        return_annotation = sig.return_annotation
+
+        if (
+            return_annotation is not inspect.Signature.empty
+            and return_annotation is not type(None)  # noqa
+            and not is_generator
+            and not is_async_generator
+        ):
+            try:
+                output_schema = create_model(
+                    "ToolOutput",
+                    __root__=(return_annotation, ...)
+                )
+            except Exception:
+                output_schema = None
+        else:
+            output_schema = None
+
         return cls(
             name=name,
             description=description,
             arg_count=arg_count,
             is_coroutine=is_coroutin,
             is_generator=is_generator,
-            is_async_generator=is_async_gen,
+            is_async_generator=is_async_generator,
             input_schema=input_schema,
-            output_schema=None
+            output_schema=output_schema
         )
 
     def print_summary(self, stream: TextIO = sys.stdout):
