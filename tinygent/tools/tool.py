@@ -131,7 +131,6 @@ class GeneratorTool(Tool):
         return self._fn(*args, **kwargs)
 
 
-
 class AsyncGeneratorTool(Tool):
     
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
