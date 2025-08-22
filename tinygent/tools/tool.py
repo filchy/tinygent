@@ -1,14 +1,15 @@
+import asyncio
 import sys
 import dataclasses
 import inspect
 
-from abc import ABC
-from abc import abstractmethod
 from pydantic import BaseModel
 from pydantic import create_model
 from typing import Any, get_origin
 from typing import Callable
 from typing import TextIO
+
+from tinygent.datamodels.tool import AbstractTool
 
 
 @dataclasses.dataclass
@@ -21,6 +22,8 @@ class ToolInfo:
     arg_count: int
 
     is_coroutine: bool
+
+    is_generator: bool
 
     is_async_generator: bool
 
@@ -35,6 +38,7 @@ class ToolInfo:
         description = inspect.getdoc(fn) or ''
 
         is_coroutin = inspect.iscoroutinefunction(fn)
+        is_generator = inspect.isgeneratorfunction(fn)
         is_async_gen = inspect.isasyncgenfunction(fn)
 
         sig = inspect.signature(fn)
@@ -74,6 +78,7 @@ class ToolInfo:
             description=description,
             arg_count=arg_count,
             is_coroutine=is_coroutin,
+            is_generator=is_generator,
             is_async_generator=is_async_gen,
             input_schema=input_schema,
             output_schema=None
@@ -88,11 +93,12 @@ class ToolInfo:
         stream.write(f"Description: {self.description}\n")
         stream.write(f"Argument Count: {self.arg_count}\n")
         stream.write(f"Is Coroutine: {self.is_coroutine}\n")
+        stream.write(f"Is Generator: {self.is_generator}\n")
         stream.write(f"Is Async Generator: {self.is_async_generator}\n")
         stream.write("-" * 20 + "\n")
 
 
-class Tool(ABC):
+class Tool(AbstractTool):
 
     def __init__(self, fn: Callable[..., Any]) -> None:
 
@@ -104,47 +110,33 @@ class Tool(ABC):
 
         return self._info
 
-    @abstractmethod
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
-
-        ...
-
-
-class SyncTool(Tool):
-
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
 
         return self._fn(*args, **kwargs)
 
+    def run(self, *args: Any, **kwargs: Any) -> Any:
 
-class AsyncTool(Tool):
-    
-    async def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        if self.info.is_async_generator:
+            async def run_async_gen():
+                result = []
+                async for item in self._fn(*args, **kwargs):
+                    result.append(item)
+                return result
+            return asyncio.run(run_async_gen())
 
-        return await self._fn(*args, **kwargs)
+        elif self.info.is_coroutine:
+            async def run_coroutine():
+                return await self._fn(*args, **kwargs)
+            return asyncio.run(run_coroutine())
 
-
-class GeneratorTool(Tool):
-    
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
-
-        return self._fn(*args, **kwargs)
-
-
-class AsyncGeneratorTool(Tool):
-    
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
-
-        return self._fn(*args, **kwargs)
+        else:
+            result = self._fn(*args, **kwargs)
+            if self.info.is_generator:
+                return list(result)
+            else:
+                return result
 
 
 def tool(fn: Callable[..., Any]) -> Tool:
 
-    if inspect.isasyncgenfunction(fn):
-        return AsyncGeneratorTool(fn)
-    elif inspect.iscoroutinefunction(fn):
-        return AsyncTool(fn)
-    elif inspect.isgeneratorfunction(fn):
-        return GeneratorTool(fn)
-    else:
-        return SyncTool(fn)
+    return Tool(fn)
