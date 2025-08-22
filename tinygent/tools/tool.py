@@ -5,7 +5,8 @@ import inspect
 
 from pydantic import BaseModel
 from pydantic import create_model
-from typing import Any, get_origin
+from typing import Any
+from typing import get_origin
 from typing import Callable
 from typing import TextIO
 
