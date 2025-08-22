@@ -36,3 +36,8 @@ Before you begin using tinygent, ensure that you meet the following software pre
     ```bash
     uv pip install -e .
     ```
+
+## Examples
+
+### Basics
+[Tool Usage](examples/tool_usage)
