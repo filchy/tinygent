@@ -1,13 +1,13 @@
 import sys
 import dataclasses
-import functools
 import inspect
 
+from abc import ABC
+from abc import abstractmethod
 from pydantic import BaseModel
 from pydantic import create_model
 from typing import Any, get_origin
 from typing import Callable
-from typing import cast
 from typing import TextIO
 
 
@@ -92,7 +92,7 @@ class ToolInfo:
         stream.write("-" * 20 + "\n")
 
 
-class Tool:
+class Tool(ABC):
 
     def __init__(self, fn: Callable[..., Any]) -> None:
 
@@ -104,6 +104,36 @@ class Tool:
 
         return self._info
 
+    @abstractmethod
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+
+        ...
+
+
+class SyncTool(Tool):
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+
+        return self._fn(*args, **kwargs)
+
+
+class AsyncTool(Tool):
+    
+    async def __call__(self, *args: Any, **kwargs: Any) -> Any:
+
+        return await self._fn(*args, **kwargs)
+
+
+class GeneratorTool(Tool):
+    
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+
+        return self._fn(*args, **kwargs)
+
+
+
+class AsyncGeneratorTool(Tool):
+    
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
 
         return self._fn(*args, **kwargs)
@@ -111,6 +141,11 @@ class Tool:
 
 def tool(fn: Callable[..., Any]) -> Tool:
 
-    wrapped = Tool(fn)
-    functools.update_wrapper(cast(Callable[..., Any], wrapped), fn)
-    return wrapped
+    if inspect.isasyncgenfunction(fn):
+        return AsyncGeneratorTool(fn)
+    elif inspect.iscoroutinefunction(fn):
+        return AsyncTool(fn)
+    elif inspect.isgeneratorfunction(fn):
+        return GeneratorTool(fn)
+    else:
+        return SyncTool(fn)
