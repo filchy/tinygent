@@ -5,8 +5,17 @@ description = "Tiny agentic framework for building AI agents which can do more t
 readme = "README.md"
 requires-python = "==3.12.*"
 dependencies = [
+    "langchain-core>=0.3.74",
+    "openai>=1.101.0",
     "pydantic>=2.11.7",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["tinygent"]
