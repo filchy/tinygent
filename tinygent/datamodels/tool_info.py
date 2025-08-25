@@ -2,14 +2,19 @@ import dataclasses
 import inspect
 import sys
 
-from typing import Any
 from typing import Callable
+from typing import Generic
+from typing import TypeVar
 from typing import TextIO
+from typing import cast
 from pydantic import BaseModel
+
+P = TypeVar('P', bound=BaseModel)
+R = TypeVar('R')
 
 
 @dataclasses.dataclass
-class ToolInfo:
+class ToolInfo(Generic[P, R]):
 
     name: str
 
@@ -23,14 +28,15 @@ class ToolInfo:
 
     is_async_generator: bool
 
-    input_schema: type[BaseModel] | None
+    input_schema: type[P] | None
 
     output_schema: type[BaseModel] | None
 
     required_fields: list[str] = dataclasses.field(default_factory=list)
 
     @classmethod
-    def from_callable(cls, fn: Callable[[BaseModel], Any]) -> 'ToolInfo':
+    def from_callable(cls, fn: Callable[[P], R]) -> 'ToolInfo[P, R]':
+
         name = fn.__name__
         description = inspect.getdoc(fn) or ''
 
@@ -58,21 +64,23 @@ class ToolInfo:
                 f'Parameter of tool \'{name}\' must be a Pydantic BaseModel.'
             )
 
-        input_schema = param_annotation
+        input_schema = cast(type[P], param_annotation)
         required_fields = [
-            fname for fname, field in input_schema.model_fields.items()
+            fname
+            for fname, field in input_schema.model_fields.items()  # type: ignore[attr-defined]
             if field.is_required()
         ]
 
         return_annotation = sig.return_annotation
         if (
             return_annotation is not inspect.Signature.empty
-            and return_annotation is not type(None)  # noqa
+            and return_annotation is not type(None)  # noqa: E721
             and not is_generator
             and not is_async_generator
         ):
             try:
                 from pydantic import create_model
+
                 output_schema = create_model(
                     'ToolOutput',
                     __root__=(return_annotation, ...)
@@ -91,7 +99,7 @@ class ToolInfo:
             is_async_generator=is_async_generator,
             input_schema=input_schema,
             output_schema=output_schema,
-            required_fields=required_fields
+            required_fields=required_fields,
         )
 
     def print_summary(self, stream: TextIO = sys.stdout):
@@ -106,4 +114,3 @@ class ToolInfo:
         stream.write(f'Is Generator: {self.is_generator}\n')
         stream.write(f'Is Async Generator: {self.is_async_generator}\n')
         stream.write('-' * 20 + '\n')
-
