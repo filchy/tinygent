@@ -6,7 +6,6 @@ from typing import Callable
 from tinygent.datamodels.tool_info import ToolInfo
 
 
-
 class AbstractTool(ABC):
 
     @abstractmethod

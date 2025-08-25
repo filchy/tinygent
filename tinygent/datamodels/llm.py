@@ -31,6 +31,12 @@ class AbstractLLM(ABC, Generic[LLMConfigT]):
     def supports_tool_calls(self) -> bool: ...
 
     @abstractmethod
+    def _tool_convertor(
+        self,
+        tool: Tool
+    ) -> typing.Any: ...
+
+    @abstractmethod
     def generate_text(
         self,
         prompt: PromptValue
@@ -57,14 +63,14 @@ class AbstractLLM(ABC, Generic[LLMConfigT]):
     ) -> LLMStructuredT: ...
 
     @abstractmethod
-    def generate_with_tool(
+    def generate_with_tools(
         self,
         prompt: PromptValue,
         tools: list['Tool']
     ) -> LLMResult: ...
 
     @abstractmethod
-    async def agenerate_with_tool(
+    async def agenerate_with_tools(
         self,
         prompt: PromptValue,
         tools: list['Tool']

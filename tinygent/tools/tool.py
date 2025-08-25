@@ -48,9 +48,4 @@ class Tool(AbstractTool):
 
 def tool(fn: Callable[..., Any]) -> Tool:
 
-    from tinygent.runtime.global_registry import GlobalRegistry
-
-    tool_fn = Tool(fn)
-    GlobalRegistry.get_registry().register_tool(tool_fn)
-
-    return tool_fn
+    return Tool(fn)

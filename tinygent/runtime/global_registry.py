@@ -9,16 +9,43 @@ class Registry:
 
     def __init__(self):
 
+        self._registered_llms: dict[
+            str,
+            AbstractLLM
+        ] = {}
+
         self._registered_tools: dict[
             str,
             AbstractTool
         ] = {}
 
-        self._registered_tool_convertors: dict[
-            type[AbstractLLM],
-            Callable[[AbstractTool], Any]
-        ] = {}
+    # llms
+    def register_llm(
+        self,
+        name: str,
+        llm: AbstractLLM
+    ) -> None:
 
+        if name in self._registered_llms:
+            raise ValueError(f'LLM {name} already registered.')
+
+        self._registered_llms[name] = llm
+
+    def get_llm(
+        self,
+        name: str
+    ) -> AbstractLLM:
+
+        if name not in self._registered_llms:
+            raise ValueError(f'LLM {name} not registered.')
+
+        return self._registered_llms[name]
+
+    def get_llms(self) -> dict[str, AbstractLLM]:
+
+        return self._registered_llms
+
+    # tools
     def register_tool(
         self,
         tool: AbstractTool
@@ -29,16 +56,19 @@ class Registry:
 
         self._registered_tools[tool.info.name] = tool
 
-    def register_tool_convertor(
+    def get_tool(
         self,
-        llm_type: type[AbstractLLM],
-        fn: Callable[[AbstractTool], Any]
-    ) -> None:
+        name: str
+    ) -> AbstractTool:
+        
+        if name not in self._registered_tools:
+            raise ValueError(f'Tool {name} not registered.')
 
-        if llm_type in self._registered_tool_convertors:
-            raise ValueError(f'Convertor for {llm_type} already registered.')
+        return self._registered_tools[name]
 
-        self._registered_tool_convertors[llm_type] = fn
+    def get_tools(self) -> dict[str, AbstractTool]:
+
+        return self._registered_tools
 
 
 class GlobalRegistry:
