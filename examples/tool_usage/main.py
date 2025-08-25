@@ -10,7 +10,7 @@ def add(a: int, b: int) -> int:
 @tool
 async def greet(name: str) -> str:
 
-    return f"Hello, {name}"
+    return f'Hello, {name}'
 
 
 @tool
@@ -27,8 +27,8 @@ async def async_count(n: int):
         yield i
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     print(add.run(1, 2))
-    print(greet.run("Filip"))
+    print(greet.run('TinyGent'))
     print(count.run(3))
     print(async_count.run(3))

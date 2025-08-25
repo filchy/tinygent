@@ -2,12 +2,12 @@ import typing
 
 from abc import ABC
 from abc import abstractmethod
+from langchain_core.prompt_values import PromptValue
 from langchain_core.outputs import LLMResult
 from pydantic import BaseModel
 from typing import Generic
 
-if typing.TYPE_CHECKING:
-    from langchain_core.prompt_values import PromptValue
+from tinygent.tools.tool import Tool
 
 LLMConfigT = typing.TypeVar('LLMConfigT', bound=BaseModel)
 LLMStructuredT = typing.TypeVar('LLMStructuredT', bound=BaseModel)
@@ -55,3 +55,17 @@ class AbstractLLM(ABC, Generic[LLMConfigT]):
         prompt: PromptValue,
         output_schema: LLMStructuredT
     ) -> LLMStructuredT: ...
+
+    @abstractmethod
+    def generate_with_tool(
+        self,
+        prompt: PromptValue,
+        tools: list['Tool']
+    ) -> LLMResult: ...
+
+    @abstractmethod
+    async def agenerate_with_tool(
+        self,
+        prompt: PromptValue,
+        tools: list['Tool']
+    ) -> LLMResult: ...
