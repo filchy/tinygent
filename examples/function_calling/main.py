@@ -2,7 +2,6 @@ from langchain_core.prompt_values import StringPromptValue
 from pydantic import BaseModel
 from pydantic import Field
 
-from tinygent.llms.openai import OpenAIConfig
 from tinygent.llms.openai import OpenAILLM
 from tinygent.tools.tool import tool
 
@@ -33,11 +32,7 @@ def get_time(data: GetTimeInput) -> str:
 
 if __name__ == '__main__':
     my_tools = [get_weather, get_time]
-    openai_llm = OpenAILLM(
-        config=OpenAIConfig(
-            base_url='https://llm-proxy.seznam.net/v1'
-        )
-    )
+    openai_llm = OpenAILLM()
 
     response = openai_llm.generate_with_tools(
         prompt=StringPromptValue(

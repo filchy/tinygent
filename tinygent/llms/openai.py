@@ -22,7 +22,7 @@ class OpenAIConfig(BaseModel):
 
     api_key: str | None = os.getenv('OPENAI_API_KEY', None)
 
-    base_url: str | None = None
+    base_url: str | None = os.getenv('OPENAI_BASE_URL', None)
 
     temperature: float = 0.6
 
