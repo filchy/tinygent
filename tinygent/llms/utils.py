@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import typing
+
 from typing import cast
 from typing import Union
 from langchain_core.messages import AIMessage
@@ -16,6 +18,9 @@ from openai.types.chat import ChatCompletionAssistantMessageParam
 from openai.types.chat import ChatCompletionToolMessageParam
 from openai.types.chat import ChatCompletionContentPartTextParam
 from openai.types.chat import ChatCompletionMessageToolCallUnionParam
+
+if typing.TYPE_CHECKING:
+    from tinygent.datamodels.llm_result import TinyLLMResult
 
 
 def _to_text_parts(
@@ -109,7 +114,7 @@ def lc_prompt_to_openai_params(
     return params
 
 
-def openai_result_to_tiny_result(resp: ChatCompletion) -> 'TinyLLMResult':
+def openai_result_to_tiny_result(resp: ChatCompletion) -> TinyLLMResult:
 
     from tinygent.datamodels.llm_result import TinyLLMResult
 
@@ -155,6 +160,7 @@ def openai_result_to_tiny_result(resp: ChatCompletion) -> 'TinyLLMResult':
 
 
 def normalize_content(content: Union[str, list[str | dict]]) -> str:
+
     if isinstance(content, str):
         return content
 

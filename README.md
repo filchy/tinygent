@@ -42,7 +42,8 @@ Before you begin using tinygent, ensure that you meet the following software pre
 ### Basics
 
 1. [Tool Usage](examples/tool-usage)
-2. [Function Calling](examples/function-calling)
+2. [LLM Usage](examples/llm-usage)
+3. [Function Calling](examples/function-calling)
 
 ### Memory
 > to be added

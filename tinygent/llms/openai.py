@@ -5,7 +5,6 @@ from openai import AsyncOpenAI
 from openai import OpenAI
 from openai.types.chat import ChatCompletionFunctionToolParam
 from pydantic import BaseModel
-from typing import Awaitable
 from typing import override
 
 from tinygent.datamodels.llm import AbstractLLM
@@ -111,30 +110,72 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         prompt: PromptValue,
     ) -> TinyLLMResult:
 
-        raise NotImplementedError()
+        messages = lc_prompt_to_openai_params(prompt)
+
+        res = self._sync_client.chat.completions.create(
+            model=self.config.model_name,
+            messages=messages,
+            temperature=self._config.temperature
+        )
+
+        return openai_result_to_tiny_result(res)
 
     async def agenerate_text(
         self,
         prompt: PromptValue
-    ) -> Awaitable[TinyLLMResult]:
+    ) -> TinyLLMResult:
 
-        raise NotImplementedError()
+        messages = lc_prompt_to_openai_params(prompt)
+
+        res = await self._async_client.chat.completions.create(
+            model=self.config.model_name,
+            messages=messages,
+            temperature=self._config.temperature
+        )
+
+        return openai_result_to_tiny_result(res)
 
     def generate_structured(
         self,
         prompt: PromptValue,
-        output_schema: LLMStructuredT
+        output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
 
-        raise NotImplementedError()
+        messages = lc_prompt_to_openai_params(prompt)
+
+        res = self._sync_client.chat.completions.parse(
+            model=self.config.model_name,
+            messages=messages,
+            temperature=self._config.temperature,
+            response_format=output_schema
+        )
+
+        if not (message := res.choices[0].message):
+            raise ValueError('No message returned from OpenAI.')
+
+        assert message.parsed is not None, 'Parsed response is None.'
+        return message.parsed
 
     async def agenerate_structured(
         self,
         prompt: PromptValue,
-        output_schema: LLMStructuredT
-    ) -> Awaitable[LLMStructuredT]:
+        output_schema: type[LLMStructuredT]
+    ) -> LLMStructuredT:
 
-        raise NotImplementedError()
+        messages = lc_prompt_to_openai_params(prompt)
+
+        res = await self._async_client.chat.completions.parse(
+            model=self.config.model_name,
+            messages=messages,
+            temperature=self._config.temperature,
+            response_format=output_schema
+        )
+
+        if not (message := res.choices[0].message):
+            raise ValueError('No message returned from OpenAI.')
+
+        assert message.parsed is not None, 'Parsed response is None.'
+        return message.parsed
 
     def generate_with_tools(
         self,
@@ -159,20 +200,17 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         self,
         prompt: PromptValue,
         tools: list[Tool]
-    ) -> Awaitable[TinyLLMResult]:
+    ) -> TinyLLMResult:
 
         functions = [self._tool_convertor(tool) for tool in tools]
         messages = lc_prompt_to_openai_params(prompt)
 
-        async def _inner() -> TinyLLMResult:
-            res = await self._async_client.chat.completions.create(
-                model=self.config.model_name,
-                messages=messages,
-                tools=functions,
-                tool_choice='auto',
-                temperature=self._config.temperature
-            )
-            
-            return openai_result_to_tiny_result(res)
-
-        return _inner()
+        res = await self._async_client.chat.completions.create(
+            model=self.config.model_name,
+            messages=messages,
+            tools=functions,
+            tool_choice='auto',
+            temperature=self._config.temperature
+        )
+        
+        return openai_result_to_tiny_result(res)
