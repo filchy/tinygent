@@ -32,12 +32,13 @@ class TinyToolCall(BaseModel):
     metadata: dict = {}
 
 
-MessageType = TinyChatMessage | TinyToolCall
+TinyMessageLiteral = Literal['chat', 'tool']
+TinyMessageType = TinyChatMessage | TinyToolCall
 
 
 class TinyLLMResult(LLMResult):
 
-    def tiny_iter(self) -> Iterator[MessageType]:
+    def tiny_iter(self) -> Iterator[TinyMessageType]:
 
         for generation in chain.from_iterable(self.generations):
             chat_gen = cast(ChatGeneration, generation)

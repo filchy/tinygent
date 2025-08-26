@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from pydantic import Field
 
 from tinygent.llms.openai import OpenAILLM
+from tinygent.runtime.global_registry import GlobalRegistry
 from tinygent.tools.tool import tool
 
 
@@ -32,6 +33,7 @@ def get_time(data: GetTimeInput) -> str:
 
 if __name__ == '__main__':
     my_tools = [get_weather, get_time]
+
     openai_llm = OpenAILLM()
 
     response = openai_llm.generate_with_tools(
@@ -42,4 +44,19 @@ if __name__ == '__main__':
     )
 
     for message in response.tiny_iter():
-        print(f'{message.type}: {message}')
+
+        if message.type == 'chat':
+            print(f'LLM response: {message.content}')
+
+        elif message.type == 'tool':
+            selected_tool = GlobalRegistry.get_registry().get_tool(
+                message.tool_name
+            )
+
+            result = selected_tool(**message.arguments)
+
+            print('Tool %s called with arguments %s, result: %s' % (
+                message.tool_name,
+                message.arguments,
+                result
+            ))

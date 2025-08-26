@@ -1,6 +1,3 @@
-from typing import Any
-from typing import Callable
-
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.tool import AbstractTool
 

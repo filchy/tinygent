@@ -20,6 +20,7 @@ class GreetInput(BaseModel):
 
     name: str = Field(..., description='The name to greet.')
 
+
 @tool
 async def greet(data: GreetInput) -> str:
 
