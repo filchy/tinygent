@@ -55,6 +55,25 @@ Each decorated function becomes a `Tool` instance that:
 
 ---
 
+## Tool Description
+
+The tool's **description** is automatically extracted from the function's **docstring**.
+
+This is used for introspection, OpenAI-compatible tool schemas, and registry summaries.
+
+```python
+@tool
+def add(data: AddInput) -> int:
+    """Adds two numbers together."""
+    return data.a + data.b
+```
+
+In this case, the description for the `add` tool will be `"Adds two numbers together."`.
+
+Writing clear and concise docstrings is essential, as this metadata is often used in LLM-assisted reasoning and tool selection.
+
+---
+
 ## `__call__()` Behavior
 
 The public interface for tools is the `__call__()` method. It supports:
