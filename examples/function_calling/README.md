@@ -145,49 +145,14 @@ class TinyLLMResult(LLMResult):
 
 ## 4) Abstract LLM interface
 
-For flexibility, the system defines an abstract base class that all LLM wrappers follow. This ensures consistent APIs across providers.
+For flexibility, TinyGent defines an abstract base class that all LLM wrappers follow. This ensures consistent APIs across providers.
+
+Not all LLMs support function/tool calling. Before invoking `generate_with_tools`, check the `supports_tool_calls` property of the LLM instance. If it is `False`, you should fall back to plain text generation.
 
 ```python
-from __future__ import annotations
-import typing
-from abc import ABC, abstractmethod
-from pydantic import BaseModel
-from typing import Generic
-
-if typing.TYPE_CHECKING:
-    from langchain_core.prompt_values import PromptValue
-    from tinygent.tools.tool import Tool
-    from tinygent.datamodels.llm_result import TinyLLMResult
-
-LLMConfigT = typing.TypeVar('LLMConfigT', bound=BaseModel)
-LLMStructuredT = typing.TypeVar('LLMStructuredT', bound=BaseModel)
-
-
 class AbstractLLM(ABC, Generic[LLMConfigT]):
-    @abstractmethod
-    def __init__(self, config: LLMConfigT, *args, **kwargs) -> None: ...
-
-    @property
-    @abstractmethod
-    def config(self) -> LLMConfigT: ...
-
     @property
     def supports_tool_calls(self) -> bool: ...
-
-    @abstractmethod
-    def _tool_convertor(self, tool: Tool) -> typing.Any: ...
-
-    @abstractmethod
-    def generate_text(self, prompt: PromptValue) -> TinyLLMResult: ...
-
-    @abstractmethod
-    async def agenerate_text(self, prompt: PromptValue) -> TinyLLMResult: ...
-
-    @abstractmethod
-    def generate_structured(self, prompt: PromptValue, output_schema: LLMStructuredT) -> LLMStructuredT: ...
-
-    @abstractmethod
-    async def agenerate_structured(self, prompt: PromptValue, output_schema: LLMStructuredT) -> LLMStructuredT: ...
 
     @abstractmethod
     def generate_with_tools(self, prompt: PromptValue, tools: list[Tool]) -> TinyLLMResult: ...
@@ -195,6 +160,8 @@ class AbstractLLM(ABC, Generic[LLMConfigT]):
     @abstractmethod
     async def agenerate_with_tools(self, prompt: PromptValue, tools: list[Tool]) -> TinyLLMResult: ...
 ```
+
+Only the relevant parts of the abstract base class are shown here. In practice, it also includes methods for plain text generation and structured outputs.
 
 ---
 
