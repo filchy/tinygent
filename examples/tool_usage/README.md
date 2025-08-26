@@ -1,22 +1,22 @@
-# Tool Example: Unified `.run()` for Sync, Async, Generator, Async Generator
+# Tool Example
 
-This example demonstrates how to use the `@tool` decorator from **tinygent**
-to wrap various types of Python functions (sync, async, generators) into a unified execution interface.
+This example demonstrates how to use the `@tool` decorator from **tinygent** to wrap various types of Python functions (sync, async, generators) into a unified execution interface.
 
 ---
 
 ## Requirements
 
-Each tool **must accept a single input argument**, which is a subclass of `pydantic.BaseModel`.
+Each tool **must accept zero or one argument**, and if it does accept an argument, it must be a subclass of `pydantic.BaseModel`.
 
-This serves two main purposes:
+This design allows:
 
-1. **Parameter validation & documentation**
-   Each field in the `BaseModel` represents one input parameter, with full type checking and optional descriptions via `Field(...)`.
+1. **Parameter validation & introspection**
+   Input parameters are modeled as Pydantic fields, providing type checking and field descriptions (via `Field(...)`).
 
-2. **LLM-compatible function calling**
-   The structure allows for automatic generation of OpenAI-compatible tool schemas.
-   This is necessary when exposing tools to language models via function-calling APIs so the model can understand parameter names, types, and descriptions.
+2. **LLM-compatible tool definitions**
+   Tools can be described with OpenAI-compatible schemas and used directly for function-calling with models.
+
+---
 
 ### Example Input Schema
 
@@ -32,26 +32,41 @@ class AddInput(BaseModel):
 
 ## Features
 
-Each decorated function is converted into a `Tool` instance that:
+Each decorated function becomes a `Tool` instance that:
 
-* Exposes a unified `.run()` method for all function types
-* Supports sync, async, generator, and async generator functions
-* Automatically detects function type (coroutine, generator, etc.)
-* Stores metadata using `ToolInfo` (input schema, async mode, etc.)
+* Exposes a unified `.run()` and `__call__()` interface
+* Supports the following function types:
+
+  * Sync function
+  * Async coroutine
+  * Sync generator
+  * Async generator
+* Automatically parses:
+
+  * Pydantic model instances
+  * Plain dicts
+  * `**kwargs`
+  * `*args` (including a single dict as positional input)
+* Provides full metadata via `ToolInfo`
 
 ---
 
-## Behavior of `.run()`
+## `.run()` and `__call__()` Behavior
 
-* Awaits async coroutines
-* Iterates and collects items from generators and async generators
-* Returns raw values for plain sync functions
+Internally, both `.run()` and `__call__()` support the same logic:
 
-This is useful for:
+* If input schema is present:
 
-* LLM function-calling / plugin systems
-* Multi-agent tool orchestration
-* Dynamic tool registry and execution
+  * `dict` or `**kwargs` will be validated and parsed into the appropriate `BaseModel`
+  * A single validated model instance is passed through unchanged
+* Tools with **no inputs** work as well
+
+Execution logic:
+
+* Async coroutine: awaited
+* Generator: iterated and collected
+* Async generator: asynchronously iterated and collected
+* Sync function: called directly and returned
 
 ---
 
@@ -65,7 +80,7 @@ def add(data: AddInput) -> int:
 
 @tool
 async def greet(data: GreetInput) -> str:
-    return f'Hello, {data.name}'
+    return f'Hello, {data.name}!'
 
 
 @tool
@@ -82,6 +97,26 @@ async def async_count(data: CountInput):
 
 ---
 
+## Calling Examples
+
+```python
+# BaseModel instance
+print(add(AddInput(a=1, b=2)))
+
+# Dict input
+print(greet({"name": "TinyGent"}))
+
+# Kwargs input
+print(list(count.run(n=3)))
+
+# Positional dict (args)
+print(list(async_count.run({"n": 4})))
+```
+
+Each call style is automatically parsed and dispatched based on the function type and the tool's schema.
+
+---
+
 ## Running the Example
 
 ```bash
@@ -92,7 +127,15 @@ Expected output:
 
 ```
 3
-Hello, TinyGent
+Hello, TinyGent!
 [1, 2, 3]
-[1, 2, 3]
+[1, 2, 3, 4]
 ```
+
+---
+
+## Use Cases
+
+* LLM-based tool/function calling
+* Multi-agent orchestration
+* Declarative plugin registration with type-safe inputs
