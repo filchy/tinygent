@@ -29,11 +29,11 @@ class Tool(AbstractTool, Generic[T, R]):
 
         return self._info
 
-    def __call__(self, *args: Any, **kwargs: Any) -> R:
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
 
-        return self.run(*args, **kwargs)
+        return self._run(*args, **kwargs)
 
-    def run(self, *args: Any, **kwargs: Any) -> Any:
+    def _run(self, *args: Any, **kwargs: Any) -> Any:
 
         parsed_args: list[Any] = list(args)
 

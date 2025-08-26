@@ -1,6 +1,6 @@
 # Tool Example
 
-This example demonstrates how to use the `@tool` decorator from **tinygent** to wrap various types of Python functions (sync, async, generators) into a unified execution interface.
+This example demonstrates how to use the `@tool` decorator from **tinygent** to wrap various types of Python functions (sync, async, generators) into a unified execution interface. Every decorated function is automatically registered into the **global runtime tool registry**, making it instantly accessible via `GlobalRegistry.get_registry().get_tool('<name>')`.
 
 ---
 
@@ -15,6 +15,9 @@ This design allows:
 
 2. **LLM-compatible tool definitions**
    Tools can be described with OpenAI-compatible schemas and used directly for function-calling with models.
+
+3. **Auto-registration in the runtime registry**
+   Each use of `@tool` not only wraps the function, but also **registers it automatically** into the global registry. This means you can dynamically retrieve any tool by name at runtime.
 
 ---
 
@@ -34,7 +37,7 @@ class AddInput(BaseModel):
 
 Each decorated function becomes a `Tool` instance that:
 
-* Exposes a unified `.run()` and `__call__()` interface
+* Exposes a unified `__call__()` interface
 * Supports the following function types:
 
   * Sync function
@@ -47,19 +50,19 @@ Each decorated function becomes a `Tool` instance that:
   * Plain dicts
   * `**kwargs`
   * `*args` (including a single dict as positional input)
+* Registers itself into the `GlobalRegistry` under its function name
 * Provides full metadata via `ToolInfo`
 
 ---
 
-## `.run()` and `__call__()` Behavior
+## `__call__()` Behavior
 
-Internally, both `.run()` and `__call__()` support the same logic:
+The public interface for tools is the `__call__()` method. It supports:
 
-* If input schema is present:
-
-  * `dict` or `**kwargs` will be validated and parsed into the appropriate `BaseModel`
-  * A single validated model instance is passed through unchanged
-* Tools with **no inputs** work as well
+* BaseModel input
+* Raw `dict` input (validated)
+* `**kwargs` input (validated)
+* Positional `*args` (e.g., one dict argument)
 
 Execution logic:
 
@@ -95,6 +98,8 @@ async def async_count(data: CountInput):
         yield i
 ```
 
+All of the above tools are automatically registered and retrievable from the global registry using their function names.
+
 ---
 
 ## Calling Examples
@@ -107,10 +112,17 @@ print(add(AddInput(a=1, b=2)))
 print(greet({"name": "TinyGent"}))
 
 # Kwargs input
-print(list(count.run(n=3)))
+print(list(count(n=3)))
 
 # Positional dict (args)
-print(list(async_count.run({"n": 4})))
+print(list(async_count({"n": 4})))
+
+# Access from global registry
+from tinygent.runtime.global_registry import GlobalRegistry
+registry = GlobalRegistry.get_registry()
+
+greet_tool = registry.get_tool("greet")
+print(greet_tool(name="TinyGent"))
 ```
 
 Each call style is automatically parsed and dispatched based on the function type and the tool's schema.
@@ -130,12 +142,5 @@ Expected output:
 Hello, TinyGent!
 [1, 2, 3]
 [1, 2, 3, 4]
+Hello, TinyGent!
 ```
-
----
-
-## Use Cases
-
-* LLM-based tool/function calling
-* Multi-agent orchestration
-* Declarative plugin registration with type-safe inputs
