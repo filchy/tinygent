@@ -42,3 +42,10 @@ Before you begin using tinygent, ensure that you meet the following software pre
 ### Basics
 
 1. [Tool Usage](examples/tool_usage)
+2. [Function Calling](examples/function_calling)
+
+### Memory
+> to be added
+
+### Agents
+> to be added

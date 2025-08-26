@@ -41,4 +41,5 @@ if __name__ == '__main__':
         tools=my_tools
     )
 
-    print(f"{response=}")
+    for message in response.tiny_iter():
+        print(f'{message.type}: {message}')

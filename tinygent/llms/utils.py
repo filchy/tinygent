@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from typing import cast
+from typing import Union
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration
-from langchain_core.outputs import LLMResult
 from langchain_core.outputs import Generation
 from langchain_core.prompt_values import PromptValue
 from langchain_core.messages.utils import convert_to_openai_messages
@@ -107,7 +109,10 @@ def lc_prompt_to_openai_params(
     return params
 
 
-def openai_result_to_lc_result(resp: ChatCompletion) -> LLMResult:
+def openai_result_to_tiny_result(resp: ChatCompletion) -> 'TinyLLMResult':
+
+    from tinygent.datamodels.llm_result import TinyLLMResult
+
     generations: list[list[Generation]] = []
 
     for choice in resp.choices:
@@ -146,5 +151,14 @@ def openai_result_to_lc_result(resp: ChatCompletion) -> LLMResult:
         'finish_reasons': [c.finish_reason for c in resp.choices],
     }
 
-    return LLMResult(generations=generations, llm_output=llm_output)
+    return TinyLLMResult(generations=generations, llm_output=llm_output)
 
+
+def normalize_content(content: Union[str, list[str | dict]]) -> str:
+    if isinstance(content, str):
+        return content
+
+    return "".join(
+        part if isinstance(part, str) else f"[{part.get('type', 'object')}]"
+        for part in content
+    )
