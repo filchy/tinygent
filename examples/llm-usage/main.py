@@ -61,7 +61,7 @@ def generation_with_tools():
 
     result = llm.generate_with_tools(
         prompt=StringPromptValue(
-            text='Capitalize 'tinygent is powerful'. Then add 5 and 7.'
+            text='Capitalize \'tinygent is powerful\'. Then add 5 and 7.'
         ),
         tools=tools
     )
