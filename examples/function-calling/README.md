@@ -174,6 +174,5 @@ uv run main.py
 Expected output (weather wording may vary):
 
 ```
-LLM response: The weather in New York is sunny with a high of 75°F.
 Tool get_weather called with arguments {'location': 'New York'}, result: The weather in New York is sunny with a high of 75°F.
 ```

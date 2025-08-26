@@ -5,6 +5,7 @@ from openai import AsyncOpenAI
 from openai import OpenAI
 from openai.types.chat import ChatCompletionFunctionToolParam
 from pydantic import BaseModel
+from typing import Awaitable
 from typing import override
 
 from tinygent.datamodels.llm import AbstractLLM
@@ -115,7 +116,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
     async def agenerate_text(
         self,
         prompt: PromptValue
-    ) -> TinyLLMResult:
+    ) -> Awaitable[TinyLLMResult]:
 
         raise NotImplementedError()
 
@@ -131,7 +132,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         self,
         prompt: PromptValue,
         output_schema: LLMStructuredT
-    ) -> LLMStructuredT:
+    ) -> Awaitable[LLMStructuredT]:
 
         raise NotImplementedError()
 
@@ -142,7 +143,6 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
     ) -> TinyLLMResult:
 
         functions = [self._tool_convertor(tool) for tool in tools]
-
         messages = lc_prompt_to_openai_params(prompt)
 
         res = self._sync_client.chat.completions.create(
@@ -159,6 +159,20 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         self,
         prompt: PromptValue,
         tools: list[Tool]
-    ) -> TinyLLMResult:
+    ) -> Awaitable[TinyLLMResult]:
 
-        raise NotImplementedError()
+        functions = [self._tool_convertor(tool) for tool in tools]
+        messages = lc_prompt_to_openai_params(prompt)
+
+        async def _inner() -> TinyLLMResult:
+            res = await self._async_client.chat.completions.create(
+                model=self.config.model_name,
+                messages=messages,
+                tools=functions,
+                tool_choice='auto',
+                temperature=self._config.temperature
+            )
+            
+            return openai_result_to_tiny_result(res)
+
+        return _inner()

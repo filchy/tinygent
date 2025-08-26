@@ -5,6 +5,7 @@ import typing
 from abc import ABC
 from abc import abstractmethod
 from pydantic import BaseModel
+from typing import Awaitable
 from typing import Generic
 
 if typing.TYPE_CHECKING:
@@ -50,7 +51,7 @@ class AbstractLLM(ABC, Generic[LLMConfigT]):
     async def agenerate_text(
         self,
         prompt: PromptValue
-    ) -> TinyLLMResult: ...
+    ) -> Awaitable[TinyLLMResult]: ...
 
     @abstractmethod
     def generate_structured(
@@ -64,7 +65,7 @@ class AbstractLLM(ABC, Generic[LLMConfigT]):
         self,
         prompt: PromptValue,
         output_schema: LLMStructuredT
-    ) -> LLMStructuredT: ...
+    ) -> Awaitable[LLMStructuredT]: ...
 
     @abstractmethod
     def generate_with_tools(
@@ -78,4 +79,4 @@ class AbstractLLM(ABC, Generic[LLMConfigT]):
         self,
         prompt: PromptValue,
         tools: list[Tool]
-    ) -> TinyLLMResult: ...
+    ) -> Awaitable[TinyLLMResult]: ...
