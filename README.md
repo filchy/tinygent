@@ -9,7 +9,6 @@ Tinygent is a lightweight, easy-to-use, and efficient library for building and d
 Before you begin using tinygent, ensure that you meet the following software prerequisites.
 
 - Install [Git](https://git-scm.com/)
-- Install [Git Large File Storage](https://git-lfs.github.com/) (LFS)
 - Install [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
 ### Install From Source
