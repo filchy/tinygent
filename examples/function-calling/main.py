@@ -1,7 +1,7 @@
-from langchain_core.prompt_values import StringPromptValue
 from pydantic import BaseModel
 from pydantic import Field
 
+from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.llms.openai import OpenAILLM
 from tinygent.runtime.global_registry import GlobalRegistry
 from tinygent.tools.tool import tool
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     openai_llm = OpenAILLM()
 
     response = openai_llm.generate_with_tools(
-        prompt=StringPromptValue(
+        prompt=TinyLLMInput(
             text='What is the weather like in New York?'
         ),
         tools=my_tools

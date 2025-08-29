@@ -8,10 +8,9 @@ from pydantic import BaseModel
 from typing import Generic
 
 if typing.TYPE_CHECKING:
-    from langchain_core.prompt_values import PromptValue
-
     from tinygent.tools.tool import Tool
-    from tinygent.datamodels.llm_result import TinyLLMResult
+    from tinygent.datamodels.llm_io import TinyLLMInput
+    from tinygent.datamodels.llm_io import TinyLLMResult
 
 LLMConfigT = typing.TypeVar('LLMConfigT', bound=BaseModel)
 LLMStructuredT = typing.TypeVar('LLMStructuredT', bound=BaseModel)
@@ -43,39 +42,39 @@ class AbstractLLM(ABC, Generic[LLMConfigT]):
     @abstractmethod
     def generate_text(
         self,
-        prompt: PromptValue
+        prompt: TinyLLMInput
     ) -> TinyLLMResult: ...
 
     @abstractmethod
     async def agenerate_text(
         self,
-        prompt: PromptValue
+        prompt: TinyLLMInput
     ) -> TinyLLMResult: ...
 
     @abstractmethod
     def generate_structured(
         self,
-        prompt: PromptValue,
+        prompt: TinyLLMInput,
         output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT: ...
 
     @abstractmethod
     async def agenerate_structured(
         self,
-        prompt: PromptValue,
+        prompt: TinyLLMInput,
         output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT: ...
 
     @abstractmethod
     def generate_with_tools(
         self,
-        prompt: PromptValue,
+        prompt: TinyLLMInput,
         tools: list[Tool]
     ) -> TinyLLMResult: ...
 
     @abstractmethod
     async def agenerate_with_tools(
         self,
-        prompt: PromptValue,
+        prompt: TinyLLMInput,
         tools: list[Tool]
     ) -> TinyLLMResult: ...

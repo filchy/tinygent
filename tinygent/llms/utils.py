@@ -7,7 +7,6 @@ from typing import Union
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration
 from langchain_core.outputs import Generation
-from langchain_core.prompt_values import PromptValue
 from langchain_core.messages.utils import convert_to_openai_messages
 from openai.types.chat import ChatCompletion
 from openai.types.chat import ChatCompletionMessageFunctionToolCall
@@ -20,7 +19,8 @@ from openai.types.chat import ChatCompletionContentPartTextParam
 from openai.types.chat import ChatCompletionMessageToolCallUnionParam
 
 if typing.TYPE_CHECKING:
-    from tinygent.datamodels.llm_result import TinyLLMResult
+    from tinygent.datamodels.llm_io import TinyLLMInput
+    from tinygent.datamodels.llm_io import TinyLLMResult
 
 
 def _to_text_parts(
@@ -63,7 +63,7 @@ def _normalize_tool_calls(
 
 
 def lc_prompt_to_openai_params(
-    prompt: PromptValue
+    prompt: TinyLLMInput
 ) -> list[ChatCompletionMessageParam]:
 
     raw = convert_to_openai_messages(prompt.to_messages())
@@ -116,7 +116,7 @@ def lc_prompt_to_openai_params(
 
 def openai_result_to_tiny_result(resp: ChatCompletion) -> TinyLLMResult:
 
-    from tinygent.datamodels.llm_result import TinyLLMResult
+    from tinygent.datamodels.llm_io import TinyLLMResult
 
     generations: list[list[Generation]] = []
 

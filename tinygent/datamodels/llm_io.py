@@ -1,44 +1,30 @@
 from itertools import chain
 from typing import Iterator
-from typing import Literal
 from typing import cast
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration
 from langchain_core.outputs import LLMResult
-from pydantic import BaseModel
+from langchain_core.prompt_values import StringPromptValue
 
+from tinygent.datamodels.messages import TinyAIMessage, TinyHumanMessage
+from tinygent.datamodels.messages import TinyChatMessage
+from tinygent.datamodels.messages import TinyToolCall
 from tinygent.llms.utils import normalize_content
 
 
-class TinyChatMessage(BaseModel):
+class TinyLLMInput(StringPromptValue):
 
-    type: Literal['chat'] = 'chat'
+    def to_tiny_message(self) -> TinyHumanMessage:
 
-    content: str
-
-    metadata: dict = {}
-
-
-class TinyToolCall(BaseModel):
-
-    type: Literal['tool'] = 'tool'
-
-    tool_name: str
-
-    arguments: dict
-
-    call_id: str | None = None
-
-    metadata: dict = {}
-
-
-TinyMessageLiteral = Literal['chat', 'tool']
-TinyMessageType = TinyChatMessage | TinyToolCall
+        return TinyHumanMessage(
+            content=self.text,
+            metadata={'raw': self}
+        )
 
 
 class TinyLLMResult(LLMResult):
 
-    def tiny_iter(self) -> Iterator[TinyMessageType]:
+    def tiny_iter(self) -> Iterator[TinyAIMessage]:
 
         for generation in chain.from_iterable(self.generations):
             chat_gen = cast(ChatGeneration, generation)

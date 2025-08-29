@@ -4,6 +4,7 @@ from pydantic import Field
 
 import asyncio
 
+from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.llms.openai import OpenAILLM
 from tinygent.runtime.global_registry import GlobalRegistry
 from tinygent.tools.tool import tool
@@ -36,7 +37,7 @@ def basic_generation():
     llm = OpenAILLM()
 
     result = llm.generate_text(
-        prompt=StringPromptValue(text='Tell me a joke about programmers.')
+        prompt=TinyLLMInput(text='Tell me a joke about programmers.'),
     )
 
     for msg in result.tiny_iter():
@@ -47,7 +48,7 @@ def structured_generation():
     llm = OpenAILLM()
 
     result = llm.generate_structured(
-        prompt=StringPromptValue(text='Summarize why the sky is blue in one sentence.'),
+        prompt=TinyLLMInput(text='Summarize why the sky is blue in one sentence.'),
         output_schema=SummaryResponse
     )
 
@@ -60,7 +61,7 @@ def generation_with_tools():
     tools = [add, capitalize]
 
     result = llm.generate_with_tools(
-        prompt=StringPromptValue(
+        prompt=TinyLLMInput(
             text='Capitalize \'tinygent is powerful\'. Then add 5 and 7.'
         ),
         tools=tools
@@ -79,7 +80,7 @@ async def async_generation():
     llm = OpenAILLM()
 
     result = await llm.agenerate_text(
-        prompt=StringPromptValue(text='Name three uses of AI in medicine.')
+        prompt=TinyLLMInput(text='Name three uses of AI in medicine.')
     )
 
     for msg in result.tiny_iter():

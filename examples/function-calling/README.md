@@ -114,11 +114,11 @@ class TinyToolCall(BaseModel):
 
 
 TinyMessageLiteral = Literal['chat', 'tool']
-TinyMessageType = TinyChatMessage | TinyToolCall
+TinyAIMessage = TinyChatMessage | TinyToolCall
 
 
 class TinyLLMResult(LLMResult):
-    def tiny_iter(self) -> Iterator[TinyMessageType]:
+    def tiny_iter(self) -> Iterator[TinyAIMessage]:
         for generation in chain.from_iterable(self.generations):
             chat_gen = cast(ChatGeneration, generation)
             message = chat_gen.message

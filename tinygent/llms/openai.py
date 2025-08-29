@@ -1,6 +1,5 @@
 import os
 
-from langchain_core.prompt_values import PromptValue
 from openai import AsyncOpenAI
 from openai import OpenAI
 from openai.types.chat import ChatCompletionFunctionToolParam
@@ -9,7 +8,8 @@ from typing import override
 
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import LLMStructuredT
-from tinygent.datamodels.llm_result import TinyLLMResult
+from tinygent.datamodels.llm_io import TinyLLMInput
+from tinygent.datamodels.llm_io import TinyLLMResult
 from tinygent.llms.utils import lc_prompt_to_openai_params
 from tinygent.llms.utils import openai_result_to_tiny_result
 from tinygent.tools.tool import Tool
@@ -107,7 +107,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
 
     def generate_text(
         self,
-        prompt: PromptValue,
+        prompt: TinyLLMInput,
     ) -> TinyLLMResult:
 
         messages = lc_prompt_to_openai_params(prompt)
@@ -122,7 +122,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
 
     async def agenerate_text(
         self,
-        prompt: PromptValue
+        prompt: TinyLLMInput
     ) -> TinyLLMResult:
 
         messages = lc_prompt_to_openai_params(prompt)
@@ -137,7 +137,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
 
     def generate_structured(
         self,
-        prompt: PromptValue,
+        prompt: TinyLLMInput,
         output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
 
@@ -158,7 +158,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
 
     async def agenerate_structured(
         self,
-        prompt: PromptValue,
+        prompt: TinyLLMInput,
         output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
 
@@ -179,7 +179,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
 
     def generate_with_tools(
         self,
-        prompt: PromptValue,
+        prompt: TinyLLMInput,
         tools: list[Tool]
     ) -> TinyLLMResult:
 
@@ -198,7 +198,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
 
     async def agenerate_with_tools(
         self,
-        prompt: PromptValue,
+        prompt: TinyLLMInput,
         tools: list[Tool]
     ) -> TinyLLMResult:
 
