@@ -1,11 +1,11 @@
 import asyncio
-
 from typing import Any
 from typing import Callable
 from typing import Generic
 from typing import Iterable
 from typing import TypeVar
 from typing import cast
+
 from pydantic import BaseModel
 
 from tinygent.datamodels.tool import AbstractTool

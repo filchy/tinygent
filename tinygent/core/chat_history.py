@@ -1,11 +1,13 @@
 from typing import Sequence
+
 from pydantic import BaseModel
 from pydantic import Field
 
-from tinygent.datamodels.messages import AllTinyMessages, TinyToolCall
+from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyAIMessage
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyHumanMessage
+from tinygent.datamodels.messages import TinyToolCall
 
 
 class BaseChatHistory(BaseModel):

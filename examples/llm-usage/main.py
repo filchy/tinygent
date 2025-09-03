@@ -1,7 +1,7 @@
+import asyncio
+
 from pydantic import BaseModel
 from pydantic import Field
-
-import asyncio
 
 from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.llms.openai import OpenAILLM

@@ -44,6 +44,15 @@ src = ["tinygent"]
 line-length = 89
 
 [tool.ruff.lint]
-ignore = [
-    "E731"  # Do not complain about lambda assignments
+extend-select = [
+    "I",  # Import-related rules
 ]
+ignore = [
+    "E731",  # Do not complain about assignments to lambda expressions
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+combine-as-imports = false
+force-sort-within-sections = true
+known-first-party = ["tinygent"]

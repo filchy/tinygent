@@ -1,8 +1,6 @@
 import asyncio
 import typing
-
 from typing import Callable
-
 
 P = typing.ParamSpec('P')
 T = typing.TypeVar('T')

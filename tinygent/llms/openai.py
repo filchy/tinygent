@@ -1,10 +1,10 @@
 import os
+from typing import override
 
 from openai import AsyncOpenAI
 from openai import OpenAI
 from openai.types.chat import ChatCompletionFunctionToolParam
 from pydantic import BaseModel
-from typing import override
 
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import LLMStructuredT

@@ -1,6 +1,7 @@
 import subprocess
 import sys
 
+
 def main():
     cmds = [
         ['uv', 'run', 'ruff', 'check'],

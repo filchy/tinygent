@@ -2,9 +2,9 @@ from typing import Any
 from typing import Generic
 from typing import Literal
 from typing import TypeVar
+
 from pydantic import BaseModel
 from pydantic import ConfigDict
-
 
 TinyMessageType = TypeVar(
     'TinyMessageType',

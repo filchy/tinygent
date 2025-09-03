@@ -1,12 +1,12 @@
 import dataclasses
 import inspect
 import sys
-
 from typing import Callable
 from typing import Generic
-from typing import TypeVar
 from typing import TextIO
+from typing import TypeVar
 from typing import cast
+
 from pydantic import BaseModel
 
 P = TypeVar('P', bound=BaseModel)

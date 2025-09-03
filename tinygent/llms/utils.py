@@ -1,22 +1,22 @@
 from __future__ import annotations
 
 import typing
-
-from typing import cast
 from typing import Union
+from typing import cast
+
 from langchain_core.messages import AIMessage
+from langchain_core.messages.utils import convert_to_openai_messages
 from langchain_core.outputs import ChatGeneration
 from langchain_core.outputs import Generation
-from langchain_core.messages.utils import convert_to_openai_messages
 from openai.types.chat import ChatCompletion
+from openai.types.chat import ChatCompletionAssistantMessageParam
+from openai.types.chat import ChatCompletionContentPartTextParam
 from openai.types.chat import ChatCompletionMessageFunctionToolCall
 from openai.types.chat import ChatCompletionMessageParam
-from openai.types.chat import ChatCompletionSystemMessageParam
-from openai.types.chat import ChatCompletionUserMessageParam
-from openai.types.chat import ChatCompletionAssistantMessageParam
-from openai.types.chat import ChatCompletionToolMessageParam
-from openai.types.chat import ChatCompletionContentPartTextParam
 from openai.types.chat import ChatCompletionMessageToolCallUnionParam
+from openai.types.chat import ChatCompletionSystemMessageParam
+from openai.types.chat import ChatCompletionToolMessageParam
+from openai.types.chat import ChatCompletionUserMessageParam
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm_io import TinyLLMInput

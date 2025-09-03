@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import typing
-
 from abc import ABC
 from abc import abstractmethod
-from pydantic import BaseModel
+import typing
 from typing import Generic
 
+from pydantic import BaseModel
+
 if typing.TYPE_CHECKING:
-    from tinygent.tools.tool import Tool
     from tinygent.datamodels.llm_io import TinyLLMInput
     from tinygent.datamodels.llm_io import TinyLLMResult
+    from tinygent.tools.tool import Tool
 
 LLMConfigT = typing.TypeVar('LLMConfigT', bound=BaseModel)
 LLMStructuredT = typing.TypeVar('LLMStructuredT', bound=BaseModel)

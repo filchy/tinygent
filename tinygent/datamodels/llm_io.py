@@ -1,13 +1,15 @@
 from itertools import chain
 from typing import Iterator
 from typing import cast
+
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration
 from langchain_core.outputs import LLMResult
 from langchain_core.prompt_values import StringPromptValue
 
-from tinygent.datamodels.messages import TinyAIMessage, TinyHumanMessage
+from tinygent.datamodels.messages import TinyAIMessage
 from tinygent.datamodels.messages import TinyChatMessage
+from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.llms.utils import normalize_content
 
