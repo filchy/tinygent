@@ -8,7 +8,7 @@ def main():
     llm = OpenAILLM()
 
     print('=== Initial memory ===')
-    print(memory.load_variables()['chat_history'])
+    print(memory.load_variables())
     print()
 
     # 1) First exchange
@@ -17,7 +17,7 @@ def main():
     memory.save_context(prompt1, result1)
 
     print('=== After first exchange ===')
-    print(memory.load_variables()['chat_history'])
+    print(memory.load_variables())
     print()
 
     # 2) Second exchange (model sees prior context if you pass memory vars)
@@ -27,13 +27,13 @@ def main():
     memory.save_context(prompt2, result2)
 
     print('=== After second exchange ===')
-    print(memory.load_variables()['chat_history'])
+    print(memory.load_variables())
     print()
 
     # 3) Clear memory
     memory.clear()
     print('=== After clear() ===')
-    print(memory.load_variables()['chat_history'])
+    print(memory.load_variables())
 
 
 if __name__ == '__main__':

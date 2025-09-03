@@ -54,6 +54,8 @@ Before you begin using tinygent, ensure that you meet the following software pre
 
 ### Memory
 
+1. [Basic Chat Memory](examples/memory/basic-chat-memory)
+
 > to be added
 
 ### Agents
