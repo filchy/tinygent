@@ -3,7 +3,7 @@ import sys
 
 
 def main():
-    cmds = [['uv', 'run', 'ruff', 'check'], ['uv', 'run', 'mypy']]
+    cmds = [['uv', 'run', 'black', '.'], ['uv', 'run', 'ruff', 'format', '.']]
 
     exit_code = 0
     for cmd in cmds:

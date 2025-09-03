@@ -6,12 +6,7 @@ P = typing.ParamSpec('P')
 T = typing.TypeVar('T')
 
 
-async def run_in_executor(
-    func: Callable[P, T],
-    *args: P.args,
-    **kwargs: P.kwargs
-) -> T:
-
+async def run_in_executor(func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
     def _inner() -> T:
         try:
             return func(*args, **kwargs)

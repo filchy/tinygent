@@ -15,7 +15,6 @@ R = TypeVar('R')
 
 @dataclasses.dataclass
 class ToolInfo(Generic[P, R]):
-
     name: str
 
     description: str
@@ -36,7 +35,6 @@ class ToolInfo(Generic[P, R]):
 
     @classmethod
     def from_callable(cls, fn: Callable[[P], R]) -> 'ToolInfo[P, R]':
-
         name = fn.__name__
         description = inspect.getdoc(fn) or ''
 
@@ -49,7 +47,7 @@ class ToolInfo(Generic[P, R]):
 
         if len(parameters) != 1:
             raise ValueError(
-                f'Tool \'{name}\' must accept exactly one BaseModel argument.'
+                f"Tool '{name}' must accept exactly one BaseModel argument."
             )
 
         param = parameters[0]
@@ -60,9 +58,7 @@ class ToolInfo(Generic[P, R]):
             or not isinstance(param_annotation, type)
             or not issubclass(param_annotation, BaseModel)
         ):
-            raise TypeError(
-                f'Parameter of tool \'{name}\' must be a Pydantic BaseModel.'
-            )
+            raise TypeError(f"Parameter of tool '{name}' must be a Pydantic BaseModel.")
 
         input_schema = cast(type[P], param_annotation)
         required_fields = [
@@ -82,8 +78,7 @@ class ToolInfo(Generic[P, R]):
                 from pydantic import create_model
 
                 output_schema = create_model(
-                    'ToolOutput',
-                    __root__=(return_annotation, ...)
+                    'ToolOutput', __root__=(return_annotation, ...)
                 )
             except Exception:
                 output_schema = None
@@ -103,7 +98,6 @@ class ToolInfo(Generic[P, R]):
         )
 
     def print_summary(self, stream: TextIO = sys.stdout):
-
         stream.write('Tool Summary:\n')
         stream.write('-' * 20 + '\n')
 

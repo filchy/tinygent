@@ -8,7 +8,6 @@ from tinygent.tools.tool import tool
 
 
 class GetWeatherInput(BaseModel):
-
     location: str = Field(..., description='The location to get the weather for.')
 
 
@@ -20,7 +19,6 @@ def get_weather(data: GetWeatherInput) -> str:
 
 
 class GetTimeInput(BaseModel):
-
     location: str = Field(..., description='The location to get the time for.')
 
 
@@ -37,26 +35,19 @@ if __name__ == '__main__':
     openai_llm = OpenAILLM()
 
     response = openai_llm.generate_with_tools(
-        prompt=TinyLLMInput(
-            text='What is the weather like in New York?'
-        ),
-        tools=my_tools
+        prompt=TinyLLMInput(text='What is the weather like in New York?'), tools=my_tools
     )
 
     for message in response.tiny_iter():
-
         if message.type == 'chat':
             print(f'LLM response: {message.content}')
 
         elif message.type == 'tool':
-            selected_tool = GlobalRegistry.get_registry().get_tool(
-                message.tool_name
-            )
+            selected_tool = GlobalRegistry.get_registry().get_tool(message.tool_name)
 
             result = selected_tool(**message.arguments)
 
-            print('Tool %s called with arguments %s, result: %s' % (
-                message.tool_name,
-                message.arguments,
-                result
-            ))
+            print(
+                'Tool %s called with arguments %s, result: %s'
+                % (message.tool_name, message.arguments, result)
+            )

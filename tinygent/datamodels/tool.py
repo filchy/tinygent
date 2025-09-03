@@ -7,7 +7,6 @@ from tinygent.datamodels.tool_info import ToolInfo
 
 
 class AbstractTool(ABC):
-
     @abstractmethod
     def __init__(self, fn: Callable[..., Any]) -> None: ...
 

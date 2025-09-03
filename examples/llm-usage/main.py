@@ -48,7 +48,7 @@ def structured_generation():
 
     result = llm.generate_structured(
         prompt=TinyLLMInput(text='Summarize why the sky is blue in one sentence.'),
-        output_schema=SummaryResponse
+        output_schema=SummaryResponse,
     )
 
     print(f'[STRUCTURED RESULT] {result.summary}')
@@ -60,10 +60,8 @@ def generation_with_tools():
     tools = [add, capitalize]
 
     result = llm.generate_with_tools(
-        prompt=TinyLLMInput(
-            text='Capitalize \'tinygent is powerful\'. Then add 5 and 7.'
-        ),
-        tools=tools
+        prompt=TinyLLMInput(text="Capitalize 'tinygent is powerful'. Then add 5 and 7."),
+        tools=tools,
     )
 
     for message in result.tiny_iter():

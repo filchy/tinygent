@@ -26,7 +26,6 @@ if typing.TYPE_CHECKING:
 def _to_text_parts(
     content: object,
 ) -> str | list[ChatCompletionContentPartTextParam]:
-
     if content is None:
         return ''
     if isinstance(content, str):
@@ -39,7 +38,6 @@ def _to_text_parts(
 def _normalize_tool_calls(
     raw: list[dict] | None,
 ) -> list[ChatCompletionMessageToolCallUnionParam]:
-
     if not raw:
         return []
 
@@ -62,10 +60,7 @@ def _normalize_tool_calls(
     return out
 
 
-def lc_prompt_to_openai_params(
-    prompt: TinyLLMInput
-) -> list[ChatCompletionMessageParam]:
-
+def lc_prompt_to_openai_params(prompt: TinyLLMInput) -> list[ChatCompletionMessageParam]:
     raw = convert_to_openai_messages(prompt.to_messages())
     params: list[ChatCompletionMessageParam] = []
 
@@ -75,19 +70,11 @@ def lc_prompt_to_openai_params(
 
         if role == 'system':
             params.append(
-                ChatCompletionSystemMessageParam(
-                    role='system',
-                    content=content
-                )
+                ChatCompletionSystemMessageParam(role='system', content=content)
             )
 
         elif role == 'user':
-            params.append(
-                ChatCompletionUserMessageParam(
-                    role='user',
-                    content=content
-                )
-            )
+            params.append(ChatCompletionUserMessageParam(role='user', content=content))
 
         elif role == 'assistant':
             tool_calls = _normalize_tool_calls(m.get('tool_calls'))
@@ -115,7 +102,6 @@ def lc_prompt_to_openai_params(
 
 
 def openai_result_to_tiny_result(resp: ChatCompletion) -> TinyLLMResult:
-
     from tinygent.datamodels.llm_io import TinyLLMResult
 
     generations: list[list[Generation]] = []
@@ -140,9 +126,7 @@ def openai_result_to_tiny_result(resp: ChatCompletion) -> TinyLLMResult:
                         }
                     )
                 else:
-                    tool_calls.append(
-                        {'id': tc.id, 'type': tc.type, 'raw': tc}
-                    )
+                    tool_calls.append({'id': tc.id, 'type': tc.type, 'raw': tc})
             additional_kwargs['tool_calls'] = tool_calls
 
         ai_msg = AIMessage(content=text, additional_kwargs=additional_kwargs)
@@ -160,11 +144,10 @@ def openai_result_to_tiny_result(resp: ChatCompletion) -> TinyLLMResult:
 
 
 def normalize_content(content: Union[str, list[str | dict]]) -> str:
-
     if isinstance(content, str):
         return content
 
-    return "".join(
-        part if isinstance(part, str) else f"[{part.get('type', 'object')}]"
+    return ''.join(
+        part if isinstance(part, str) else f'[{part.get("type", "object")}]'
         for part in content
     )

@@ -52,7 +52,7 @@ async def async_count(data: AsyncCountInput):
 
 
 if __name__ == '__main__':
-    header_print = lambda title: print('\n' + '*'*10 + f' {title} ' + '*'*10 + '\n')
+    header_print = lambda title: print('\n' + '*' * 10 + f' {title} ' + '*' * 10 + '\n')
     classic_print = lambda msg: print(f'[Classic] {msg}')
     global_registry_print = lambda msg: print(f'[GlobalRegistry] {msg}')
 

@@ -7,25 +7,19 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 
 TinyMessageType = TypeVar(
-    'TinyMessageType',
-    Literal['chat'], Literal['tool'], Literal['human']
+    'TinyMessageType', Literal['chat'], Literal['tool'], Literal['human']
 )
 
 
 class BaseMessage(BaseModel, Generic[TinyMessageType]):
-
     type: TinyMessageType
 
     metadata: dict = {}
 
-    model_config = ConfigDict(
-        frozen=True,
-        extra='forbid'
-    )
+    model_config = ConfigDict(frozen=True, extra='forbid')
 
 
 class TinyChatMessage(BaseMessage[Literal['chat']]):
-
     type: Literal['chat'] = 'chat'
 
     content: str
@@ -34,7 +28,6 @@ class TinyChatMessage(BaseMessage[Literal['chat']]):
 
 
 class TinyToolCall(BaseMessage[Literal['tool']]):
-
     type: Literal['tool'] = 'tool'
 
     tool_name: str
@@ -49,7 +42,6 @@ class TinyToolCall(BaseMessage[Literal['tool']]):
 
 
 class TinyHumanMessage(BaseMessage[Literal['human']]):
-
     type: Literal['human'] = 'human'
 
     content: str

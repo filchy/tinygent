@@ -4,7 +4,6 @@ from tinygent.memory.base_chat_memory import BaseChatMemory
 
 
 def main():
-
     memory = BaseChatMemory()
     llm = OpenAILLM()
 

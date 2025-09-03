@@ -15,12 +15,14 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "black>=25.1.0",
     "mypy>=1.17.1",
     "ruff>=0.12.11",
 ]
 
 [project.scripts]
 lint = "scripts.lint:main"
+fmt = "scripts.fmt:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -32,6 +34,11 @@ package = true
 [tool.hatch.build.targets.wheel]
 packages = ["tinygent"]
 
+[tool.black]
+line-length = 89
+target-version = ["py312"]
+skip-string-normalization = true
+
 [tool.mypy]
 python_version = 3.12
 files = ["tinygent"]
@@ -42,6 +49,9 @@ disable_error_code = ["attr-defined"]
 target-version = "py312"
 src = ["tinygent"]
 line-length = 89
+
+[tool.ruff.format]
+quote-style = "single"
 
 [tool.ruff.lint]
 extend-select = [

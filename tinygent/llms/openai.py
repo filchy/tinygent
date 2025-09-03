@@ -16,7 +16,6 @@ from tinygent.tools.tool import Tool
 
 
 class OpenAIConfig(BaseModel):
-
     model_name: str = 'gpt-4o'
 
     api_key: str | None = os.getenv('OPENAI_API_KEY', None)
@@ -27,38 +26,30 @@ class OpenAIConfig(BaseModel):
 
 
 class OpenAILLM(AbstractLLM[OpenAIConfig]):
-
     def __init__(
         self,
         config: OpenAIConfig = OpenAIConfig(),
     ) -> None:
-
         if not config.api_key:
             raise ValueError(
                 'OpenAI API key must be provided either via config',
-                ' or \'OPENAI_API_KEY\' env variable.'
+                " or 'OPENAI_API_KEY' env variable.",
             )
 
-        self._sync_client = OpenAI(
-            api_key=config.api_key,
-            base_url=config.base_url
-        )
+        self._sync_client = OpenAI(api_key=config.api_key, base_url=config.base_url)
 
         self._async_client = AsyncOpenAI(
-            api_key=config.api_key,
-            base_url=config.base_url
+            api_key=config.api_key, base_url=config.base_url
         )
 
         self._config = config
 
     @property
     def config(self) -> OpenAIConfig:
-
         return self._config
 
     @property
     def supports_tool_calls(self) -> bool:
-
         return True
 
     @override
@@ -109,45 +100,37 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         self,
         prompt: TinyLLMInput,
     ) -> TinyLLMResult:
-
         messages = lc_prompt_to_openai_params(prompt)
 
         res = self._sync_client.chat.completions.create(
             model=self.config.model_name,
             messages=messages,
-            temperature=self._config.temperature
+            temperature=self._config.temperature,
         )
 
         return openai_result_to_tiny_result(res)
 
-    async def agenerate_text(
-        self,
-        prompt: TinyLLMInput
-    ) -> TinyLLMResult:
-
+    async def agenerate_text(self, prompt: TinyLLMInput) -> TinyLLMResult:
         messages = lc_prompt_to_openai_params(prompt)
 
         res = await self._async_client.chat.completions.create(
             model=self.config.model_name,
             messages=messages,
-            temperature=self._config.temperature
+            temperature=self._config.temperature,
         )
 
         return openai_result_to_tiny_result(res)
 
     def generate_structured(
-        self,
-        prompt: TinyLLMInput,
-        output_schema: type[LLMStructuredT]
+        self, prompt: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
-
         messages = lc_prompt_to_openai_params(prompt)
 
         res = self._sync_client.chat.completions.parse(
             model=self.config.model_name,
             messages=messages,
             temperature=self._config.temperature,
-            response_format=output_schema
+            response_format=output_schema,
         )
 
         if not (message := res.choices[0].message):
@@ -157,18 +140,15 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         return message.parsed
 
     async def agenerate_structured(
-        self,
-        prompt: TinyLLMInput,
-        output_schema: type[LLMStructuredT]
+        self, prompt: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
-
         messages = lc_prompt_to_openai_params(prompt)
 
         res = await self._async_client.chat.completions.parse(
             model=self.config.model_name,
             messages=messages,
             temperature=self._config.temperature,
-            response_format=output_schema
+            response_format=output_schema,
         )
 
         if not (message := res.choices[0].message):
@@ -178,11 +158,8 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         return message.parsed
 
     def generate_with_tools(
-        self,
-        prompt: TinyLLMInput,
-        tools: list[Tool]
+        self, prompt: TinyLLMInput, tools: list[Tool]
     ) -> TinyLLMResult:
-
         functions = [self._tool_convertor(tool) for tool in tools]
         messages = lc_prompt_to_openai_params(prompt)
 
@@ -191,17 +168,14 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
             messages=messages,
             tools=functions,
             tool_choice='auto',
-            temperature=self._config.temperature
+            temperature=self._config.temperature,
         )
 
         return openai_result_to_tiny_result(res)
 
     async def agenerate_with_tools(
-        self,
-        prompt: TinyLLMInput,
-        tools: list[Tool]
+        self, prompt: TinyLLMInput, tools: list[Tool]
     ) -> TinyLLMResult:
-
         functions = [self._tool_convertor(tool) for tool in tools]
         messages = lc_prompt_to_openai_params(prompt)
 
@@ -210,7 +184,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
             messages=messages,
             tools=functions,
             tool_choice='auto',
-            temperature=self._config.temperature
+            temperature=self._config.temperature,
         )
-        
+
         return openai_result_to_tiny_result(res)

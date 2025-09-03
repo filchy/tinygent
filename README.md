@@ -53,14 +53,18 @@ Before you begin using tinygent, ensure that you meet the following software pre
 3. [Function Calling](examples/function-calling)
 
 ### Memory
+
 > to be added
 
 ### Agents
+
 > to be added
 
-## Linting
-To ensure code quality, consistency and type safety run the following commands:
+## Linting & Formatting
+
+To ensure code quality, formatting consistency, and type safety, run:
 
 ```bash
-uv run lint
+uv run fmt   # Format code using Black and Ruff
+uv run lint  # Run Ruff linter and Mypy type checks
 ```
