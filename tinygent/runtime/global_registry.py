@@ -4,7 +4,7 @@ from tinygent.datamodels.tool import AbstractTool
 
 class Registry:
 
-    def __init__(self):
+    def __init__(self) -> None:
 
         self._registered_llms: dict[
             str,

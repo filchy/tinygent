@@ -14,7 +14,7 @@ async def run_in_executor(
     **kwargs: P.kwargs
 ) -> T:
 
-    async def _inner() -> T:
+    def _inner() -> T:
         try:
             return func(*args, **kwargs)
         except StopIteration as exc:

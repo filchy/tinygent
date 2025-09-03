@@ -26,6 +26,11 @@ Before you begin using tinygent, ensure that you meet the following software pre
     ```
 
 3. Install the tinygent library.
+    To install only the core tinygent library without any optional dependencies, run the following:
+    ```bash
+    uv sync
+    ```
+
     To install the tinygent library along with all of the optional dependencies. Including developer tools (`--all-groups`) and all of the dependencies needed for profiling and plugins (`--all-extras`) in the source repository, run the following:
     ```bash
     uv sync --all-groups --all-extras
@@ -52,3 +57,10 @@ Before you begin using tinygent, ensure that you meet the following software pre
 
 ### Agents
 > to be added
+
+## Linting
+To ensure code quality, consistency and type safety run the following commands:
+
+```bash
+uv run lint
+```

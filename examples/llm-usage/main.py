@@ -1,4 +1,3 @@
-from langchain_core.prompt_values import StringPromptValue
 from pydantic import BaseModel
 from pydantic import Field
 

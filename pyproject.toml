@@ -3,12 +3,24 @@ name = "tinygent"
 version = "0.1.0"
 description = "Tiny agentic framework for building AI agents which can do more than tiny tasks."
 readme = "README.md"
+authors = [
+    { name = "Filip Chytil", email = "chytilfilip@gmail.com" }
+]
 requires-python = "==3.12.*"
 dependencies = [
     "langchain-core>=0.3.74",
     "openai>=1.101.0",
     "pydantic>=2.11.7",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.17.1",
+    "ruff>=0.12.11",
+]
+
+[project.scripts]
+lint = "scripts.lint:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -19,3 +31,19 @@ package = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["tinygent"]
+
+[tool.mypy]
+python_version = 3.12
+files = ["tinygent"]
+ignore_missing_imports = true
+disable_error_code = ["attr-defined"]
+
+[tool.ruff]
+target-version = "py312"
+src = ["tinygent"]
+line-length = 89
+
+[tool.ruff.lint]
+ignore = [
+    "E731"  # Do not complain about lambda assignments
+]

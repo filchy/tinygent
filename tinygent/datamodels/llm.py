@@ -31,6 +31,7 @@ class AbstractLLM(ABC, Generic[LLMConfigT]):
     def config(self) -> LLMConfigT: ...
 
     @property
+    @abstractmethod
     def supports_tool_calls(self) -> bool: ...
 
     @abstractmethod
