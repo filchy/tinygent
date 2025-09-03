@@ -41,9 +41,6 @@ Before you begin using tinygent, ensure that you meet the following software pre
     uv pip install -e .
     ```
 
-## Supported LLMs
-- OpenAI
-
 ## Examples
 
 ### Basics
