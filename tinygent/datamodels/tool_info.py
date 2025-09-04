@@ -110,7 +110,7 @@ class ToolInfo(Generic[P, R]):
             input_schema=input_schema,
             output_schema=output_schema,
             required_fields=required_fields,
-            **extra_kwargs
+            **extra_kwargs,
         )
 
     def print_summary(self, stream: TextIO = sys.stdout):

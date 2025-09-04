@@ -28,9 +28,7 @@ class Tool(AbstractTool, Generic[T, R]):
 
         self._cached_fn: Callable[[T], R] | None = None
         self._info: ToolInfo[T, R] = ToolInfo.from_callable(
-            fn,
-            use_cache=use_cache,
-            cache_size=cache_size
+            fn, use_cache=use_cache, cache_size=cache_size
         )
 
         if use_cache:
