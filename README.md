@@ -55,7 +55,7 @@ Before you begin using tinygent, ensure that you meet the following software pre
 
 ### Agents
 
-> to be added
+1. [ReAct Agent](examples/agents/react)
 
 ## Linting & Formatting
 
