@@ -1,33 +1,33 @@
-from pydantic import BaseModel
 from pydantic import Field
 
 from tinygent.tools.tool import tool
+from tinygent.types import TinyModel
 
 
-class AddInput(BaseModel):
+class AddInput(TinyModel):
     a: int = Field(..., description='The first number to add.')
     b: int = Field(..., description='The second number to add.')
 
 
-@tool
+@tool(use_cache=True)
 def add(data: AddInput) -> int:
     """Adds two numbers together."""
 
     return data.a + data.b
 
 
-class GreetInput(BaseModel):
+class GreetInput(TinyModel):
     name: str = Field(..., description='The name to greet.')
 
 
-@tool
+@tool(use_cache=True)
 async def greet(data: GreetInput) -> str:
     """Greets a person by name."""
 
     return f'Hello, {data.name}!'
 
 
-class CountInput(BaseModel):
+class CountInput(TinyModel):
     n: int = Field(..., description='The number to count to.')
 
 
@@ -39,7 +39,7 @@ def count(data: CountInput):
         yield i
 
 
-class AsyncCountInput(BaseModel):
+class AsyncCountInput(TinyModel):
     n: int = Field(..., description='The number to count to.')
 
 
@@ -55,6 +55,7 @@ if __name__ == '__main__':
     header_print = lambda title: print('\n' + '*' * 10 + f' {title} ' + '*' * 10 + '\n')
     classic_print = lambda msg: print(f'[Classic] {msg}')
     global_registry_print = lambda msg: print(f'[GlobalRegistry] {msg}')
+    cache_print = lambda msg: print(f'[Cache] {msg}')
 
     # Tool summaries
     header_print('Tool Summaries')
@@ -93,3 +94,25 @@ if __name__ == '__main__':
 
     registry_async_count = registry.get_tool('async_count')
     global_registry_print(list(registry_async_count({'n': 4})))
+
+    # Cache info
+    header_print('Cache Info')
+
+    cache_print(add.cache_info())
+    cache_print(greet.cache_info())
+    cache_print(count.cache_info())
+    cache_print(async_count.cache_info())
+
+    # Clear caches
+    header_print('Clear Caches')
+    add.clear_cache()
+    greet.clear_cache()
+    count.clear_cache()
+    async_count.clear_cache()
+
+    cache_print(add.cache_info())
+    cache_print(greet.cache_info())
+    cache_print(count.cache_info())
+    cache_print(async_count.cache_info())
+
+    # NOTE: count and async_count are not cachable, so their cache_info will be None

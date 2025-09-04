@@ -5,26 +5,68 @@ from typing import Generic
 from typing import Iterable
 from typing import TypeVar
 from typing import cast
-
-from pydantic import BaseModel
+from typing import overload
 
 from tinygent.datamodels.tool import AbstractTool
 from tinygent.datamodels.tool_info import ToolInfo
 from tinygent.runtime.global_registry import GlobalRegistry
+from tinygent.types import TinyModel
 from tinygent.utils.schema_validator import validate_schema
 
-T = TypeVar('T', bound=BaseModel)
+T = TypeVar('T', bound=TinyModel)
 R = TypeVar('R')
 
 
 class Tool(AbstractTool, Generic[T, R]):
-    def __init__(self, fn: Callable[[T], R]) -> None:
-        self._fn: Callable[[T], R] = fn
-        self._info: ToolInfo[T, R] = ToolInfo.from_callable(fn)
+    def __init__(
+        self,
+        fn: Callable[[T], R],
+        use_cache: bool = False,
+        cache_size: int | None = None,
+    ) -> None:
+        self.__original_fn = fn
+
+        self._cached_fn: Callable[[T], R] | None = None
+        self._info: ToolInfo[T, R] = ToolInfo.from_callable(
+            fn,
+            use_cache=use_cache,
+            cache_size=cache_size
+        )
+
+        if use_cache:
+            if not self.info.is_cachable:
+                raise ValueError(
+                    'Caching is not supported for generator or async generator tools.'
+                )
+
+            cache_size = cache_size or 128
+            if self.info.is_coroutine:
+                from async_lru import alru_cache
+
+                self._cached_fn = alru_cache(maxsize=cache_size)(fn)  # type: ignore[misc]
+            else:
+                from functools import lru_cache
+
+                self._cached_fn = lru_cache(maxsize=cache_size)(fn)
+
+        self._fn = self._cached_fn or self.__original_fn
 
     @property
     def info(self) -> ToolInfo[T, R]:
         return self._info
+
+    def clear_cache(self) -> None:
+        if self._cached_fn:
+            clear = getattr(self._cached_fn, 'cache_clear', None)
+            if callable(clear):
+                clear()
+
+    def cache_info(self) -> Any:
+        if self._cached_fn:
+            info = getattr(self._cached_fn, 'cache_info', None)
+            if callable(info):
+                return info()
+        return None
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         return self._run(*args, **kwargs)
@@ -68,9 +110,29 @@ class Tool(AbstractTool, Generic[T, R]):
                 return result
 
 
-def tool(fn: Callable[[T], R]) -> Tool[T, R]:
-    tool_fn = Tool(fn)
+@overload
+def tool(fn: Callable[[T], R]) -> Tool[T, R]: ...
 
-    GlobalRegistry.get_registry().register_tool(tool_fn)
 
-    return tool_fn
+@overload
+def tool(
+    *,
+    use_cache: bool = False,
+    cache_size: int = 128,
+) -> Callable[[Callable[[T], R]], Tool[T, R]]: ...
+
+
+def tool(
+    fn: Callable[[T], R] | None = None,
+    *,
+    use_cache: bool = False,
+    cache_size: int = 128,
+) -> Tool[T, R] | Callable[[Callable[[T], R]], Tool[T, R]]:
+    def wrapper(f: Callable[[T], R]) -> Tool[T, R]:
+        tool_instance = Tool(f, use_cache=use_cache, cache_size=cache_size)
+        GlobalRegistry.get_registry().register_tool(tool_instance)
+        return tool_instance
+
+    if fn is None:
+        return wrapper
+    return wrapper(fn)

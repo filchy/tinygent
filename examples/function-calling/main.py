@@ -1,13 +1,13 @@
-from pydantic import BaseModel
 from pydantic import Field
 
 from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.llms.openai import OpenAILLM
 from tinygent.runtime.global_registry import GlobalRegistry
 from tinygent.tools.tool import tool
+from tinygent.types import TinyModel
 
 
-class GetWeatherInput(BaseModel):
+class GetWeatherInput(TinyModel):
     location: str = Field(..., description='The location to get the weather for.')
 
 
@@ -18,7 +18,7 @@ def get_weather(data: GetWeatherInput) -> str:
     return f'The weather in {data.location} is sunny with a high of 75°F.'
 
 
-class GetTimeInput(BaseModel):
+class GetTimeInput(TinyModel):
     location: str = Field(..., description='The location to get the time for.')
 
 

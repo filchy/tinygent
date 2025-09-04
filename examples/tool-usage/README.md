@@ -6,7 +6,7 @@ This example demonstrates how to use the `@tool` decorator from **tinygent** to 
 
 ## Requirements
 
-Each tool **must accept zero or one argument**, and if it does accept an argument, it must be a subclass of `pydantic.BaseModel`.
+Each tool **must accept zero or one argument**, and if it does accept an argument, it must be a subclass of `tinygent.types.TinyModel`.
 
 This design allows:
 
@@ -24,9 +24,10 @@ This design allows:
 ### Example Input Schema
 
 ```python
-from pydantic import BaseModel, Field
+from pydantic import Field
+from tinygent.types import TinyModel
 
-class AddInput(BaseModel):
+class AddInput(TinyModel):
     a: int = Field(..., description="First number to add")
     b: int = Field(..., description="Second number to add")
 ```
@@ -68,7 +69,7 @@ def add(data: AddInput) -> int:
     return data.a + data.b
 ```
 
-In this case, the description for the `add` tool will be `"Adds two numbers together."`.
+In this case, the description for the `add` tool will be `"Adds two numbers together."`
 
 Writing clear and concise docstrings is essential, as this metadata is often used in LLM-assisted reasoning and tool selection.
 
@@ -78,7 +79,7 @@ Writing clear and concise docstrings is essential, as this metadata is often use
 
 The public interface for tools is the `__call__()` method. It supports:
 
-* BaseModel input
+* TinyModel input
 * Raw `dict` input (validated)
 * `**kwargs` input (validated)
 * Positional `*args` (e.g., one dict argument)
@@ -89,6 +90,46 @@ Execution logic:
 * Generator: iterated and collected
 * Async generator: asynchronously iterated and collected
 * Sync function: called directly and returned
+
+---
+
+## Caching Support
+
+You can enable **in-memory LRU caching** for any synchronous or asynchronous tool function by passing `use_cache=True` to the `@tool` decorator:
+
+```python
+@tool(use_cache=True)
+def add(data: AddInput) -> int:
+    return data.a + data.b
+```
+
+* Internally uses:
+
+  * `functools.lru_cache` for synchronous functions
+  * `async_lru.alru_cache` for asynchronous functions
+* **Not supported** for generator functions (sync or async)
+* Cache size is configurable using `cache_size`:
+
+```python
+@tool(use_cache=True, cache_size=256)
+def expensive_tool(...):
+    ...
+```
+
+### Cache Inspection & Clearing
+
+Each tool exposes standard methods for cache management:
+
+```python
+add.cache_info()
+# -> CacheInfo(hits=3, misses=5, maxsize=128, currsize=5)
+
+add.clear_cache()
+```
+
+* **hits**: how many times a cached result was returned
+* **misses**: how many times the function was actually called
+* **currsize**: number of items currently cached
 
 ---
 
@@ -124,7 +165,7 @@ All of the above tools are automatically registered and retrievable from the glo
 ## Calling Examples
 
 ```python
-# BaseModel instance
+# TinyModel instance
 print(add(AddInput(a=1, b=2)))
 
 # Dict input

@@ -1,4 +1,6 @@
-import dataclasses
+from dataclasses import dataclass
+from dataclasses import field
+from dataclasses import fields
 import inspect
 import sys
 from typing import Callable
@@ -13,7 +15,7 @@ P = TypeVar('P', bound=BaseModel)
 R = TypeVar('R')
 
 
-@dataclasses.dataclass
+@dataclass
 class ToolInfo(Generic[P, R]):
     name: str
 
@@ -31,10 +33,18 @@ class ToolInfo(Generic[P, R]):
 
     output_schema: type[BaseModel] | None
 
-    required_fields: list[str] = dataclasses.field(default_factory=list)
+    required_fields: list[str] = field(default_factory=list)
+
+    use_cache: bool = False
+
+    cache_size: int | None = None
+
+    @property
+    def is_cachable(self) -> bool:
+        return not (self.is_generator or self.is_async_generator)
 
     @classmethod
-    def from_callable(cls, fn: Callable[[P], R]) -> 'ToolInfo[P, R]':
+    def from_callable(cls, fn: Callable[[P], R], *args, **kwargs) -> 'ToolInfo[P, R]':
         name = fn.__name__
         description = inspect.getdoc(fn) or ''
 
@@ -85,6 +95,11 @@ class ToolInfo(Generic[P, R]):
         else:
             output_schema = None
 
+        field_names = {f.name for f in fields(cls)}
+        extra_kwargs = {
+            key: value for key, value in kwargs.items() if key in field_names
+        }
+
         return cls(
             name=name,
             description=description,
@@ -95,6 +110,7 @@ class ToolInfo(Generic[P, R]):
             input_schema=input_schema,
             output_schema=output_schema,
             required_fields=required_fields,
+            **extra_kwargs
         )
 
     def print_summary(self, stream: TextIO = sys.stdout):
@@ -107,4 +123,10 @@ class ToolInfo(Generic[P, R]):
         stream.write(f'Is Coroutine: {self.is_coroutine}\n')
         stream.write(f'Is Generator: {self.is_generator}\n')
         stream.write(f'Is Async Generator: {self.is_async_generator}\n')
+        stream.write(f'Input Schema: {self.input_schema}\n')
+        stream.write(f'Output Schema: {self.output_schema}\n')
+        stream.write(f'Required Fields: {self.required_fields}\n')
+        stream.write(f'Use Cache: {self.use_cache}\n')
+        if self.use_cache:
+            stream.write(f'Cache Size: {self.cache_size}\n')
         stream.write('-' * 20 + '\n')

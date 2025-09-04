@@ -1,15 +1,15 @@
 import asyncio
 
-from pydantic import BaseModel
 from pydantic import Field
 
 from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.llms.openai import OpenAILLM
 from tinygent.runtime.global_registry import GlobalRegistry
 from tinygent.tools.tool import tool
+from tinygent.types import TinyModel
 
 
-class AddInput(BaseModel):
+class AddInput(TinyModel):
     a: int = Field(..., description='First number')
     b: int = Field(..., description='Second number')
 
@@ -19,7 +19,7 @@ def add(data: AddInput) -> int:
     return data.a + data.b
 
 
-class CapitalizeInput(BaseModel):
+class CapitalizeInput(TinyModel):
     text: str = Field(..., description='Text to capitalize')
 
 
@@ -28,7 +28,7 @@ def capitalize(data: CapitalizeInput) -> str:
     return data.text.upper()
 
 
-class SummaryResponse(BaseModel):
+class SummaryResponse(TinyModel):
     summary: str
 
 
