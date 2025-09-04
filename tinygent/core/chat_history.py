@@ -7,7 +7,6 @@ from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyAIMessage
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyHumanMessage
-from tinygent.datamodels.messages import TinyToolCall
 
 
 class BaseChatHistory(BaseModel):
@@ -38,24 +37,11 @@ class BaseChatHistory(BaseModel):
         parts = []
 
         for message in self.messages:
-            if isinstance(message, TinyHumanMessage):
-                role = 'Human'
-                content = message.content
+            try:
+                tiny_message = message.tiny_str
+            except NotImplementedError:
+                tiny_message = 'Unknown message'
 
-            elif isinstance(message, TinyChatMessage):
-                role = 'AI'
-                content = message.content
-
-            elif isinstance(message, TinyToolCall):
-                role = f'Tool - {message.tool_name}({message.arguments})'
-                content = (
-                    str(message.result) if message.result is not None else 'No result'
-                )
-
-            else:
-                role = 'Unknown'
-                content = 'Unknown message'
-
-            parts.append(f'{role}: {content}')
+            parts.append(tiny_message)
 
         return '\n'.join(parts)

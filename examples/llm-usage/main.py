@@ -1,5 +1,6 @@
 import asyncio
 
+from langchain_core.messages import HumanMessage
 from pydantic import Field
 
 from tinygent.datamodels.llm_io import TinyLLMInput
@@ -36,7 +37,9 @@ def basic_generation():
     llm = OpenAILLM()
 
     result = llm.generate_text(
-        prompt=TinyLLMInput(text='Tell me a joke about programmers.'),
+        llm_input=TinyLLMInput(
+            messages=[HumanMessage('Tell me a joke about programmers.')]
+        )
     )
 
     for msg in result.tiny_iter():
@@ -47,7 +50,9 @@ def structured_generation():
     llm = OpenAILLM()
 
     result = llm.generate_structured(
-        prompt=TinyLLMInput(text='Summarize why the sky is blue in one sentence.'),
+        llm_input=TinyLLMInput(
+            messages=[HumanMessage('Summarize why the sky is blue in one sentence.')],
+        ),
         output_schema=SummaryResponse,
     )
 
@@ -60,7 +65,11 @@ def generation_with_tools():
     tools = [add, capitalize]
 
     result = llm.generate_with_tools(
-        prompt=TinyLLMInput(text="Capitalize 'tinygent is powerful'. Then add 5 and 7."),
+        llm_input=TinyLLMInput(
+            messages=[
+                HumanMessage("Capitalize 'tinygent is powerful'. Then add 5 and 7.")
+            ]
+        ),
         tools=tools,
     )
 
@@ -77,7 +86,9 @@ async def async_generation():
     llm = OpenAILLM()
 
     result = await llm.agenerate_text(
-        prompt=TinyLLMInput(text='Name three uses of AI in medicine.')
+        llm_input=TinyLLMInput(
+            messages=[HumanMessage('Name three uses of AI in medicine.')]
+        )
     )
 
     for msg in result.tiny_iter():

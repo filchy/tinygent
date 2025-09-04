@@ -1,36 +1,52 @@
-from tinygent.datamodels.llm_io import TinyLLMInput
-from tinygent.llms.openai import OpenAILLM
+from tinygent.datamodels.messages import TinyChatMessage
+from tinygent.datamodels.messages import TinyHumanMessage
+from tinygent.datamodels.messages import TinyPlanMessage
 from tinygent.memory.base_chat_memory import BaseChatMemory
 
 
 def main():
     memory = BaseChatMemory()
-    llm = OpenAILLM()
 
     print('=== Initial memory ===')
     print(memory.load_variables())
     print()
 
-    # 1) First exchange
-    prompt1 = TinyLLMInput(text='Say hello in one short sentence.')
-    result1 = llm.generate_text(prompt1)
-    memory.save_context(prompt1, result1)
+    # First exchange
+    msg1 = TinyHumanMessage(content='Hello, assistant.')
+    memory.save_context(msg1)
+
+    msg2 = TinyChatMessage(content='Hi there! How can I help you today?')
+    memory.save_context(msg2)
 
     print('=== After first exchange ===')
     print(memory.load_variables())
     print()
 
-    # 2) Second exchange (model sees prior context if you pass memory vars)
-    # In a real chain, you'd merge memory.load_variables() into your prompt.
-    prompt2 = TinyLLMInput(text='What did you just greet me with? Answer briefly.')
-    result2 = llm.generate_text(prompt2)
-    memory.save_context(prompt2, result2)
+    # Second exchange
+    msg3 = TinyHumanMessage(content='Can you make a plan for my weekend?')
+    memory.save_context(msg3)
+
+    msg4 = TinyPlanMessage(content='Sure! 1. Go hiking. 2. Watch a movie. 3. Relax.')
+    memory.save_context(msg4)
 
     print('=== After second exchange ===')
     print(memory.load_variables())
     print()
 
-    # 3) Clear memory
+    # Third exchange
+    msg5 = TinyHumanMessage(content='That sounds nice, thanks.')
+    memory.save_context(msg5)
+
+    msg6 = TinyChatMessage(
+        content='You’re welcome! Let me know if you need anything else.'
+    )
+    memory.save_context(msg6)
+
+    print('=== After third exchange ===')
+    print(memory.load_variables())
+    print()
+
+    # Clear memory
     memory.clear()
     print('=== After clear() ===')
     print(memory.load_variables())

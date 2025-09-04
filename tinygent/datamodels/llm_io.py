@@ -3,20 +3,19 @@ from typing import Iterator
 from typing import cast
 
 from langchain_core.messages import AIMessage
+from langchain_core.messages import BaseMessage
 from langchain_core.outputs import ChatGeneration
 from langchain_core.outputs import LLMResult
-from langchain_core.prompt_values import StringPromptValue
+from openai import BaseModel
 
 from tinygent.datamodels.messages import TinyAIMessage
 from tinygent.datamodels.messages import TinyChatMessage
-from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.llms.utils import normalize_content
 
 
-class TinyLLMInput(StringPromptValue):
-    def to_tiny_message(self) -> TinyHumanMessage:
-        return TinyHumanMessage(content=self.text, metadata={'raw': self})
+class TinyLLMInput(BaseModel):
+    messages: list[BaseMessage]
 
 
 class TinyLLMResult(LLMResult):

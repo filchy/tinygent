@@ -1,9 +1,8 @@
 from pydantic import PrivateAttr
 
 from tinygent.core.chat_history import BaseChatHistory
-from tinygent.datamodels.llm_io import TinyLLMInput
-from tinygent.datamodels.llm_io import TinyLLMResult
 from tinygent.datamodels.memory import AbstractMemory
+from tinygent.datamodels.messages import AllTinyMessages
 
 
 class BaseChatMemory(AbstractMemory):
@@ -16,10 +15,8 @@ class BaseChatMemory(AbstractMemory):
     def load_variables(self) -> dict[str, str]:
         return {'chat_history': str(self._chat_history)}
 
-    def save_context(self, input: TinyLLMInput, output: TinyLLMResult) -> None:
-        all_messages = [input.to_tiny_message()] + list(output.tiny_iter())
-
-        self._chat_history.add_messages(all_messages)
+    def save_context(self, message: AllTinyMessages) -> None:
+        self._chat_history.add_message(message)
 
     def clear(self) -> None:
         self._chat_history.clear()

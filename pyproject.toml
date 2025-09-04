@@ -9,9 +9,11 @@ authors = [
 requires-python = "==3.12.*"
 dependencies = [
     "async-lru>=2.0.5",
+    "jinja2>=3.1.6",
     "langchain-core>=0.3.74",
     "openai>=1.101.0",
     "pydantic>=2.11.7",
+    "pyyaml>=6.0.2",
 ]
 
 [project.optional-dependencies]
@@ -44,7 +46,7 @@ skip-string-normalization = true
 python_version = 3.12
 files = ["tinygent", "scripts"]
 ignore_missing_imports = true
-disable_error_code = ["attr-defined"]
+disable_error_code = ["attr-defined", "import-untyped"]
 
 [tool.ruff]
 target-version = "py312"

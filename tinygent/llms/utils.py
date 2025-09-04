@@ -61,7 +61,7 @@ def _normalize_tool_calls(
 
 
 def lc_prompt_to_openai_params(prompt: TinyLLMInput) -> list[ChatCompletionMessageParam]:
-    raw = convert_to_openai_messages(prompt.to_messages())
+    raw = convert_to_openai_messages(prompt.messages)
     params: list[ChatCompletionMessageParam] = []
 
     for m in raw:

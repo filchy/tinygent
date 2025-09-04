@@ -10,9 +10,9 @@ from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import LLMStructuredT
 from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.datamodels.llm_io import TinyLLMResult
+from tinygent.datamodels.tool import AbstractTool
 from tinygent.llms.utils import lc_prompt_to_openai_params
 from tinygent.llms.utils import openai_result_to_tiny_result
-from tinygent.tools.tool import Tool
 
 
 class OpenAIConfig(BaseModel):
@@ -53,7 +53,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         return True
 
     @override
-    def _tool_convertor(self, tool: Tool) -> ChatCompletionFunctionToolParam:
+    def _tool_convertor(self, tool: AbstractTool) -> ChatCompletionFunctionToolParam:
         info = tool.info
         schema = info.input_schema
 
@@ -98,9 +98,9 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
 
     def generate_text(
         self,
-        prompt: TinyLLMInput,
+        llm_input: TinyLLMInput,
     ) -> TinyLLMResult:
-        messages = lc_prompt_to_openai_params(prompt)
+        messages = lc_prompt_to_openai_params(llm_input)
 
         res = self._sync_client.chat.completions.create(
             model=self.config.model_name,
@@ -110,8 +110,8 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
 
         return openai_result_to_tiny_result(res)
 
-    async def agenerate_text(self, prompt: TinyLLMInput) -> TinyLLMResult:
-        messages = lc_prompt_to_openai_params(prompt)
+    async def agenerate_text(self, llm_input: TinyLLMInput) -> TinyLLMResult:
+        messages = lc_prompt_to_openai_params(llm_input)
 
         res = await self._async_client.chat.completions.create(
             model=self.config.model_name,
@@ -122,9 +122,9 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         return openai_result_to_tiny_result(res)
 
     def generate_structured(
-        self, prompt: TinyLLMInput, output_schema: type[LLMStructuredT]
+        self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
-        messages = lc_prompt_to_openai_params(prompt)
+        messages = lc_prompt_to_openai_params(llm_input)
 
         res = self._sync_client.chat.completions.parse(
             model=self.config.model_name,
@@ -140,9 +140,9 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         return message.parsed
 
     async def agenerate_structured(
-        self, prompt: TinyLLMInput, output_schema: type[LLMStructuredT]
+        self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
-        messages = lc_prompt_to_openai_params(prompt)
+        messages = lc_prompt_to_openai_params(llm_input)
 
         res = await self._async_client.chat.completions.parse(
             model=self.config.model_name,
@@ -158,10 +158,10 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         return message.parsed
 
     def generate_with_tools(
-        self, prompt: TinyLLMInput, tools: list[Tool]
+        self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult:
         functions = [self._tool_convertor(tool) for tool in tools]
-        messages = lc_prompt_to_openai_params(prompt)
+        messages = lc_prompt_to_openai_params(llm_input)
 
         res = self._sync_client.chat.completions.create(
             model=self.config.model_name,
@@ -174,10 +174,10 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         return openai_result_to_tiny_result(res)
 
     async def agenerate_with_tools(
-        self, prompt: TinyLLMInput, tools: list[Tool]
+        self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult:
         functions = [self._tool_convertor(tool) for tool in tools]
-        messages = lc_prompt_to_openai_params(prompt)
+        messages = lc_prompt_to_openai_params(llm_input)
 
         res = await self._async_client.chat.completions.create(
             model=self.config.model_name,

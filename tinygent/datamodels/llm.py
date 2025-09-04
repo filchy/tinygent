@@ -10,7 +10,7 @@ from pydantic import BaseModel
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm_io import TinyLLMInput
     from tinygent.datamodels.llm_io import TinyLLMResult
-    from tinygent.tools.tool import Tool
+    from tinygent.datamodels.tool import AbstractTool
 
 LLMConfigT = typing.TypeVar('LLMConfigT', bound=BaseModel)
 LLMStructuredT = typing.TypeVar('LLMStructuredT', bound=BaseModel)
@@ -29,30 +29,30 @@ class AbstractLLM(ABC, Generic[LLMConfigT]):
     def supports_tool_calls(self) -> bool: ...
 
     @abstractmethod
-    def _tool_convertor(self, tool: Tool) -> typing.Any: ...
+    def _tool_convertor(self, tool: AbstractTool) -> typing.Any: ...
 
     @abstractmethod
-    def generate_text(self, prompt: TinyLLMInput) -> TinyLLMResult: ...
+    def generate_text(self, llm_input: TinyLLMInput) -> TinyLLMResult: ...
 
     @abstractmethod
-    async def agenerate_text(self, prompt: TinyLLMInput) -> TinyLLMResult: ...
+    async def agenerate_text(self, llm_input: TinyLLMInput) -> TinyLLMResult: ...
 
     @abstractmethod
     def generate_structured(
-        self, prompt: TinyLLMInput, output_schema: type[LLMStructuredT]
+        self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT: ...
 
     @abstractmethod
     async def agenerate_structured(
-        self, prompt: TinyLLMInput, output_schema: type[LLMStructuredT]
+        self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT: ...
 
     @abstractmethod
     def generate_with_tools(
-        self, prompt: TinyLLMInput, tools: list[Tool]
+        self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult: ...
 
     @abstractmethod
     async def agenerate_with_tools(
-        self, prompt: TinyLLMInput, tools: list[Tool]
+        self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult: ...

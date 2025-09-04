@@ -1,3 +1,4 @@
+from langchain_core.messages import HumanMessage
 from pydantic import Field
 
 from tinygent.datamodels.llm_io import TinyLLMInput
@@ -35,7 +36,10 @@ if __name__ == '__main__':
     openai_llm = OpenAILLM()
 
     response = openai_llm.generate_with_tools(
-        prompt=TinyLLMInput(text='What is the weather like in New York?'), tools=my_tools
+        llm_input=TinyLLMInput(
+            messages=[HumanMessage('What is the weather like in New York?')]
+        ),
+        tools=my_tools,
     )
 
     for message in response.tiny_iter():
