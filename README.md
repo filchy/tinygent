@@ -2,22 +2,6 @@
 
 Tinygent is a lightweight, easy-to-use, and efficient library for building and deploying generative AI applications. It provides a simple interface for working with various models and tools, making it ideal for developers who want to quickly prototype and deploy AI solutions.
 
-## Examples
-
-### Basics
-
-1. [Tool Usage](examples/tool-usage)
-2. [LLM Usage](examples/llm-usage)
-3. [Function Calling](examples/function-calling)
-
-### Memory
-
-1. [Basic Chat Memory](examples/memory/basic-chat-memory)
-
-### Agents
-
-1. [ReAct Agent](examples/agents/react)
-
 ## Getting Started
 
 ### Prerequisites
@@ -56,6 +40,22 @@ Before you begin using tinygent, ensure that you meet the following software pre
     ```bash
     uv pip install -e .
     ```
+
+## Examples
+
+### Basics
+
+1. [Tool Usage](examples/tool-usage)
+2. [LLM Usage](examples/llm-usage)
+3. [Function Calling](examples/function-calling)
+
+### Memory
+
+1. [Basic Chat Memory](examples/memory/basic-chat-memory)
+
+### Agents
+
+1. [ReAct Agent](examples/agents/react)
 
 ## Linting & Formatting
 
