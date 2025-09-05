@@ -8,7 +8,7 @@
 
 ___
 
-Tinygent is a lightweight, easy-to-use, and efficient library for building and deploying generative AI applications. It provides a simple interface for working with various models and tools, making it ideal for developers who want to quickly prototype and deploy AI solutions.
+Tinygent is a lightweight, easy-to-use (hopefully), and efficient (also hopefully ;-0) library for building and deploying generative AI applications. It provides a simple interface for working with various models and tools, making it ideal for developers who want to quickly prototype and deploy AI solutions.
 
 ## Getting Started
 
