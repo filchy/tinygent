@@ -2,7 +2,7 @@
     <picture>
         <source media="(prefers-color-scheme: light)" srcset="docs/light-logo.png">
         <source media="(prefers-color-scheme: dark)" srcset="docs/dark-logo.png">
-        <img alt="TinyCorp logo" src="docs/light-logo.png" width="200">
+        <img alt="TinyCorp logo" src="docs/light-logo.png" width="50%" height="50%">
     </picture>
 </div>
 
