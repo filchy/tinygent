@@ -1,4 +1,12 @@
-# tinygent
+<div align="center">
+    <picture>
+        <source media="(prefers-color-scheme: light)" srcset="docs/light-logo.png">
+        <source media="(prefers-color-scheme: dark)" srcset="docs/dark-logo.png">
+        <img alt="TinyCorp logo" src="docs/light-logo.png" width="200">
+    </picture>
+</div>
+
+___
 
 Tinygent is a lightweight, easy-to-use, and efficient library for building and deploying generative AI applications. It provides a simple interface for working with various models and tools, making it ideal for developers who want to quickly prototype and deploy AI solutions.
 
