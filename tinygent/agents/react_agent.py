@@ -1,24 +1,30 @@
+from __future__ import annotations
+
 from collections.abc import Generator
 from dataclasses import dataclass
 import logging
+import typing
 
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import SystemMessage
 
 from tinygent.datamodels.agent import AbstractAgent
-from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm_io import TinyLLMInput
-from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyAIMessage
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyPlanMessage
 from tinygent.datamodels.messages import TinyToolCall
-from tinygent.datamodels.tool import AbstractTool
 from tinygent.memory.base_chat_memory import BaseChatMemory
-from tinygent.tools.default import provide_final_answer
+from tinygent.tools.default_tools import provide_final_answer
+from tinygent.utils.answer_validation import is_final_answer
 from tinygent.utils.jinja_utils import render_template
+
+if typing.TYPE_CHECKING:
+    from tinygent.datamodels.llm import AbstractLLM
+    from tinygent.datamodels.memory import AbstractMemory
+    from tinygent.datamodels.tool import AbstractTool
 
 logger = logging.getLogger(__name__)
 
@@ -160,9 +166,9 @@ class TinyReActAgent(AbstractAgent):
                     if isinstance(msg, TinyToolCall):
                         msg.call()
 
-                        if isinstance(
-                            msg.result, TinyChatMessage
-                        ) and msg.result.metadata.get('is_final_answer', False):
+                        if isinstance(msg.result, TinyChatMessage) and is_final_answer(
+                            msg.result
+                        ):
                             returned_final_answer = True
 
                     self.memory.save_context(msg)
