@@ -1,0 +1,20 @@
+target-version = "py312"
+src = ["tinygent", "scripts"]
+line-length = 89
+
+[format]
+quote-style = "single"
+
+[lint]
+extend-select = [
+    "I",  # Import-related rules
+]
+ignore = [
+    "E731",  # Do not complain about assignments to lambda expressions
+]
+
+[lint.isort]
+force-single-line = true
+combine-as-imports = false
+force-sort-within-sections = true
+known-first-party = ["tinygent"]
