@@ -55,13 +55,13 @@ class FinalAnswerPromptTemplate:
 
 
 @dataclass
-class ReactPromptTemplate:
+class MultiStepPromptTemplate:
     plan: PlanPromptTemplate
     acter: ActionPromptTemplate
     final: FinalAnswerPromptTemplate
 
 
-def _validate_prompt_template(prompt_template: ReactPromptTemplate) -> None:
+def _validate_prompt_template(prompt_template: MultiStepPromptTemplate) -> None:
     if not validate_template(prompt_template.plan.init_plan, {'task', 'tools'}):
         raise ValueError('plan.init_plan missing required fields {task, tools}')
 
@@ -89,11 +89,11 @@ def _validate_prompt_template(prompt_template: ReactPromptTemplate) -> None:
         )
 
 
-class TinyReActAgent(AbstractAgent):
+class TinyMultiStepAgent(AbstractAgent):
     def __init__(
         self,
         llm: AbstractLLM,
-        prompt_template: ReactPromptTemplate,
+        prompt_template: MultiStepPromptTemplate,
         tools: list[AbstractTool] = [],
         memory_list: list[AbstractMemory] = [],
         max_steps: int = 15,

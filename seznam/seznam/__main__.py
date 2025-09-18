@@ -2,11 +2,11 @@ import asyncio
 
 import seznam.tools  # noqa: F401
 
-from tinygent.agents.react_agent import ActionPromptTemplate
-from tinygent.agents.react_agent import FinalAnswerPromptTemplate
-from tinygent.agents.react_agent import PlanPromptTemplate
-from tinygent.agents.react_agent import ReactPromptTemplate
-from tinygent.agents.react_agent import TinyReActAgent
+from tinygent.agents.multi_step_agent import ActionPromptTemplate
+from tinygent.agents.multi_step_agent import FinalAnswerPromptTemplate
+from tinygent.agents.multi_step_agent import PlanPromptTemplate
+from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
+from tinygent.agents.multi_step_agent import TinyMultiStepAgent
 from tinygent.llms.openai import OpenAIConfig
 from tinygent.llms.openai import OpenAILLM
 from tinygent.logging import setup_general_loggers
@@ -23,7 +23,7 @@ async def main():
     tools = GlobalRegistry.get_registry().get_tools()
     agent_prompt = load_yaml('seznam/prompts/agent-prompt.yaml')
 
-    react_agent = TinyReActAgent(
+    multi_step_agent = TinyMultiStepAgent(
         llm=OpenAILLM(
             config=OpenAIConfig(
                 model_name='azure-gpt-4.1-nano',
@@ -32,7 +32,7 @@ async def main():
         ),
         memory_list=[BufferChatMemory()],
         tools=list(tools.values()),
-        prompt_template=ReactPromptTemplate(
+        prompt_template=MultiStepPromptTemplate(
             acter=ActionPromptTemplate(
                 system=agent_prompt['acter']['system'],
                 final_answer=agent_prompt['acter']['final_answer'],
@@ -47,7 +47,7 @@ async def main():
         ),
     )
 
-    result = react_agent.run(
+    result = multi_step_agent.run(
         # 'Chci si na svém mobilu zahrát Hansu teutonicu. Mám android'
         # 'Jaký je zdravotní stav papeže Františka?',
         'Jsou nějaké negativní zkušenosti s produktem Marshall Major IV BT, černá?'

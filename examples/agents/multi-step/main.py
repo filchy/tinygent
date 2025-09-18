@@ -2,11 +2,11 @@ from pathlib import Path
 
 from pydantic import Field
 
-from tinygent.agents.react_agent import ActionPromptTemplate
-from tinygent.agents.react_agent import FinalAnswerPromptTemplate
-from tinygent.agents.react_agent import PlanPromptTemplate
-from tinygent.agents.react_agent import ReactPromptTemplate
-from tinygent.agents.react_agent import TinyReActAgent
+from tinygent.agents.multi_step_agent import ActionPromptTemplate
+from tinygent.agents.multi_step_agent import FinalAnswerPromptTemplate
+from tinygent.agents.multi_step_agent import PlanPromptTemplate
+from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
+from tinygent.agents.multi_step_agent import TinyMultiStepAgent
 from tinygent.llms.openai import OpenAILLM
 from tinygent.logging import setup_logger
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
@@ -40,34 +40,34 @@ def get_best_destination(data: GetBestDestinationInput) -> list[str]:
 
 
 def main():
-    react_agent_prompt = load_yaml(str(Path(__file__).parent / 'react_agent.yaml'))
+    multi_step_agent_prompt = load_yaml(str(Path(__file__).parent / 'agent.yaml'))
 
-    react_agent = TinyReActAgent(
+    multi_step_agent = TinyMultiStepAgent(
         llm=OpenAILLM(),
         memory_list=[
             BufferChatMemory(),
         ],
-        prompt_template=ReactPromptTemplate(
+        prompt_template=MultiStepPromptTemplate(
             acter=ActionPromptTemplate(
-                system=react_agent_prompt['acter']['system'],
-                final_answer=react_agent_prompt['acter']['final_answer'],
+                system=multi_step_agent_prompt['acter']['system'],
+                final_answer=multi_step_agent_prompt['acter']['final_answer'],
             ),
             plan=PlanPromptTemplate(
-                init_plan=react_agent_prompt['planner']['init_plan'],
-                update_plan=react_agent_prompt['planner']['update_plan'],
+                init_plan=multi_step_agent_prompt['planner']['init_plan'],
+                update_plan=multi_step_agent_prompt['planner']['update_plan'],
             ),
             final=FinalAnswerPromptTemplate(
-                final_answer=react_agent_prompt['final']['final_answer']
+                final_answer=multi_step_agent_prompt['final']['final_answer']
             ),
         ),
         tools=[get_weather, get_best_destination],
     )
 
-    result = react_agent.run(
+    result = multi_step_agent.run(
         'What is the best travel destination and what is the weather like there?'
     )
 
-    logger.info(f'[MEMORY] {react_agent.memory.load_variables()}')
+    logger.info(f'[MEMORY] {multi_step_agent.memory.load_variables()}')
 
     logger.info(f'[RESULT] {result}')
 
