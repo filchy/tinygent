@@ -4,8 +4,8 @@ from pydantic import Field
 
 from tinygent.agents.multi_step_agent import ActionPromptTemplate
 from tinygent.agents.multi_step_agent import FinalAnswerPromptTemplate
-from tinygent.agents.multi_step_agent import PlanPromptTemplate
 from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
+from tinygent.agents.multi_step_agent import PlanPromptTemplate
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
 from tinygent.llms.openai import OpenAILLM
 from tinygent.logging import setup_logger
@@ -14,7 +14,7 @@ from tinygent.tools.tool import tool
 from tinygent.types import TinyModel
 from tinygent.utils.load_file import load_yaml
 
-logger = setup_logger('info')
+logger = setup_logger('debug')
 
 
 class WeatherInput(TinyModel):

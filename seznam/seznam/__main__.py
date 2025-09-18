@@ -4,8 +4,8 @@ import seznam.tools  # noqa: F401
 
 from tinygent.agents.multi_step_agent import ActionPromptTemplate
 from tinygent.agents.multi_step_agent import FinalAnswerPromptTemplate
-from tinygent.agents.multi_step_agent import PlanPromptTemplate
 from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
+from tinygent.agents.multi_step_agent import PlanPromptTemplate
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
 from tinygent.llms.openai import OpenAIConfig
 from tinygent.llms.openai import OpenAILLM

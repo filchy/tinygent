@@ -5,7 +5,6 @@ acter:
     If you are unsure about any aspect of the task, make reasonable assumptions and state them clearly in your answer.
     Your answer should be clear, concise, and directly address the task at hand.
     If there are multiple parts to the task, ensure that each part is addressed in your answer.
-    You can leverage the following tools:
 
   final_answer: |-
     You are an expert at analyzing situations and providing clear, concise answers.

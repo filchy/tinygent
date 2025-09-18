@@ -20,6 +20,7 @@ TinyMessageType = TypeVar(
     Literal['tool'],
     Literal['human'],
     Literal['plan'],
+    Literal['reasoning'],
 )
 
 
@@ -41,19 +42,25 @@ class TinyPlanMessage(BaseMessage[Literal['plan']]):
 
     content: str
 
-    metadata: dict = {}
-
     @property
     def tiny_str(self) -> str:
         return f'AI Plan: {self.content}'
+
+
+class TinyReasoningMessage(BaseMessage[Literal['reasoning']]):
+    type: Literal['reasoning'] = 'reasoning'
+
+    content: str
+
+    @property
+    def tiny_str(self) -> str:
+        return f'AI Reasoning: {self.content}'
 
 
 class TinyChatMessage(BaseMessage[Literal['chat']]):
     type: Literal['chat'] = 'chat'
 
     content: str
-
-    metadata: dict = {}
 
     @property
     def tiny_str(self) -> str:
@@ -70,8 +77,6 @@ class TinyToolCall(BaseMessage[Literal['tool']]):
     call_id: str | None = None
 
     _result: Any | None = PrivateAttr(default=None)
-
-    metadata: dict = {}
 
     @property
     def result(self) -> Any | None:
@@ -99,13 +104,11 @@ class TinyHumanMessage(BaseMessage[Literal['human']]):
 
     content: str
 
-    metadata: dict = {}
-
     @property
     def tiny_str(self) -> str:
         return f'Human: {self.content}'
 
 
-TinyAIMessage = TinyPlanMessage | TinyChatMessage | TinyToolCall
+TinyAIMessage = TinyPlanMessage | TinyReasoningMessage | TinyChatMessage | TinyToolCall
 
 AllTinyMessages = TinyAIMessage | TinyHumanMessage

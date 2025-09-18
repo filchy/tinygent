@@ -15,10 +15,12 @@ from tinygent.datamodels.messages import TinyAIMessage
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyPlanMessage
+from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.runtime.memory_group import MemoryGroup
 from tinygent.tools.default_tools import provide_final_answer
+from tinygent.types import TinyModel
 from tinygent.utils.answer_validation import is_final_answer
 from tinygent.utils.jinja_utils import render_template
 from tinygent.utils.jinja_utils import validate_template
@@ -128,7 +130,13 @@ class TinyMultiStepAgent(AbstractAgent):
     def final_answer(self, _: str | None) -> None:
         raise AttributeError('final_answer is read-only and cannot be set directly.')
 
-    def _stream_steps(self, task: str) -> Generator[TinyPlanMessage]:
+    def _stream_steps(
+        self, task: str
+    ) -> Generator[TinyPlanMessage | TinyReasoningMessage]:
+        class TinyReasonedSteps(TinyModel):
+            planned_steps: list[str]
+            reasoning: str
+
         # Initial plan
         if self._step_number == 1:
             messages = TinyLLMInput(
@@ -161,13 +169,14 @@ class TinyMultiStepAgent(AbstractAgent):
                 ]
             )
 
-        result = self.llm.generate_with_tools(
+        result = self.llm.generate_structured(
             llm_input=messages,
-            tools=self.tools,
+            output_schema=TinyReasonedSteps,
         )
 
-        for msg in result.tiny_iter():
-            yield TinyPlanMessage(content=str(msg))
+        yield TinyReasoningMessage(content=result.reasoning)
+        for step in result.planned_steps:
+            yield TinyPlanMessage(content=step)
 
     def _stream_action(self, task: str) -> Generator[TinyAIMessage]:
         messages = TinyLLMInput(
@@ -239,7 +248,11 @@ class TinyMultiStepAgent(AbstractAgent):
                     if isinstance(msg, TinyPlanMessage):
                         logger.info(f'[{self._step_number}. STEP - Plan]: {msg.content}')
                         self._planned_steps.append(msg)
-                        self.memory.save_context(msg)
+                    if isinstance(msg, TinyReasoningMessage):
+                        logger.info(
+                            f'[{self._step_number}. STEP - Reasoning]: {msg.content}'
+                        )
+                    self.memory.save_context(msg)
 
             try:
                 for msg in self._stream_action(input_text):  # type: ignore
