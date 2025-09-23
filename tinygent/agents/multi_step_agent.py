@@ -8,7 +8,7 @@ import typing
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import SystemMessage
 
-from tinygent.datamodels.agent import AbstractAgent
+from tinygent.agents.base_agent import BaseAgent
 from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyAIMessage
@@ -20,6 +20,7 @@ from tinygent.datamodels.messages import TinyToolCall
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.runtime.memory_group import MemoryGroup
 from tinygent.tools.default_tools import provide_final_answer
+from tinygent.tools.reasoning_tool import ToolWithReasoning
 from tinygent.types import TinyModel
 from tinygent.utils.answer_validation import is_final_answer
 from tinygent.utils.jinja_utils import render_template
@@ -91,7 +92,7 @@ def _validate_prompt_template(prompt_template: MultiStepPromptTemplate) -> None:
         )
 
 
-class TinyMultiStepAgent(AbstractAgent):
+class TinyMultiStepAgent(BaseAgent):
     def __init__(
         self,
         llm: AbstractLLM,
@@ -101,6 +102,8 @@ class TinyMultiStepAgent(AbstractAgent):
         max_steps: int = 15,
         plan_interval: int = 5,
     ) -> None:
+        super().__init__(llm, tools, memory_list)
+
         _validate_prompt_template(prompt_template)
 
         self._final_answer: str | None = None
@@ -108,8 +111,9 @@ class TinyMultiStepAgent(AbstractAgent):
         self._planned_steps: list[TinyPlanMessage] = []
         self._tool_calls: list[TinyToolCall] = []
 
-        self.llm = llm
-        self.tools = tools
+        self._tools: list[ToolWithReasoning] = [
+            ToolWithReasoning(tool) for tool in tools
+        ]
         self.max_steps = max_steps
         self.plan_interval = plan_interval
 
@@ -259,6 +263,13 @@ class TinyMultiStepAgent(AbstractAgent):
                     if isinstance(msg, TinyToolCall):
                         msg.call()
                         self._tool_calls.append(msg)
+
+                        called_tool = self.get_tool(msg.tool_name)
+                        if isinstance(called_tool, ToolWithReasoning):
+                            reasoning = msg.arguments.get('reasoning', '')
+                            logger.info(
+                                f'[{self._step_number}. STEP - Tool Reasoning]: {reasoning}'
+                            )
 
                         logger.info(
                             '[%s. STEP - Tool Call]: %s(%s) = %s',
