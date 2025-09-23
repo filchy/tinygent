@@ -28,3 +28,11 @@ def setup_logger(log_level: str = 'info') -> logging.Logger:
     root_logger.addHandler(handler)
 
     return root_logger
+
+
+def setup_general_loggers(log_level: str = 'warning') -> None:
+    num_level = LOG_LEVELS.get(log_level.upper(), logging.WARNING)
+
+    for name in ('httpx', 'httpcore', 'openai._base_client', 'asyncio'):
+        logger = logging.getLogger(name)
+        logger.setLevel(num_level)

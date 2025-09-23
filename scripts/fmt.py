@@ -1,6 +1,6 @@
 import sys
 
-from tinygent.utils.run_commands import run_commands
+from .run_commands import run_commands
 
 
 def main():

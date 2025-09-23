@@ -12,6 +12,7 @@ class Registry:
         self._registered_llms: dict[str, AbstractLLM] = {}
 
         self._registered_tools: dict[str, AbstractTool] = {}
+        self._registered_hidden_tools: dict[str, AbstractTool] = {}
 
     # llms
     def register_llm(self, name: str, llm: AbstractLLM) -> None:
@@ -30,19 +31,25 @@ class Registry:
         return self._registered_llms
 
     # tools
-    def register_tool(self, tool: AbstractTool) -> None:
-        if tool.info.name in self._registered_tools:
+    def register_tool(self, tool: AbstractTool, hidden: bool = False) -> None:
+        if tool.info.name in self.get_tools(include_hidden=True):
             raise ValueError(f'Tool {tool.info.name} already registered.')
 
-        self._registered_tools[tool.info.name] = tool
+        if hidden:
+            self._registered_hidden_tools[tool.info.name] = tool
+        else:
+            self._registered_tools[tool.info.name] = tool
 
     def get_tool(self, name: str) -> AbstractTool:
-        if name not in self._registered_tools:
-            raise ValueError(f'Tool {name} not registered.')
+        if name in self._registered_tools:
+            return self._registered_tools[name]
+        if name in self._registered_hidden_tools:
+            return self._registered_hidden_tools[name]
+        raise ValueError(f'Tool {name} not registered.')
 
-        return self._registered_tools[name]
-
-    def get_tools(self) -> dict[str, AbstractTool]:
+    def get_tools(self, include_hidden: bool = False) -> dict[str, AbstractTool]:
+        if include_hidden:
+            return {**self._registered_tools, **self._registered_hidden_tools}
         return self._registered_tools
 
 

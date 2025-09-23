@@ -1,4 +1,3 @@
-import asyncio
 from typing import Any
 from typing import Callable
 from typing import Generic
@@ -9,6 +8,7 @@ from typing import overload
 
 from tinygent.datamodels.tool import AbstractTool
 from tinygent.datamodels.tool_info import ToolInfo
+from tinygent.runtime.executors import run_async_in_executor
 from tinygent.runtime.global_registry import GlobalRegistry
 from tinygent.types import TinyModel
 from tinygent.utils.schema_validator import validate_schema
@@ -91,14 +91,14 @@ class Tool(AbstractTool, Generic[T, R]):
 
                 return result
 
-            return asyncio.run(run_async_gen())
+            return run_async_in_executor(run_async_gen)
 
         elif self.info.is_coroutine:
 
             async def run_coroutine():
                 return await self._fn(*parsed_args, **kwargs)  # type: ignore[misc]
 
-            return asyncio.run(run_coroutine())
+            return run_async_in_executor(run_coroutine)
 
         else:
             result = self._fn(*parsed_args, **kwargs)  # type: ignore[misc]
@@ -114,9 +114,7 @@ def tool(fn: Callable[[T], R]) -> Tool[T, R]: ...
 
 @overload
 def tool(
-    *,
-    use_cache: bool = False,
-    cache_size: int = 128,
+    *, use_cache: bool = False, cache_size: int = 128, hidden: bool = False
 ) -> Callable[[Callable[[T], R]], Tool[T, R]]: ...
 
 
@@ -125,10 +123,11 @@ def tool(
     *,
     use_cache: bool = False,
     cache_size: int = 128,
+    hidden: bool = False,
 ) -> Tool[T, R] | Callable[[Callable[[T], R]], Tool[T, R]]:
     def wrapper(f: Callable[[T], R]) -> Tool[T, R]:
         tool_instance = Tool(f, use_cache=use_cache, cache_size=cache_size)
-        GlobalRegistry.get_registry().register_tool(tool_instance)
+        GlobalRegistry.get_registry().register_tool(tool_instance, hidden=hidden)
         return tool_instance
 
     if fn is None:

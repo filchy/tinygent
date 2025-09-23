@@ -29,6 +29,8 @@ class OpenAIConfig(BaseModel):
 
     temperature: float = 0.6
 
+    timeout: float = 60.0
+
 
 class OpenAILLM(AbstractLLM[OpenAIConfig]):
     def __init__(
@@ -111,6 +113,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
             model=self.config.model_name,
             messages=messages,
             temperature=self._config.temperature,
+            timeout=self.config.timeout,
         )
 
         return openai_result_to_tiny_result(res)
@@ -122,6 +125,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
             model=self.config.model_name,
             messages=messages,
             temperature=self._config.temperature,
+            timeout=self.config.timeout,
         )
 
         return openai_result_to_tiny_result(res)
@@ -135,6 +139,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
             model=self.config.model_name,
             messages=messages,
             temperature=self._config.temperature,
+            timeout=self.config.timeout,
             response_format=output_schema,
         )
 
@@ -153,6 +158,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
             model=self.config.model_name,
             messages=messages,
             temperature=self._config.temperature,
+            timeout=self.config.timeout,
             response_format=output_schema,
         )
 
@@ -174,6 +180,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
             tools=functions,
             tool_choice='auto',
             temperature=self._config.temperature,
+            timeout=self.config.timeout,
         )
 
         return openai_result_to_tiny_result(res)
@@ -190,6 +197,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
             tools=functions,
             tool_choice='auto',
             temperature=self._config.temperature,
+            timeout=self.config.timeout,
         )
 
         return openai_result_to_tiny_result(res)
