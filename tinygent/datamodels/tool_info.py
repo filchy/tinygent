@@ -57,7 +57,7 @@ class ToolInfo(Generic[P, R]):
 
         if len(parameters) != 1:
             raise ValueError(
-                f"Tool '{name}' must accept exactly one BaseModel argument."
+                f'Tool \'{name}\' must accept exactly one BaseModel argument.'
             )
 
         param = parameters[0]
@@ -68,7 +68,7 @@ class ToolInfo(Generic[P, R]):
             or not isinstance(param_annotation, type)
             or not issubclass(param_annotation, BaseModel)
         ):
-            raise TypeError(f"Parameter of tool '{name}' must be a Pydantic BaseModel.")
+            raise TypeError(f'Parameter of tool \'{name}\' must be a Pydantic BaseModel.')
 
         input_schema = cast(type[P], param_annotation)
         required_fields = [
