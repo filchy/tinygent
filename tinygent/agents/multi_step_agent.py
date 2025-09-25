@@ -102,7 +102,11 @@ class TinyMultiStepAgent(BaseAgent):
         max_steps: int = 15,
         plan_interval: int = 5,
     ) -> None:
-        super().__init__(llm, tools, memory_list)
+        super().__init__(
+            llm=llm,
+            tools=tools,
+            memory_list=memory_list,
+        )
 
         _validate_prompt_template(prompt_template)
 
@@ -111,9 +115,11 @@ class TinyMultiStepAgent(BaseAgent):
         self._planned_steps: list[TinyPlanMessage] = []
         self._tool_calls: list[TinyToolCall] = []
 
+        __all_tools = list(tools) + [provide_final_answer]
         self._tools: list[ToolWithReasoning] = [
-            ToolWithReasoning(tool) for tool in tools
+            ToolWithReasoning(tool) for tool in __all_tools
         ]
+
         self.max_steps = max_steps
         self.plan_interval = plan_interval
 
@@ -125,14 +131,6 @@ class TinyMultiStepAgent(BaseAgent):
             memory_list.append(BufferChatMemory())
 
         self.memory = MemoryGroup(memory_list=memory_list)
-
-    @property
-    def final_answer(self) -> str | None:
-        return self._final_answer
-
-    @final_answer.setter
-    def final_answer(self, _: str | None) -> None:
-        raise AttributeError('final_answer is read-only and cannot be set directly.')
 
     def _stream_steps(
         self, task: str
@@ -173,7 +171,8 @@ class TinyMultiStepAgent(BaseAgent):
                 ]
             )
 
-        result = self.llm.generate_structured(
+        result = self.run_llm(
+            self.llm.generate_structured,
             llm_input=messages,
             output_schema=TinyReasonedSteps,
         )
@@ -201,12 +200,10 @@ class TinyMultiStepAgent(BaseAgent):
             ]
         )
 
-        action_tools = self.tools.copy()
-        action_tools.append(provide_final_answer)
-
-        result = self.llm.generate_with_tools(
+        result = self.run_llm(
+            self.llm.generate_with_tools,
             llm_input=messages,
-            tools=action_tools,
+            tools=self._tools,
         )
         for msg in result.tiny_iter():
             yield msg
@@ -227,7 +224,7 @@ class TinyMultiStepAgent(BaseAgent):
             ]
         )
 
-        result = self.llm.generate_text(llm_input=messages)
+        result = self.run_llm(self.llm.generate_text, llm_input=messages)
         for msg in result.tiny_iter():
             if isinstance(msg, TinyChatMessage):
                 yield msg
@@ -239,7 +236,7 @@ class TinyMultiStepAgent(BaseAgent):
         self.memory.save_context(TinyHumanMessage(content=input_text))
 
         while not returned_final_answer and (self._step_number <= self.max_steps):
-            logger.info(f'--- STEP {self._step_number} ---')
+            logger.debug(f'--- STEP {self._step_number} ---')
 
             if self._step_number == 1 or (
                 (self._step_number - 1) % self.plan_interval == 0
@@ -250,43 +247,52 @@ class TinyMultiStepAgent(BaseAgent):
 
                 for msg in plan_generator:
                     if isinstance(msg, TinyPlanMessage):
-                        logger.info(f'[{self._step_number}. STEP - Plan]: {msg.content}')
+                        logger.debug(f'[{self._step_number}. STEP - Plan]: {msg.content}')
                         self._planned_steps.append(msg)
                     if isinstance(msg, TinyReasoningMessage):
-                        logger.info(
+                        logger.debug(
                             f'[{self._step_number}. STEP - Reasoning]: {msg.content}'
                         )
                     self.memory.save_context(msg)
 
             try:
                 for msg in self._stream_action(input_text):  # type: ignore
-                    if isinstance(msg, TinyToolCall):
-                        msg.call()
-                        self._tool_calls.append(msg)
+                    if isinstance(msg, TinyChatMessage):
+                        logger.debug(f'[{self._step_number}. STEP - Chat]: {msg.content}')
+                        returned_final_answer = True
 
+                    elif isinstance(msg, TinyToolCall):
                         called_tool = self.get_tool(msg.tool_name)
+                        if called_tool:
+                            self.run_tool(called_tool, msg)
+                            self._tool_calls.append(msg)
+                        else:
+                            logger.error(
+                                f'Tool {msg.tool_name} not found. Skipping tool call.'
+                            )
+
                         if isinstance(called_tool, ToolWithReasoning):
                             reasoning = msg.arguments.get('reasoning', '')
-                            logger.info(
+                            logger.debug(
                                 f'[{self._step_number}. STEP - Tool Reasoning]: {reasoning}'
                             )
 
-                        logger.info(
+                        logger.debug(
                             '[%s. STEP - Tool Call]: %s(%s) = %s',
                             self._step_number,
                             msg.tool_name,
                             msg.arguments,
                             msg.result,
                         )
+
                         if isinstance(msg.result, TinyChatMessage) and is_final_answer(
                             msg.result
                         ):
                             returned_final_answer = True
                             self._final_answer = msg.result.content
+
                     else:
-                        logger.debug(
-                            f'[{self._step_number}. STEP - Action]: {msg.tiny_str}'
-                        )
+                        logger.warning(f'Unhandeled message type: {msg}')
 
                     self.memory.save_context(msg)
                     yield msg
@@ -294,6 +300,7 @@ class TinyMultiStepAgent(BaseAgent):
                     if returned_final_answer:
                         break
             except Exception as e:
+                self.on_error(e)
                 raise e
             finally:
                 self._step_number += 1
@@ -315,7 +322,7 @@ class TinyMultiStepAgent(BaseAgent):
         input_text: str,
         reset: bool = True,
     ) -> str:
-        logger.info(f'[USER INPUT] {input_text}')
+        logger.debug(f'[USER INPUT] {input_text}')
 
         if reset:
             self._final_answer = None
@@ -325,6 +332,6 @@ class TinyMultiStepAgent(BaseAgent):
 
         results = list(self._run_generator(input_text))
         for res in results:
-            logger.info(f'[AGENT OUTPUT] {res.tiny_str}')
+            logger.debug(f'[AGENT OUTPUT] {res.tiny_str}')
 
         return self.final_answer or 'No final answer provided.'

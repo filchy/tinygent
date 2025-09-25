@@ -6,11 +6,9 @@ from typing import Generic
 from typing import Literal
 from typing import TypeVar
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic import ConfigDict
 from pydantic import PrivateAttr
-
-from tinygent.runtime.global_registry import GlobalRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +28,10 @@ class BaseMessage(ABC, BaseModel, Generic[TinyMessageType]):
     type: TinyMessageType
     """The type of the message."""
 
-    metadata: dict = {}
+    metadata: dict[str, Any] = Field(default_factory=dict)
     """Metadata associated with the message."""
 
-    model_config = ConfigDict(frozen=True, extra='forbid')
+    model_config = ConfigDict(extra='forbid')
     """Pydantic model configuration."""
 
     @property
@@ -108,6 +106,10 @@ class TinyToolCall(BaseMessage[Literal['tool']]):
         """The result of the tool call."""
         return self._result
 
+    @result.setter
+    def result(self, value: Any) -> None:
+        self._result = value
+
     @property
     def tiny_str(self) -> str:
         result_str = (
@@ -117,12 +119,6 @@ class TinyToolCall(BaseMessage[Literal['tool']]):
         return (
             '[EXECUTED] - ' if self.metadata.get('executed') else '[NOT EXECUTED] - '
         ) + f'Tool Call: {self.tool_name}({self.arguments}){result_str}'
-
-    def call(self) -> None:
-        tool = GlobalRegistry.get_registry().get_tool(self.tool_name)
-        result = tool(**self.arguments)
-        self.metadata['executed'] = True
-        self._result = result
 
 
 class TinyHumanMessage(BaseMessage[Literal['human']]):

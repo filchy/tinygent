@@ -1,39 +1,45 @@
 from abc import ABC
-from typing import Any
+import logging
+from typing import Any, Callable
 
 from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.datamodels.tool import AbstractTool
 
+logger = logging.getLogger(__name__)
+
+
+def _log_hook(msg: str, level: int = logging.DEBUG) -> None:
+    logger.log(level, msg)
+
 
 class AgentHooks(ABC):
-    """Abstract base class for agent hooks to monitor and intervene in the agent's operations."""
+    ''"Abstract base class for agent hooks to monitor and intervene in the agent's operations."""
 
-    def on_before_llm_call(self, llm_input: TinyLLMInput) -> None:
-        """Called before the LLM is invoked."""
-        pass
+    def __init__(self) -> None:
+        self.on_before_llm_call: Callable[[TinyLLMInput], None] = (
+            lambda llm_input: _log_hook(f"Before LLM call with input: {llm_input}")
+        )
 
-    def on_after_llm_call(self, llm_input: TinyLLMInput, response: str) -> None:
-        """Called after the LLM has returned a response."""
-        pass
+        self.on_after_llm_call: Callable[[TinyLLMInput, Any], None] = (
+            lambda llm_input, result: _log_hook(f"After LLM call. Input: {llm_input}, Result: {result}")
+        )
 
-    def on_before_tool_call(self, tool: AbstractTool, arguments: dict[str, Any]) -> None:
-        """Called before a tool is invoked."""
-        pass
+        self.on_before_tool_call: Callable[[AbstractTool, dict[str, Any]], None] = (
+            lambda tool, args: _log_hook(f"Before tool call: {tool.info.name} with args: {args}")
+        )
 
-    def on_after_tool_call(
-        self, tool: AbstractTool, arguments: dict[str, Any], result: Any
-    ) -> None:
-        """Called after a tool has returned a result."""
-        pass
+        self.on_after_tool_call: Callable[[AbstractTool, dict[str, Any], Any], None] = (
+            lambda tool, args, result: _log_hook(f"After tool call: {tool.info.name} with args: {args}, result: {result}")
+        )
 
-    def on_reasoning(self, reasoning: str) -> None:
-        """Called when the agent generates reasoning."""
-        pass
+        self.on_reasoning: Callable[[str], None] = (
+            lambda reasoning: _log_hook(f"Reasoning: {reasoning}")
+        )
 
-    def on_answer(self, answer: str) -> None:
-        """Called when the agent generates a final answer."""
-        pass
+        self.on_answer: Callable[[str], None] = (
+            lambda answer: _log_hook(f"Final Answer: {answer}")
+        )
 
-    def on_error(self, error: Exception) -> None:
-        """Called when an error occurs during LLM or tool invocation."""
-        pass
+        self.on_error: Callable[[Exception], None] = (
+            lambda e: _log_hook(f"Error occurred: {e}", level=logging.ERROR)
+        )
