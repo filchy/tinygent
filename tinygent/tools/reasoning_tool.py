@@ -6,7 +6,7 @@ from pydantic import Field
 from pydantic import create_model
 
 from tinygent.datamodels.tool import AbstractTool
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 
 
 class ToolWithReasoning(AbstractTool):

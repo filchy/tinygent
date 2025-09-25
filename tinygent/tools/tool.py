@@ -10,7 +10,7 @@ from tinygent.datamodels.tool import AbstractTool
 from tinygent.datamodels.tool_info import ToolInfo
 from tinygent.runtime.executors import run_async_in_executor
 from tinygent.runtime.global_registry import GlobalRegistry
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 from tinygent.utils.schema_validator import validate_schema
 
 T = TypeVar('T', bound=TinyModel)

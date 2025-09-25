@@ -5,7 +5,7 @@ from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.llms.openai import OpenAILLM
 from tinygent.runtime.global_registry import GlobalRegistry
 from tinygent.tools.tool import tool
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 
 
 class GetWeatherInput(TinyModel):

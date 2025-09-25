@@ -1,7 +1,7 @@
 from pydantic import Field
 
 from tinygent.tools.tool import tool
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 
 
 class AddInput(TinyModel):

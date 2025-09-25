@@ -12,7 +12,7 @@ from tinygent.logging import setup_general_loggers
 from tinygent.logging import setup_logger
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.tools.tool import tool
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 from tinygent.utils.load_file import load_yaml
 
 logger = setup_logger('debug')

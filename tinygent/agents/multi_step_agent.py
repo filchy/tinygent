@@ -21,7 +21,7 @@ from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.runtime.memory_group import MemoryGroup
 from tinygent.tools.default_tools import provide_final_answer
 from tinygent.tools.reasoning_tool import ToolWithReasoning
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 from tinygent.utils.answer_validation import is_final_answer
 from tinygent.utils.jinja_utils import render_template
 from tinygent.utils.jinja_utils import validate_template
