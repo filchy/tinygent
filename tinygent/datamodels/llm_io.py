@@ -16,6 +16,7 @@ from tinygent.llms.utils import normalize_content
 
 class TinyLLMInput(BaseModel):
     """Input to an LLM, consisting of a list of messages."""
+
     messages: list[BaseMessage]
 
 

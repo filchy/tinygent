@@ -13,4 +13,5 @@ class AbstractAgent(ABC):
     @property
     @abstractmethod
     def final_answer(self) -> str | None: ...
+
     """Get the final answer produced by the agent, if any."""

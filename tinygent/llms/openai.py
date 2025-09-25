@@ -40,7 +40,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         if not config.api_key:
             raise ValueError(
                 'OpenAI API key must be provided either via config',
-                ' or \'OPENAI_API_KEY\' env variable.',
+                " or 'OPENAI_API_KEY' env variable.",
             )
 
         self._sync_client = OpenAI(api_key=config.api_key, base_url=config.base_url)

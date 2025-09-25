@@ -13,18 +13,22 @@ class AbstractMemory(BaseModel, ABC):
     @property
     @abstractmethod
     def memory_keys(self) -> list[str]: ...
+
     """List of keys used in the memory."""
 
     @abstractmethod
     def load_variables(self) -> dict[str, str]: ...
+
     """Load variables from memory."""
 
     @abstractmethod
     def save_context(self, message: AllTinyMessages) -> None: ...
+
     """Save the context of a conversation to memory."""
 
     @abstractmethod
     def clear(self) -> None: ...
+
     """Clear the memory."""
 
     async def aload_variables(self) -> dict[str, str]:
