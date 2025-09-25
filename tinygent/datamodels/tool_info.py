@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from dataclasses import field
 from dataclasses import fields
@@ -17,34 +19,49 @@ R = TypeVar('R')
 
 @dataclass
 class ToolInfo(Generic[P, R]):
+    """Metadata about a tool."""
+
     name: str
+    """The name of the tool."""
 
     description: str
+    """A brief description of the tool's purpose. Extracted from the function's docstring."""
 
     arg_count: int
+    """The number of arguments the tool accepts (should be 1 for BaseModel input)."""
 
     is_coroutine: bool
+    """Indicates if the tool function is a coroutine (async function)."""
 
     is_generator: bool
+    """Indicates if the tool function is a generator (yields values)."""
 
     is_async_generator: bool
+    """Indicates if the tool function is an async generator (yields values asynchronously)."""
 
     input_schema: type[P] | None
+    """The Pydantic model class representing the input schema for the tool."""
 
     output_schema: type[BaseModel] | None
+    """The Pydantic model class representing the output schema for the tool, if applicable."""
 
     required_fields: list[str] = field(default_factory=list)
+    """List of required fields in the input schema."""
 
     use_cache: bool = False
+    """Indicates if the tool's results should be cached."""
 
     cache_size: int | None = None
+    """The maximum size of the cache, if caching is enabled."""
 
     @property
     def is_cachable(self) -> bool:
+        """Indicates if the tool is cachable (not a generator or async generator)."""
         return not (self.is_generator or self.is_async_generator)
 
     @classmethod
-    def from_callable(cls, fn: Callable[[P], R], *args, **kwargs) -> 'ToolInfo[P, R]':
+    def from_callable(cls, fn: Callable[[P], R], *args, **kwargs) -> ToolInfo[P, R]:
+        """Create a ToolInfo instance from a callable function."""
         name = fn.__name__
         description = inspect.getdoc(fn) or ''
 
@@ -114,6 +131,8 @@ class ToolInfo(Generic[P, R]):
         )
 
     def print_summary(self, stream: TextIO = sys.stdout):
+        """Print a summary of the tool's metadata to the specified stream."""
+
         stream.write('Tool Summary:\n')
         stream.write('-' * 20 + '\n')
 

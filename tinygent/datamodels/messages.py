@@ -25,22 +25,32 @@ TinyMessageType = TypeVar(
 
 
 class BaseMessage(ABC, BaseModel, Generic[TinyMessageType]):
+    """Abstract base class for all message types."""
+
     type: TinyMessageType
+    """The type of the message."""
 
     metadata: dict = {}
+    """Metadata associated with the message."""
 
     model_config = ConfigDict(frozen=True, extra='forbid')
+    """Pydantic model configuration."""
 
     @property
     @abstractmethod
     def tiny_str(self) -> str:
+        """A concise string representation of the message."""
         raise NotImplementedError('Subclasses must implement this method.')
 
 
 class TinyPlanMessage(BaseMessage[Literal['plan']]):
+    """Message representing the AI's plan."""
+
     type: Literal['plan'] = 'plan'
+    """The type of the message."""
 
     content: str
+    """The content of the plan message."""
 
     @property
     def tiny_str(self) -> str:
@@ -48,9 +58,13 @@ class TinyPlanMessage(BaseMessage[Literal['plan']]):
 
 
 class TinyReasoningMessage(BaseMessage[Literal['reasoning']]):
+    """Message representing the AI's reasoning."""
+
     type: Literal['reasoning'] = 'reasoning'
+    """The type of the message."""
 
     content: str
+    """The content of the reasoning message."""
 
     @property
     def tiny_str(self) -> str:
@@ -58,9 +72,13 @@ class TinyReasoningMessage(BaseMessage[Literal['reasoning']]):
 
 
 class TinyChatMessage(BaseMessage[Literal['chat']]):
+    """Message representing a chat from the AI."""
+
     type: Literal['chat'] = 'chat'
+    """The type of the message."""
 
     content: str
+    """The content of the chat message."""
 
     @property
     def tiny_str(self) -> str:
@@ -68,18 +86,26 @@ class TinyChatMessage(BaseMessage[Literal['chat']]):
 
 
 class TinyToolCall(BaseMessage[Literal['tool']]):
+    """Message representing a tool call from the AI."""
+
     type: Literal['tool'] = 'tool'
+    """The type of the message."""
 
     tool_name: str
+    """The name of the tool being called."""
 
     arguments: dict
+    """The arguments for the tool call."""
 
     call_id: str | None = None
+    """An optional identifier for the tool call."""
 
     _result: Any | None = PrivateAttr(default=None)
+    """The result of the tool call, initially None."""
 
     @property
     def result(self) -> Any | None:
+        """The result of the tool call."""
         return self._result
 
     @property
@@ -100,9 +126,13 @@ class TinyToolCall(BaseMessage[Literal['tool']]):
 
 
 class TinyHumanMessage(BaseMessage[Literal['human']]):
+    """Message representing input from a human."""
+
     type: Literal['human'] = 'human'
+    """The type of the message."""
 
     content: str
+    """The content of the human message."""
 
     @property
     def tiny_str(self) -> str:

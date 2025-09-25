@@ -15,11 +15,15 @@ from tinygent.llms.utils import normalize_content
 
 
 class TinyLLMInput(BaseModel):
+    """Input to an LLM, consisting of a list of messages."""
     messages: list[BaseMessage]
 
 
 class TinyLLMResult(LLMResult):
+    """Result from an LLM, consisting of generations and optional metadata."""
+
     def tiny_iter(self) -> Iterator[TinyAIMessage]:
+        """Iterate over the messages and tool calls in the LLM result."""
         for generation in chain.from_iterable(self.generations):
             chat_gen = cast(ChatGeneration, generation)
             message = chat_gen.message
