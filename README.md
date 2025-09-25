@@ -64,7 +64,7 @@ Before you begin using tinygent, ensure that you meet the following software pre
 
 ### Agents
 
-1. [ReAct Agent](examples/agents/react)
+1. [Multi-Step Agent](examples/agents/multi-step)
 
 ## Linting & Formatting
 
