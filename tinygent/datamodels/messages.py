@@ -6,16 +6,19 @@ from typing import Generic
 from typing import Literal
 from typing import TypeVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from pydantic import ConfigDict
+from pydantic import Field
 from pydantic import PrivateAttr
 
 logger = logging.getLogger(__name__)
 
 TinyMessageType = TypeVar(
     'TinyMessageType',
+    Literal['system'],
     Literal['chat'],
     Literal['tool'],
+    Literal['tool_result'],
     Literal['human'],
     Literal['plan'],
     Literal['reasoning'],
@@ -39,6 +42,20 @@ class BaseMessage(ABC, BaseModel, Generic[TinyMessageType]):
     def tiny_str(self) -> str:
         """A concise string representation of the message."""
         raise NotImplementedError('Subclasses must implement this method.')
+
+
+class TinySystemMessage(BaseMessage[Literal['system']]):
+    """Message representing system-level instructions."""
+
+    type: Literal['system'] = 'system'
+    """The type of the message."""
+
+    content: str
+    """The content of the system message."""
+
+    @property
+    def tiny_str(self) -> str:
+        return f'SYSTEM: {self.content}'
 
 
 class TinyPlanMessage(BaseMessage[Literal['plan']]):
@@ -121,6 +138,23 @@ class TinyToolCall(BaseMessage[Literal['tool']]):
         ) + f'Tool Call: {self.tool_name}({self.arguments}){result_str}'
 
 
+class TinyToolResult(BaseMessage[Literal['tool_result']]):
+    """Message representing the result of a tool call."""
+
+    type: Literal['tool_result'] = 'tool_result'
+    """The type of the message."""
+
+    call_id: str
+    """The identifier of the tool call."""
+
+    content: str
+    """The content of the tool result message."""
+
+    @property
+    def tiny_str(self) -> str:
+        return f'Tool Result - {self.call_id}: {self.content}'
+
+
 class TinyHumanMessage(BaseMessage[Literal['human']]):
     """Message representing input from a human."""
 
@@ -137,4 +171,4 @@ class TinyHumanMessage(BaseMessage[Literal['human']]):
 
 TinyAIMessage = TinyPlanMessage | TinyReasoningMessage | TinyChatMessage | TinyToolCall
 
-AllTinyMessages = TinyAIMessage | TinyHumanMessage
+AllTinyMessages = TinyAIMessage | TinyHumanMessage | TinySystemMessage | TinyToolResult

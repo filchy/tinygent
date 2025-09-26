@@ -3,11 +3,11 @@ from typing import Iterator
 from typing import cast
 
 from langchain_core.messages import AIMessage
-from langchain_core.messages import BaseMessage
 from langchain_core.outputs import ChatGeneration
 from langchain_core.outputs import LLMResult
 from openai import BaseModel
 
+from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyAIMessage
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyToolCall
@@ -17,7 +17,7 @@ from tinygent.llms.utils import normalize_content
 class TinyLLMInput(BaseModel):
     """Input to an LLM, consisting of a list of messages."""
 
-    messages: list[BaseMessage]
+    messages: list[AllTinyMessages]
 
 
 class TinyLLMResult(LLMResult):

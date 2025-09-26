@@ -5,9 +5,6 @@ from dataclasses import dataclass
 import logging
 import typing
 
-from langchain_core.messages import HumanMessage
-from langchain_core.messages import SystemMessage
-
 from tinygent.agents.base_agent import BaseAgent
 from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.datamodels.messages import AllTinyMessages
@@ -16,6 +13,7 @@ from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyPlanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
+from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.runtime.memory_group import MemoryGroup
@@ -143,8 +141,8 @@ class TinyMultiStepAgent(BaseAgent):
         if self._step_number == 1:
             messages = TinyLLMInput(
                 messages=[
-                    HumanMessage(
-                        render_template(
+                    TinyHumanMessage(
+                        content=render_template(
                             self.plan_prompt.init_plan,
                             {'task': task, 'tools': self.tools},
                         )
@@ -154,8 +152,8 @@ class TinyMultiStepAgent(BaseAgent):
         else:
             messages = TinyLLMInput(
                 messages=[
-                    HumanMessage(
-                        render_template(
+                    TinyHumanMessage(
+                        content=render_template(
                             self.plan_prompt.update_plan,
                             {
                                 'task': task,
@@ -184,9 +182,9 @@ class TinyMultiStepAgent(BaseAgent):
     def _stream_action(self, task: str) -> Generator[TinyAIMessage]:
         messages = TinyLLMInput(
             messages=[
-                SystemMessage(self.acter_prompt.system),
-                HumanMessage(
-                    render_template(
+                TinySystemMessage(content=self.acter_prompt.system),
+                TinyHumanMessage(
+                    content=render_template(
                         self.acter_prompt.final_answer,
                         {
                             'task': task,
@@ -211,8 +209,8 @@ class TinyMultiStepAgent(BaseAgent):
     def _stream_final_answer(self, task: str) -> Generator[TinyChatMessage]:
         messages = TinyLLMInput(
             messages=[
-                HumanMessage(
-                    render_template(
+                TinyHumanMessage(
+                    content=render_template(
                         self.final_prompt.final_answer,
                         {
                             'task': task,
@@ -247,7 +245,9 @@ class TinyMultiStepAgent(BaseAgent):
 
                 for msg in plan_generator:
                     if isinstance(msg, TinyPlanMessage):
-                        logger.debug(f'[{self._step_number}. STEP - Plan]: {msg.content}')
+                        logger.debug(
+                            f'[{self._step_number}. STEP - Plan]: {msg.content}'
+                        )
                         self._planned_steps.append(msg)
                     if isinstance(msg, TinyReasoningMessage):
                         logger.debug(
@@ -258,7 +258,9 @@ class TinyMultiStepAgent(BaseAgent):
             try:
                 for msg in self._stream_action(input_text):  # type: ignore
                     if isinstance(msg, TinyChatMessage):
-                        logger.debug(f'[{self._step_number}. STEP - Chat]: {msg.content}')
+                        logger.debug(
+                            f'[{self._step_number}. STEP - Chat]: {msg.content}'
+                        )
                         returned_final_answer = True
 
                     elif isinstance(msg, TinyToolCall):

@@ -5,7 +5,6 @@ from typing import Union
 from typing import cast
 
 from langchain_core.messages import AIMessage
-from langchain_core.messages.utils import convert_to_openai_messages
 from langchain_core.outputs import ChatGeneration
 from langchain_core.outputs import Generation
 from openai.types.chat import ChatCompletion
@@ -17,6 +16,14 @@ from openai.types.chat import ChatCompletionMessageToolCallUnionParam
 from openai.types.chat import ChatCompletionSystemMessageParam
 from openai.types.chat import ChatCompletionToolMessageParam
 from openai.types.chat import ChatCompletionUserMessageParam
+
+from tinygent.datamodels.messages import TinyChatMessage
+from tinygent.datamodels.messages import TinyHumanMessage
+from tinygent.datamodels.messages import TinyPlanMessage
+from tinygent.datamodels.messages import TinyReasoningMessage
+from tinygent.datamodels.messages import TinySystemMessage
+from tinygent.datamodels.messages import TinyToolCall
+from tinygent.datamodels.messages import TinyToolResult
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm_io import TinyLLMInput
@@ -60,45 +67,72 @@ def _normalize_tool_calls(
     return out
 
 
-def lc_prompt_to_openai_params(
-    prompt: TinyLLMInput,
+def tiny_prompt_to_openai_params(
+    prompt: 'TinyLLMInput',
 ) -> list[ChatCompletionMessageParam]:
-    raw = convert_to_openai_messages(prompt.messages)
     params: list[ChatCompletionMessageParam] = []
 
-    for m in raw:
-        role = m['role']
-        content = _to_text_parts(m.get('content'))
-
-        if role == 'system':
+    for msg in prompt.messages:
+        if isinstance(msg, TinyHumanMessage):
             params.append(
-                ChatCompletionSystemMessageParam(role='system', content=content)
+                ChatCompletionUserMessageParam(role='user', content=msg.content)
             )
 
-        elif role == 'user':
-            params.append(ChatCompletionUserMessageParam(role='user', content=content))
+        elif isinstance(msg, TinySystemMessage):
+            params.append(
+                ChatCompletionSystemMessageParam(role='system', content=msg.content)
+            )
 
-        elif role == 'assistant':
-            tool_calls = _normalize_tool_calls(m.get('tool_calls'))
+        elif isinstance(msg, TinyChatMessage):
             params.append(
                 ChatCompletionAssistantMessageParam(
-                    role='assistant',
-                    content=content,
-                    tool_calls=tool_calls,
+                    role='assistant', content=msg.content
                 )
             )
 
-        elif role == 'tool':
+        elif isinstance(msg, TinyPlanMessage):
+            params.append(
+                ChatCompletionAssistantMessageParam(
+                    role='assistant', content=f'[PLAN] {msg.content}'
+                )
+            )
+
+        elif isinstance(msg, TinyReasoningMessage):
+            params.append(
+                ChatCompletionAssistantMessageParam(
+                    role='assistant', content=f'[REASONING] {msg.content}'
+                )
+            )
+
+        elif isinstance(msg, TinyToolCall):
+            params.append(
+                ChatCompletionAssistantMessageParam(
+                    role='assistant',
+                    content=None,
+                    tool_calls=[
+                        {
+                            'id': msg.call_id or 'tool_call_1',
+                            'type': 'function',
+                            'function': {
+                                'name': msg.tool_name,
+                                'arguments': str(msg.arguments),
+                            },
+                        }
+                    ],
+                )
+            )
+
+        elif isinstance(msg, TinyToolResult):
             params.append(
                 ChatCompletionToolMessageParam(
                     role='tool',
-                    content=content,
-                    tool_call_id=m.get('tool_call_id', ''),
+                    content=msg.content,
+                    tool_call_id=msg.call_id,
                 )
             )
 
         else:
-            raise TypeError(f'Unsupported role from LC: {role!r}')
+            raise TypeError(f'Unsupported TinyMessage type: {type(msg)}')
 
     return params
 

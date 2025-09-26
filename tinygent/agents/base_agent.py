@@ -1,4 +1,5 @@
-from typing import Any, Sequence
+from typing import Any
+from typing import Sequence
 
 from tinygent.datamodels.agent import AbstractAgent
 from tinygent.datamodels.agent_hooks import AgentHooks
