@@ -7,6 +7,7 @@ from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import TinyToolCall
+from tinygent.datamodels.messages import TinyToolResult
 from tinygent.datamodels.tool import AbstractTool
 
 
@@ -45,7 +46,7 @@ class BaseAgent(AbstractAgent, AgentHooks):
     ) -> AbstractTool | None:
         return next((tool for tool in tools if tool.info.name == name), None)
 
-    def run_llm(self, fn, llm_input: TinyLLMInput, **kwargs):
+    def run_llm(self, fn, llm_input: TinyLLMInput, **kwargs) -> Any:
         self.on_before_llm_call(llm_input)
         try:
             result = fn(llm_input=llm_input, **kwargs)
@@ -55,14 +56,18 @@ class BaseAgent(AbstractAgent, AgentHooks):
             self.on_error(e)
             raise
 
-    def run_tool(self, tool: AbstractTool, call: TinyToolCall) -> Any:
+    def run_tool(self, tool: AbstractTool, call: TinyToolCall) -> TinyToolResult:
         self.on_before_tool_call(tool, call.arguments)
         try:
             result = tool(**call.arguments)
             call.metadata['executed'] = True
             call.result = result
             self.on_after_tool_call(tool, call.arguments, result)
-            return result
+
+            return TinyToolResult(
+                call_id=call.call_id or 'unknown',
+                content=str(result),
+            )
         except Exception as e:
             self.on_error(e)
             raise

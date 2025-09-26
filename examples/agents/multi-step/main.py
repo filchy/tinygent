@@ -10,7 +10,6 @@ from tinygent.agents.multi_step_agent import TinyMultiStepAgent
 from tinygent.llms.openai import OpenAILLM
 from tinygent.logging import setup_general_loggers
 from tinygent.logging import setup_logger
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.tools.tool import tool
 from tinygent.types.base import TinyModel
 from tinygent.utils.load_file import load_yaml
@@ -46,9 +45,6 @@ def main():
 
     multi_step_agent = TinyMultiStepAgent(
         llm=OpenAILLM(),
-        memory_list=[
-            BufferChatMemory(),
-        ],
         prompt_template=MultiStepPromptTemplate(
             acter=ActionPromptTemplate(
                 system=multi_step_agent_prompt['acter']['system'],

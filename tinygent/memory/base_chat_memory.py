@@ -15,6 +15,10 @@ if typing.TYPE_CHECKING:
 class BaseChatMemory(AbstractMemory, ABC):
     _chat_history: BaseChatHistory = PrivateAttr(default_factory=BaseChatHistory)
 
+    @property
+    def chat_messages(self) -> list[AllTinyMessages]:
+        return self._chat_history.messages
+
     def save_context(self, message: AllTinyMessages) -> None:
         self._chat_history.add_message(message)
 
