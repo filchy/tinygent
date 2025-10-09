@@ -33,6 +33,7 @@ if typing.TYPE_CHECKING:
 def _to_text_parts(
     content: object,
 ) -> str | list[ChatCompletionContentPartTextParam]:
+    """Convert content to a string or list of ChatCompletionContentPartTextParam."""
     if content is None:
         return ''
     if isinstance(content, str):
@@ -45,6 +46,7 @@ def _to_text_parts(
 def _normalize_tool_calls(
     raw: list[dict] | None,
 ) -> list[ChatCompletionMessageToolCallUnionParam]:
+    """Normalize raw tool calls to ChatCompletionMessageToolCallUnionParam."""
     if not raw:
         return []
 
@@ -70,6 +72,7 @@ def _normalize_tool_calls(
 def tiny_prompt_to_openai_params(
     prompt: 'TinyLLMInput',
 ) -> list[ChatCompletionMessageParam]:
+    """Convert a TinyLLMInput prompt to a list of OpenAI ChatCompletionMessageParam."""
     params: list[ChatCompletionMessageParam] = []
 
     for msg in prompt.messages:
@@ -138,6 +141,7 @@ def tiny_prompt_to_openai_params(
 
 
 def openai_result_to_tiny_result(resp: ChatCompletion) -> TinyLLMResult:
+    """Convert an OpenAI ChatCompletion response to a TinyLLMResult."""
     from tinygent.datamodels.llm_io import TinyLLMResult
 
     generations: list[list[Generation]] = []
@@ -180,6 +184,7 @@ def openai_result_to_tiny_result(resp: ChatCompletion) -> TinyLLMResult:
 
 
 def normalize_content(content: Union[str, list[str | dict]]) -> str:
+    """Normalize content which can be a string or a list of strings and dicts."""
     if isinstance(content, str):
         return content
 
