@@ -1,10 +1,11 @@
 from typing import Any
 
-from pydantic import BaseModel
 from pydantic import ValidationError
 
+from tinygent.types.base import TinyModel
 
-def validate_schema(metadata: Any, schema: type[BaseModel]) -> BaseModel:
+
+def validate_schema(metadata: Any, schema: type[TinyModel]) -> TinyModel:
     try:
         return schema(**metadata)
     except ValidationError as e:

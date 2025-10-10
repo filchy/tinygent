@@ -6,10 +6,11 @@ from typing import Generic
 from typing import Literal
 from typing import TypeVar
 
-from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import PrivateAttr
+
+from tinygent.types.base import TinyModel
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ TinyMessageType = TypeVar(
 )
 
 
-class BaseMessage(ABC, BaseModel, Generic[TinyMessageType]):
+class BaseMessage(ABC, TinyModel, Generic[TinyMessageType]):
     """Abstract base class for all message types."""
 
     type: TinyMessageType

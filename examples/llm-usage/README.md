@@ -58,7 +58,7 @@ def basic_generation():
 ## Example: Structured Output Generation
 
 ```python
-class SummaryResponse(BaseModel):
+class SummaryResponse(TinyModel):
     summary: str
 
 result = llm.generate_structured(

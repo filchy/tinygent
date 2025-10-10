@@ -27,7 +27,7 @@ This is useful when you want to keep the most recent context short and focused, 
 
 ```python
 from tinygent.datamodels.messages import TinyHumanMessage, TinyChatMessage
-from tinygent.memory.buffer_window_chat_memory import BufferWindowChatMemory
+from tinygent.memory import BufferWindowChatMemory
 
 memory = BufferWindowChatMemory()
 memory.k = 3  # keep only the last 3 messages

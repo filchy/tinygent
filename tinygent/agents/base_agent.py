@@ -1,7 +1,14 @@
+from __future__ import annotations
+
+from abc import abstractmethod
 from typing import Any
+from typing import TypeVar
 from typing import Sequence
 
+from pydantic import Field
+
 from tinygent.datamodels.agent import AbstractAgent
+from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.agent_hooks import AgentHooks
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm_io import TinyLLMInput
@@ -10,8 +17,28 @@ from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.messages import TinyToolResult
 from tinygent.datamodels.tool import AbstractTool
 
+T = TypeVar('T', bound='TinyBaseAgent')
 
-class BaseAgent(AbstractAgent, AgentHooks):
+
+class TinyBaseAgentConfig(AbstractAgentConfig[T]):
+    """Configuration for BaseAgent."""
+
+    agent_type: str = 'base'
+
+    llm: AbstractLLM
+    tools: Sequence[AbstractTool] = Field(default_factory=list)
+    memory_list: Sequence[AbstractMemory] = Field(default_factory=list)
+
+    @abstractmethod
+    def build_agent(self) -> T:
+        return self._agent_class(
+            llm=self.llm,
+            tools=self.tools,
+            memory_list=self.memory_list,
+        )
+
+
+class TinyBaseAgent(AbstractAgent, AgentHooks):
     def __init__(
         self,
         llm: AbstractLLM,

@@ -1,7 +1,7 @@
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyPlanMessage
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.memory import BufferChatMemory
 
 
 def main():

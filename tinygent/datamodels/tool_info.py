@@ -11,9 +11,9 @@ from typing import TextIO
 from typing import TypeVar
 from typing import cast
 
-from pydantic import BaseModel
+from tinygent.types.base import TinyModel
 
-P = TypeVar('P', bound=BaseModel)
+P = TypeVar('P', bound=TinyModel)
 R = TypeVar('R')
 
 
@@ -28,7 +28,7 @@ class ToolInfo(Generic[P, R]):
     """A brief description of the tool's purpose. Extracted from the function's docstring."""
 
     arg_count: int
-    """The number of arguments the tool accepts (should be 1 for BaseModel input)."""
+    """The number of arguments the tool accepts (should be 1 for TinyModel input)."""
 
     is_coroutine: bool
     """Indicates if the tool function is a coroutine (async function)."""
@@ -42,7 +42,7 @@ class ToolInfo(Generic[P, R]):
     input_schema: type[P] | None
     """The Pydantic model class representing the input schema for the tool."""
 
-    output_schema: type[BaseModel] | None
+    output_schema: type[TinyModel] | None
     """The Pydantic model class representing the output schema for the tool, if applicable."""
 
     required_fields: list[str] = field(default_factory=list)
@@ -74,7 +74,7 @@ class ToolInfo(Generic[P, R]):
 
         if len(parameters) != 1:
             raise ValueError(
-                f"Tool '{name}' must accept exactly one BaseModel argument."
+                f"Tool '{name}' must accept exactly one TinyModel argument."
             )
 
         param = parameters[0]
@@ -83,9 +83,9 @@ class ToolInfo(Generic[P, R]):
         if (
             param_annotation is inspect.Parameter.empty
             or not isinstance(param_annotation, type)
-            or not issubclass(param_annotation, BaseModel)
+            or not issubclass(param_annotation, TinyModel)
         ):
-            raise TypeError(f"Parameter of tool '{name}' must be a Pydantic BaseModel.")
+            raise TypeError(f"Parameter of tool '{name}' must be a TinyModel.")
 
         input_schema = cast(type[P], param_annotation)
         required_fields = [
@@ -105,7 +105,7 @@ class ToolInfo(Generic[P, R]):
                 from pydantic import create_model
 
                 output_schema = create_model(
-                    'ToolOutput', __root__=(return_annotation, ...)
+                    'ToolOutput', __root__=(return_annotation, ...), __base__=TinyModel
                 )
             except Exception:
                 output_schema = None

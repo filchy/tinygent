@@ -7,11 +7,11 @@ from typing import override
 from openai import AsyncOpenAI
 from openai import OpenAI
 from openai.types.chat import ChatCompletionFunctionToolParam
-from pydantic import BaseModel
 
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.llms.utils import openai_result_to_tiny_result
 from tinygent.llms.utils import tiny_prompt_to_openai_params
+from tinygent.types.base import TinyModel
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm import LLMStructuredT
@@ -20,7 +20,7 @@ if typing.TYPE_CHECKING:
     from tinygent.datamodels.tool import AbstractTool
 
 
-class OpenAIConfig(BaseModel):
+class OpenAIConfig(TinyModel):
     model_name: str = 'gpt-4o'
 
     api_key: str | None = os.getenv('OPENAI_API_KEY', None)

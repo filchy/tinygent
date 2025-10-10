@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from dataclasses import dataclass
 import logging
 import typing
+from typing import cast
 
-from tinygent.agents.base_agent import BaseAgent
+from tinygent.agents import TinyBaseAgent
+from tinygent.agents import TinyBaseAgentConfig
 from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyAIMessage
@@ -15,7 +16,7 @@ from tinygent.datamodels.messages import TinyPlanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.memory import BufferChatMemory
 from tinygent.tools.default_tools import provide_final_answer
 from tinygent.tools.reasoning_tool import ToolWithReasoning
 from tinygent.types.base import TinyModel
@@ -30,34 +31,53 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class PlanPromptTemplate:
+class PlanPromptTemplate(TinyModel):
     """Used to generate or update the plan."""
 
     init_plan: str
     update_plan: str
 
 
-@dataclass
-class ActionPromptTemplate:
+class ActionPromptTemplate(TinyModel):
     """Used to generate the final answer or action."""
 
     system: str
     final_answer: str
 
 
-@dataclass
-class FinalAnswerPromptTemplate:
+class FinalAnswerPromptTemplate(TinyModel):
     """Used to generate the final answer if maximum steps achieved."""
 
     final_answer: str
 
 
-@dataclass
-class MultiStepPromptTemplate:
+class MultiStepPromptTemplate(TinyModel):
+    """Prompt templates for the multi-step agent."""
+
     plan: PlanPromptTemplate
     acter: ActionPromptTemplate
     final: FinalAnswerPromptTemplate
+
+
+class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
+    """Configuration for the TinyMultiStepAgent."""
+
+    agent_type: str = 'multi_step'
+
+    llm: AbstractLLM
+    prompt_template: MultiStepPromptTemplate
+    max_steps: int = 15
+    plan_interval: int = 5
+
+    @typing.override
+    def build_agent(self) -> TinyMultiStepAgent:
+        return self._agent_class(
+            llm=self.llm,
+            prompt_template=self.prompt_template,
+            tools=cast(list, self.tools),
+            max_steps=self.max_steps,
+            plan_interval=self.plan_interval,
+        )
 
 
 def _validate_prompt_template(prompt_template: MultiStepPromptTemplate) -> None:
@@ -88,7 +108,7 @@ def _validate_prompt_template(prompt_template: MultiStepPromptTemplate) -> None:
         )
 
 
-class TinyMultiStepAgent(BaseAgent):
+class TinyMultiStepAgent(TinyBaseAgent):
     def __init__(
         self,
         llm: AbstractLLM,

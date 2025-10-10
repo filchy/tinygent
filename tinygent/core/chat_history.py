@@ -1,16 +1,16 @@
 from typing import Callable
 from typing import Sequence
 
-from pydantic import BaseModel
 from pydantic import PrivateAttr
 
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyAIMessage
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyHumanMessage
+from tinygent.types.base import TinyModel
 
 
-class BaseChatHistory(BaseModel):
+class BaseChatHistory(TinyModel):
     _messages: list[AllTinyMessages] = PrivateAttr(default_factory=list)
     _filters: dict[str, Callable[[AllTinyMessages], bool]] = PrivateAttr(
         default_factory=dict

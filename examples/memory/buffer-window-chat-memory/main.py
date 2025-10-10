@@ -1,7 +1,7 @@
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyPlanMessage
-from tinygent.memory.buffer_window_chat_memory import BufferWindowChatMemory
+from tinygent.memory import BufferWindowChatMemory
 
 
 def main():
@@ -35,7 +35,7 @@ def main():
     print()
 
     print(f'=== Windowed memory (last {memory.k} messages) ===')
-    print('\n'.join([m.tiny_str for m in memory.chat_buffer_window()]))
+    print('\n'.join([m.tiny_str for m in memory.chat_buffer_window]))
     print()
 
 

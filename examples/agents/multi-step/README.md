@@ -61,8 +61,8 @@ from tinygent.agents.multi_step_agent import (
     MultiStepPromptTemplate,
     TinyMultiStepAgent,
 )
-from tinygent.llms.openai import OpenAILLM
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.llms import OpenAILLM
+from tinygent.memory import BufferChatMemory
 from tinygent.utils.load_file import load_yaml
 
 multi_step_agent_prompt = load_yaml(str(Path(__file__).parent / "agent.yaml"))

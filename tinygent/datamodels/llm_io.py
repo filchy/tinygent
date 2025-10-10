@@ -5,16 +5,16 @@ from typing import cast
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration
 from langchain_core.outputs import LLMResult
-from openai import BaseModel
 
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyAIMessage
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.llms.utils import normalize_content
+from tinygent.types.base import TinyModel
 
 
-class TinyLLMInput(BaseModel):
+class TinyLLMInput(TinyModel):
     """Input to an LLM, consisting of a list of messages."""
 
     messages: list[AllTinyMessages]

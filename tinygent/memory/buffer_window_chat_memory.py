@@ -1,5 +1,5 @@
 from tinygent.datamodels.messages import AllTinyMessages
-from tinygent.memory.base_chat_memory import BaseChatMemory
+from tinygent.memory import BaseChatMemory
 
 
 class BufferWindowChatMemory(BaseChatMemory):

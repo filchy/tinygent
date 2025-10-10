@@ -5,7 +5,7 @@ This example shows how to:
 * Declare simple tools with `@tool` (automatically registered into the global registry)
 * Ask an LLM to decide when and which tool to call
 * Iterate model output (chat vs. tool calls) with a helper iterator
-* Execute the selected tool by name with validated arguments (`BaseModel`, dict, or kwargs)
+* Execute the selected tool by name with validated arguments (`TinyModel`, dict, or kwargs)
 
 This is an example, not formal API documentation.
 
@@ -17,14 +17,14 @@ Each tool accepts a single Pydantic model as input. The `@tool` decorator wraps 
 
 ```python
 from langchain_core.prompt_values import StringPromptValue
-from pydantic import BaseModel, Field
+from pydantic import TinyModel, Field
 
-from tinygent.llms.openai import OpenAILLM
+from tinygent.llms import OpenAILLM
 from tinygent.runtime.global_registry import GlobalRegistry
 from tinygent.tools.tool import tool
 
 
-class GetWeatherInput(BaseModel):
+class GetWeatherInput(TinyModel):
     location: str = Field(..., description='The location to get the weather for.')
 
 
@@ -34,7 +34,7 @@ def get_weather(data: GetWeatherInput) -> str:
     return f"The weather in {data.location} is sunny with a high of 75°F."
 
 
-class GetTimeInput(BaseModel):
+class GetTimeInput(TinyModel):
     location: str = Field(..., description='The location to get the time for.')
 
 
@@ -94,18 +94,18 @@ from itertools import chain
 from typing import Iterator, Literal, cast
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration, LLMResult
-from pydantic import BaseModel
 
+from tinygent.types.base import TinyModel
 from tinygent.llms.utils import normalize_content
 
 
-class TinyChatMessage(BaseModel):
+class TinyChatMessage(TinyModel):
     type: Literal['chat'] = 'chat'
     content: str
     metadata: dict = {}
 
 
-class TinyToolCall(BaseModel):
+class TinyToolCall(TinyModel):
     type: Literal['tool'] = 'tool'
     tool_name: str
     arguments: dict
