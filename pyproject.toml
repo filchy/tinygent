@@ -17,6 +17,10 @@ dependencies = [
     "typer>=0.19.2",
 ]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project.optional-dependencies]
 dev = [
     "black>=25.1.0",
@@ -29,9 +33,9 @@ tiny = "tinygent.cli.main:run_cli"
 lint = "scripts.lint:main"
 fmt = "scripts.fmt:main"
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[project.entry-points.components]
+tiny_agents = "tinygent.agents.register"
+tiny_llms = "tinygent.llms.register"
 
 [tool.uv]
 package = true

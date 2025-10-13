@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from abc import abstractmethod
 from typing import Any
-from typing import TypeVar
+from typing import Generic
 from typing import Sequence
+from typing import TypeVar
 
 from pydantic import Field
 
@@ -11,31 +11,28 @@ from tinygent.datamodels.agent import AbstractAgent
 from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.agent_hooks import AgentHooks
 from tinygent.datamodels.llm import AbstractLLM
+from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.messages import TinyToolResult
 from tinygent.datamodels.tool import AbstractTool
 
-T = TypeVar('T', bound='TinyBaseAgent')
+T = TypeVar('T', bound='AbstractAgent')
 
 
-class TinyBaseAgentConfig(AbstractAgentConfig[T]):
+class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
     """Configuration for BaseAgent."""
 
-    agent_type: str = 'base'
+    type: Any = 'base'
 
-    llm: AbstractLLM
+    llm: AbstractLLMConfig
     tools: Sequence[AbstractTool] = Field(default_factory=list)
     memory_list: Sequence[AbstractMemory] = Field(default_factory=list)
 
-    @abstractmethod
-    def build_agent(self) -> T:
-        return self._agent_class(
-            llm=self.llm,
-            tools=self.tools,
-            memory_list=self.memory_list,
-        )
+    def build(self) -> T:
+        """Build the BaseAgent instance from the configuration."""
+        raise NotImplementedError('Subclasses must implement this method.')
 
 
 class TinyBaseAgent(AbstractAgent, AgentHooks):

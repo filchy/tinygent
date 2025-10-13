@@ -1,37 +1,89 @@
 from __future__ import annotations
 
+import logging
 import typing
 
 if typing.TYPE_CHECKING:
+    from tinygent.datamodels.agent import AbstractAgent
+    from tinygent.datamodels.agent import AbstractAgentConfig
     from tinygent.datamodels.llm import AbstractLLM
+    from tinygent.datamodels.llm import AbstractLLMConfig
     from tinygent.datamodels.tool import AbstractTool
+
+logger = logging.getLogger(__name__)
 
 
 class Registry:
     def __init__(self) -> None:
-        self._registered_llms: dict[str, AbstractLLM] = {}
+        # agents
+        self._registered_agents: dict[
+            str, tuple[type[AbstractAgentConfig], type[AbstractAgent]]
+        ] = {}
 
+        # llms
+        self._registered_llms: dict[
+            str, tuple[type[AbstractLLMConfig], type[AbstractLLM]]
+        ] = {}
+
+        # tools
         self._registered_tools: dict[str, AbstractTool] = {}
         self._registered_hidden_tools: dict[str, AbstractTool] = {}
 
+    # agents
+    def register_agent(
+        self,
+        name: str,
+        config_class: type[AbstractAgentConfig],
+        agent_class: type[AbstractAgent],
+    ) -> None:
+        logger.debug(f'Registering agent {name}')
+        if name in self._registered_agents:
+            raise ValueError(f'Agent {name} already registered.')
+
+        self._registered_agents[name] = (config_class, agent_class)
+
+    def get_agent(
+        self, name: str
+    ) -> tuple[type[AbstractAgentConfig], type[AbstractAgent]]:
+        logger.debug(f'Getting agent {name}')
+        if name not in self._registered_agents:
+            raise ValueError(f'Agent {name} not registered.')
+
+        return self._registered_agents[name]
+
+    def get_agents(
+        self,
+    ) -> dict[str, tuple[type[AbstractAgentConfig], type[AbstractAgent]]]:
+        logger.debug('Getting all registered agents')
+        return self._registered_agents
+
     # llms
-    def register_llm(self, name: str, llm: AbstractLLM) -> None:
+    def register_llm(
+        self,
+        name: str,
+        config_class: type[AbstractLLMConfig],
+        llm_class: type[AbstractLLM],
+    ) -> None:
+        logger.debug(f'Registering LLM {name}')
         if name in self._registered_llms:
             raise ValueError(f'LLM {name} already registered.')
 
-        self._registered_llms[name] = llm
+        self._registered_llms[name] = (config_class, llm_class)
 
-    def get_llm(self, name: str) -> AbstractLLM:
+    def get_llm(self, name: str) -> tuple[type[AbstractLLMConfig], type[AbstractLLM]]:
+        logger.debug(f'Getting LLM {name}')
         if name not in self._registered_llms:
             raise ValueError(f'LLM {name} not registered.')
 
         return self._registered_llms[name]
 
-    def get_llms(self) -> dict[str, AbstractLLM]:
+    def get_llms(self) -> dict[str, tuple[type[AbstractLLMConfig], type[AbstractLLM]]]:
+        logger.debug('Getting all registered LLMs')
         return self._registered_llms
 
     # tools
     def register_tool(self, tool: AbstractTool, hidden: bool = False) -> None:
+        logger.debug(f'Registering tool {tool.info.name} (hidden={hidden})')
         if tool.info.name in self.get_tools(include_hidden=True):
             raise ValueError(f'Tool {tool.info.name} already registered.')
 
@@ -41,6 +93,7 @@ class Registry:
             self._registered_tools[tool.info.name] = tool
 
     def get_tool(self, name: str) -> AbstractTool:
+        logger.debug(f'Getting tool {name}')
         if name in self._registered_tools:
             return self._registered_tools[name]
         if name in self._registered_hidden_tools:
@@ -48,6 +101,7 @@ class Registry:
         raise ValueError(f'Tool {name} not registered.')
 
     def get_tools(self, include_hidden: bool = False) -> dict[str, AbstractTool]:
+        logger.debug(f'Getting all registered tools (include_hidden={include_hidden})')
         if include_hidden:
             return {**self._registered_tools, **self._registered_hidden_tools}
         return self._registered_tools

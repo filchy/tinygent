@@ -2,29 +2,33 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
+from typing import Any
+from typing import ClassVar
 from typing import Generic
 from typing import TypeVar
 
-from pydantic import ConfigDict, PrivateAttr
+from pydantic import ConfigDict
 
-from tinygent.types.base import TinyModel
+from tinygent.types.builder import TinyModelBuildable
 
 AgentType = TypeVar('AgentType', bound='AbstractAgent')
 
 
-class AbstractAgentConfig(TinyModel, Generic[AgentType], ABC):
+class AbstractAgentConfig(TinyModelBuildable[AgentType], Generic[AgentType]):
     """Abstract base class for agent configurations."""
 
-    agent_type: str  # used as discriminator
+    type: Any  # used as discriminator
 
-    _agent_class: type[AgentType] = PrivateAttr()
+    _discriminator_field: ClassVar[str] = 'type'
+
+    _agent_class: ClassVar
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    @abstractmethod
-    def build_agent(self) -> AgentType:
-        """Build and return an agent instance."""
-        raise NotImplementedError('Subclasses must implement this method.')
+    @classmethod
+    def get_discriminator_field(cls) -> str:
+        """Get the name of the discriminator field."""
+        return cls._discriminator_field
 
 
 class AbstractAgent(ABC):

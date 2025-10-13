@@ -3,10 +3,13 @@ from __future__ import annotations
 from collections.abc import Generator
 import logging
 import typing
+from typing import Literal
 from typing import cast
 
 from tinygent.agents import TinyBaseAgent
 from tinygent.agents import TinyBaseAgentConfig
+from tinygent.cli.builder import build_llm
+from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyAIMessage
@@ -62,17 +65,16 @@ class MultiStepPromptTemplate(TinyModel):
 class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
     """Configuration for the TinyMultiStepAgent."""
 
-    agent_type: str = 'multi_step'
+    type: Literal['multi_step'] = 'multi_step'
 
-    llm: AbstractLLM
+    llm: AbstractLLMConfig
     prompt_template: MultiStepPromptTemplate
     max_steps: int = 15
     plan_interval: int = 5
 
-    @typing.override
-    def build_agent(self) -> TinyMultiStepAgent:
-        return self._agent_class(
-            llm=self.llm,
+    def build(self) -> TinyMultiStepAgent:
+        return TinyMultiStepAgent(
+            llm=build_llm(self.llm),
             prompt_template=self.prompt_template,
             tools=cast(list, self.tools),
             max_steps=self.max_steps,

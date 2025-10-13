@@ -3,31 +3,57 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 import typing
+from typing import Any
+from typing import ClassVar
 from typing import Generic
+from typing import TypeVar
 
 from tinygent.types.base import TinyModel
+from tinygent.types.builder import TinyModelBuildable
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm_io import TinyLLMInput
     from tinygent.datamodels.llm_io import TinyLLMResult
     from tinygent.datamodels.tool import AbstractTool
 
-LLMConfigT = typing.TypeVar('LLMConfigT', bound=TinyModel)
-LLMStructuredT = typing.TypeVar('LLMStructuredT', bound=TinyModel)
+T = TypeVar('T', bound='AbstractLLM')
+LLMConfigT = TypeVar('LLMConfigT', bound=TinyModel)
+LLMStructuredT = TypeVar('LLMStructuredT', bound=TinyModel)
+
+
+class AbstractLLMConfig(TinyModelBuildable[T], Generic[T]):
+    """Abstract base class for LLM configurations."""
+
+    type: Any  # used as discriminator
+
+    _discriminator_field: ClassVar[str] = 'type'
+
+    model: str
+
+    api_key: str | None = None
+
+    timeout: float = 60.0
+
+    @classmethod
+    def get_discriminator_field(cls) -> str:
+        """Get the name of the discriminator field."""
+        return cls._discriminator_field
+
+    def build(self) -> T:
+        """Build the LLM instance from the configuration."""
+        raise NotImplementedError('Subclasses must implement this method.')
+
+    def build_from_config(self, config: type[TinyModel]) -> T:
+        """Build the LLM instance from another configuration."""
+        raise NotImplementedError('Subclasses must implement this method.')
 
 
 class AbstractLLM(ABC, Generic[LLMConfigT]):
     """Abstract base class for LLMs."""
 
     @abstractmethod
-    def __init__(self, config: LLMConfigT, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the LLM with the given configuration."""
-        pass
-
-    @property
-    @abstractmethod
-    def config(self) -> LLMConfigT:
-        """Get the configuration of the LLM."""
         pass
 
     @property

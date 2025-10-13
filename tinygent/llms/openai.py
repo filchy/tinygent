@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import typing
+from typing import Literal
 from typing import override
 
 from openai import AsyncOpenAI
@@ -9,6 +10,7 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletionFunctionToolParam
 
 from tinygent.datamodels.llm import AbstractLLM
+from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.llms.utils import openai_result_to_tiny_result
 from tinygent.llms.utils import tiny_prompt_to_openai_params
 from tinygent.types.base import TinyModel
@@ -20,40 +22,52 @@ if typing.TYPE_CHECKING:
     from tinygent.datamodels.tool import AbstractTool
 
 
-class OpenAIConfig(TinyModel):
-    model_name: str = 'gpt-4o'
+class OpenAIConfig(AbstractLLMConfig['OpenAILLM']):
+    type: Literal['openai'] = 'openai'
+
+    model: str = 'gpt-4o'
 
     api_key: str | None = os.getenv('OPENAI_API_KEY', None)
 
-    base_url: str | None = os.getenv('OPENAI_BASE_URL', None)
+    base_url: str | None = None
 
     temperature: float = 0.6
 
     timeout: float = 60.0
 
+    def build(self) -> OpenAILLM:
+        return OpenAILLM(
+            model_name=self.model,
+            api_key=self.api_key,
+            base_url=self.base_url,
+            temperature=self.temperature,
+            timeout=self.timeout,
+        )
+
 
 class OpenAILLM(AbstractLLM[OpenAIConfig]):
     def __init__(
         self,
-        config: OpenAIConfig = OpenAIConfig(),
+        model_name: str = 'gpt-4o',
+        api_key: str | None = None,
+        base_url: str | None = None,
+        temperature: float = 0.6,
+        timeout: float = 60.0,
     ) -> None:
-        if not config.api_key:
+        if not api_key and not (api_key := os.getenv('OPENAI_API_KEY', None)):
             raise ValueError(
                 'OpenAI API key must be provided either via config',
                 " or 'OPENAI_API_KEY' env variable.",
             )
 
-        self._sync_client = OpenAI(api_key=config.api_key, base_url=config.base_url)
+        self._sync_client = OpenAI(api_key=api_key, base_url=base_url)
 
-        self._async_client = AsyncOpenAI(
-            api_key=config.api_key, base_url=config.base_url
-        )
+        self._async_client = AsyncOpenAI(api_key=api_key, base_url=base_url)
 
-        self._config = config
-
-    @property
-    def config(self) -> OpenAIConfig:
-        return self._config
+        self.model_name = model_name
+        self.base_url = base_url
+        self.temperature = temperature
+        self.timeout = timeout
 
     @property
     def supports_tool_calls(self) -> bool:
@@ -110,10 +124,10 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         messages = tiny_prompt_to_openai_params(llm_input)
 
         res = self._sync_client.chat.completions.create(
-            model=self.config.model_name,
+            model=self.model_name,
             messages=messages,
-            temperature=self._config.temperature,
-            timeout=self.config.timeout,
+            temperature=self.temperature,
+            timeout=self.timeout,
         )
 
         return openai_result_to_tiny_result(res)
@@ -122,10 +136,10 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         messages = tiny_prompt_to_openai_params(llm_input)
 
         res = await self._async_client.chat.completions.create(
-            model=self.config.model_name,
+            model=self.model_name,
             messages=messages,
-            temperature=self._config.temperature,
-            timeout=self.config.timeout,
+            temperature=self.temperature,
+            timeout=self.timeout,
         )
 
         return openai_result_to_tiny_result(res)
@@ -136,10 +150,10 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         messages = tiny_prompt_to_openai_params(llm_input)
 
         res = self._sync_client.chat.completions.parse(
-            model=self.config.model_name,
+            model=self.model_name,
             messages=messages,
-            temperature=self._config.temperature,
-            timeout=self.config.timeout,
+            temperature=self.temperature,
+            timeout=self.timeout,
             response_format=output_schema,
         )
 
@@ -155,10 +169,10 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         messages = tiny_prompt_to_openai_params(llm_input)
 
         res = await self._async_client.chat.completions.parse(
-            model=self.config.model_name,
+            model=self.model_name,
             messages=messages,
-            temperature=self._config.temperature,
-            timeout=self.config.timeout,
+            temperature=self.temperature,
+            timeout=self.timeout,
             response_format=output_schema,
         )
 
@@ -175,12 +189,12 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         messages = tiny_prompt_to_openai_params(llm_input)
 
         res = self._sync_client.chat.completions.create(
-            model=self.config.model_name,
+            model=self.model_name,
             messages=messages,
             tools=functions,
             tool_choice='auto',
-            temperature=self._config.temperature,
-            timeout=self.config.timeout,
+            temperature=self.temperature,
+            timeout=self.timeout,
         )
 
         return openai_result_to_tiny_result(res)
@@ -192,12 +206,12 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         messages = tiny_prompt_to_openai_params(llm_input)
 
         res = await self._async_client.chat.completions.create(
-            model=self.config.model_name,
+            model=self.model_name,
             messages=messages,
             tools=functions,
             tool_choice='auto',
-            temperature=self._config.temperature,
-            timeout=self.config.timeout,
+            temperature=self.temperature,
+            timeout=self.timeout,
         )
 
         return openai_result_to_tiny_result(res)

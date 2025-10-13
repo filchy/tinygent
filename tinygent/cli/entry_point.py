@@ -1,12 +1,15 @@
 import logging
 import time
-import typer
 from typing import Annotated
 from typing import Any
 
-from tinygent.cli.utils import get_click_context, register_commands_from_package
-from tinygent.logging import setup_logger
+import click
+import typer
+
+from tinygent.cli.utils import get_click_context
+from tinygent.cli.utils import register_commands_from_package
 from tinygent.logging import LOG_LEVELS
+from tinygent.logging import setup_logger
 
 app = typer.Typer(name='tiny', help='TinyGent CLI')
 
@@ -37,6 +40,7 @@ def cli(
             show_choices=True,
             case_sensitive=False,
             autocompletion=lambda: list(LOG_LEVELS.keys()),
+            click_type=click.Choice(list(LOG_LEVELS.keys()), case_sensitive=False),
         ),
     ] = 'info',
 ) -> None:
