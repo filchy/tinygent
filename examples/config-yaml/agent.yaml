@@ -1,4 +1,4 @@
-type: multi_step
+type: multistep
 max_steps: 10
 plan_interval: 2
 llm:

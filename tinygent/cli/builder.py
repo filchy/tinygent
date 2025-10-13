@@ -10,6 +10,7 @@ from pydantic import TypeAdapter
 from tinygent.cli.utils import discover_and_register_components
 from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.llm import AbstractLLMConfig
+from tinygent.datamodels.memory import AbstractMemoryConfig
 from tinygent.runtime.global_registry import GlobalRegistry
 from tinygent.runtime.global_registry import Registry
 from tinygent.types.base import TinyModel
@@ -49,8 +50,6 @@ def _parse_config(
 
 
 def build_agent(config: dict | AbstractAgentConfig):
-    discover_and_register_components()
-
     if isinstance(config, AbstractAgentConfig):
         config = config.model_dump()
 
@@ -59,10 +58,16 @@ def build_agent(config: dict | AbstractAgentConfig):
 
 
 def build_llm(config: dict | AbstractLLMConfig):
-    discover_and_register_components()
-
     if isinstance(config, AbstractLLMConfig):
         config = config.model_dump()
 
     llm_config = _parse_config(config, lambda r: r.get_llms())
     return llm_config.build()
+
+
+def build_memory(config: dict | AbstractMemoryConfig):
+    if isinstance(config, AbstractMemoryConfig):
+        config = config.model_dump()
+
+    memory_config = _parse_config(config, lambda r: r.get_memories())
+    return memory_config.build()

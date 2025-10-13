@@ -65,7 +65,7 @@ class MultiStepPromptTemplate(TinyModel):
 class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
     """Configuration for the TinyMultiStepAgent."""
 
-    type: Literal['multi_step'] = 'multi_step'
+    type: Literal['multistep'] = 'multistep'
 
     llm: AbstractLLMConfig
     prompt_template: MultiStepPromptTemplate

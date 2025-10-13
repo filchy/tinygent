@@ -30,6 +30,10 @@ class AbstractAgentConfig(TinyModelBuildable[AgentType], Generic[AgentType]):
         """Get the name of the discriminator field."""
         return cls._discriminator_field
 
+    def build(self) -> AgentType:
+        """Build the agent instance from the configuration."""
+        raise NotImplementedError('Subclasses must implement this method.')
+
 
 class AbstractAgent(ABC):
     """Abstract base class for agents."""
@@ -43,4 +47,3 @@ class AbstractAgent(ABC):
     @abstractmethod
     def final_answer(self) -> str | None:
         """Get the final answer produced by the agent, if any."""
-        raise NotImplementedError('Subclasses must implement this method.')

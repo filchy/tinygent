@@ -1,5 +1,17 @@
+from typing import Literal
+
+from tinygent.datamodels.memory import AbstractMemoryConfig
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.memory import BaseChatMemory
+
+
+class BufferWindowChatMemoryConfig(AbstractMemoryConfig['BufferWindowChatMemory']):
+    type: Literal['buffer_window'] = 'buffer_window'
+
+    k: int = 5
+
+    def build(self) -> 'BufferWindowChatMemory':
+        return BufferWindowChatMemory(k=self.k)
 
 
 class BufferWindowChatMemory(BaseChatMemory):

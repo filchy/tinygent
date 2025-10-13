@@ -43,10 +43,6 @@ class AbstractLLMConfig(TinyModelBuildable[T], Generic[T]):
         """Build the LLM instance from the configuration."""
         raise NotImplementedError('Subclasses must implement this method.')
 
-    def build_from_config(self, config: type[TinyModel]) -> T:
-        """Build the LLM instance from another configuration."""
-        raise NotImplementedError('Subclasses must implement this method.')
-
 
 class AbstractLLM(ABC, Generic[LLMConfigT]):
     """Abstract base class for LLMs."""

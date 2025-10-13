@@ -3,6 +3,9 @@ from __future__ import annotations
 import logging
 import typing
 
+from tinygent.datamodels.memory import AbstractMemory
+from tinygent.datamodels.memory import AbstractMemoryConfig
+
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.agent import AbstractAgent
     from tinygent.datamodels.agent import AbstractAgentConfig
@@ -23,6 +26,11 @@ class Registry:
         # llms
         self._registered_llms: dict[
             str, tuple[type[AbstractLLMConfig], type[AbstractLLM]]
+        ] = {}
+
+        # memories
+        self._registered_memories: dict[
+            str, tuple[type[AbstractMemoryConfig], type[AbstractMemory]]
         ] = {}
 
         # tools
@@ -80,6 +88,34 @@ class Registry:
     def get_llms(self) -> dict[str, tuple[type[AbstractLLMConfig], type[AbstractLLM]]]:
         logger.debug('Getting all registered LLMs')
         return self._registered_llms
+
+    # memories
+    def register_memory(
+        self,
+        name: str,
+        config_class: type[AbstractMemoryConfig],
+        memory_class: type[AbstractMemory],
+    ) -> None:
+        logger.debug(f'Registering memory {name}')
+        if name in self._registered_memories:
+            raise ValueError(f'Memory {name} already registered.')
+
+        self._registered_memories[name] = (config_class, memory_class)
+
+    def get_memory(
+        self, name: str
+    ) -> tuple[type[AbstractMemoryConfig], type[AbstractMemory]]:
+        logger.debug(f'Getting memory {name}')
+        if name not in self._registered_memories:
+            raise ValueError(f'Memory {name} not registered.')
+
+        return self._registered_memories[name]
+
+    def get_memories(
+        self,
+    ) -> dict[str, tuple[type[AbstractMemoryConfig], type[AbstractMemory]]]:
+        logger.debug('Getting all registered memories')
+        return self._registered_memories
 
     # tools
     def register_tool(self, tool: AbstractTool, hidden: bool = False) -> None:

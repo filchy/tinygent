@@ -13,7 +13,6 @@ from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.llms.utils import openai_result_to_tiny_result
 from tinygent.llms.utils import tiny_prompt_to_openai_params
-from tinygent.types.base import TinyModel
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm import LLMStructuredT

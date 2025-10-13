@@ -10,6 +10,11 @@ T = TypeVar('T')
 
 
 class TinyModelBuildable(TinyModel, Generic[T], ABC):
+    @classmethod
+    @abstractmethod
+    def get_discriminator_field(cls) -> str:
+        pass
+
     @abstractmethod
     def build(self) -> Any:
         pass
