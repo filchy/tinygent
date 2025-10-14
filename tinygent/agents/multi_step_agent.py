@@ -4,11 +4,11 @@ from collections.abc import Generator
 import logging
 import typing
 from typing import Literal
-from typing import cast
 
 from tinygent.agents import TinyBaseAgent
 from tinygent.agents import TinyBaseAgentConfig
 from tinygent.cli.builder import build_llm
+from tinygent.cli.builder import build_tool
 from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.datamodels.messages import AllTinyMessages
@@ -76,7 +76,7 @@ class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
         return TinyMultiStepAgent(
             llm=build_llm(self.llm),
             prompt_template=self.prompt_template,
-            tools=cast(list, self.tools),
+            tools=[build_tool(tool) for tool in self.tools],
             max_steps=self.max_steps,
             plan_interval=self.plan_interval,
         )

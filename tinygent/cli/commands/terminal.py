@@ -33,5 +33,5 @@ def main(
 ):
     data = tiny_yaml_load(str(config_path))
     agent = build_agent(data)
-    # TODO: dodelat tooly atd.....
-    print(agent)
+    for tool in agent._tools:
+        logger.info(f'Loaded tool: {tool.info.name} - {tool.info.description}')

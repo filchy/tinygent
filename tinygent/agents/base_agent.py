@@ -17,6 +17,7 @@ from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.messages import TinyToolResult
 from tinygent.datamodels.tool import AbstractTool
+from tinygent.tools.tool import ToolConfig
 
 T = TypeVar('T', bound='AbstractAgent')
 
@@ -27,7 +28,7 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
     type: Any = 'base'
 
     llm: AbstractLLMConfig
-    tools: Sequence[AbstractTool] = Field(default_factory=list)
+    tools: Sequence[ToolConfig] = Field(default_factory=list)
     memory_list: Sequence[AbstractMemory] = Field(default_factory=list)
 
     def build(self) -> T:

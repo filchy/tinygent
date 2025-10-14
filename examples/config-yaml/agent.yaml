@@ -14,5 +14,5 @@ prompt_template:
     final_answer: "Final answer for task {{ task }} with tools {{ tools }}, history {{ history }}, steps {{ steps }}, tool calls {{ tool_calls }}"
   final:
     final_answer: "Fallback answer for task {{ task }}, history {{ history }}, steps {{ steps }}"
-# tools:
-#   - type: provide_final_answer
+tools:
+  - name: provide_final_answer
