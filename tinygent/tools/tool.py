@@ -2,6 +2,7 @@ from typing import Any
 from typing import Callable
 from typing import Generic
 from typing import Iterable
+from typing import Literal
 from typing import TypeVar
 from typing import cast
 from typing import overload
@@ -15,6 +16,12 @@ from tinygent.utils.schema_validator import validate_schema
 
 T = TypeVar('T', bound=TinyModel)
 R = TypeVar('R')
+
+
+class ToolConfig(TinyModel):
+    type: Literal['tool'] = 'tool'
+
+    name: str
 
 
 class Tool(AbstractTool, Generic[T, R]):

@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from dataclasses import dataclass
 import logging
 import typing
+from typing import Literal
 
-from tinygent.agents.base_agent import BaseAgent
+from tinygent.agents import TinyBaseAgent
+from tinygent.agents import TinyBaseAgentConfig
+from tinygent.cli.builder import build_llm
+from tinygent.cli.builder import build_tool
+from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyAIMessage
@@ -15,7 +19,7 @@ from tinygent.datamodels.messages import TinyPlanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.memory import BufferChatMemory
 from tinygent.tools.default_tools import provide_final_answer
 from tinygent.tools.reasoning_tool import ToolWithReasoning
 from tinygent.types.base import TinyModel
@@ -30,34 +34,52 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class PlanPromptTemplate:
+class PlanPromptTemplate(TinyModel):
     """Used to generate or update the plan."""
 
     init_plan: str
     update_plan: str
 
 
-@dataclass
-class ActionPromptTemplate:
+class ActionPromptTemplate(TinyModel):
     """Used to generate the final answer or action."""
 
     system: str
     final_answer: str
 
 
-@dataclass
-class FinalAnswerPromptTemplate:
+class FinalAnswerPromptTemplate(TinyModel):
     """Used to generate the final answer if maximum steps achieved."""
 
     final_answer: str
 
 
-@dataclass
-class MultiStepPromptTemplate:
+class MultiStepPromptTemplate(TinyModel):
+    """Prompt templates for the multi-step agent."""
+
     plan: PlanPromptTemplate
     acter: ActionPromptTemplate
     final: FinalAnswerPromptTemplate
+
+
+class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
+    """Configuration for the TinyMultiStepAgent."""
+
+    type: Literal['multistep'] = 'multistep'
+
+    llm: AbstractLLMConfig
+    prompt_template: MultiStepPromptTemplate
+    max_steps: int = 15
+    plan_interval: int = 5
+
+    def build(self) -> TinyMultiStepAgent:
+        return TinyMultiStepAgent(
+            llm=build_llm(self.llm),
+            prompt_template=self.prompt_template,
+            tools=[build_tool(tool) for tool in self.tools],
+            max_steps=self.max_steps,
+            plan_interval=self.plan_interval,
+        )
 
 
 def _validate_prompt_template(prompt_template: MultiStepPromptTemplate) -> None:
@@ -88,7 +110,7 @@ def _validate_prompt_template(prompt_template: MultiStepPromptTemplate) -> None:
         )
 
 
-class TinyMultiStepAgent(BaseAgent):
+class TinyMultiStepAgent(TinyBaseAgent):
     def __init__(
         self,
         llm: AbstractLLM,
@@ -228,7 +250,7 @@ class TinyMultiStepAgent(BaseAgent):
         self.memory.save_context(TinyHumanMessage(content=input_text))
 
         while not returned_final_answer and (self._step_number <= self.max_steps):
-            logger.debug(f'--- STEP {self._step_number} ---')
+            logger.debug('--- STEP %d ---', self._step_number)
 
             if self._step_number == 1 or (
                 (self._step_number - 1) % self.plan_interval == 0
@@ -240,12 +262,16 @@ class TinyMultiStepAgent(BaseAgent):
                 for msg in plan_generator:
                     if isinstance(msg, TinyPlanMessage):
                         logger.debug(
-                            f'[{self._step_number}. STEP - Plan]: {msg.content}'
+                            '[%d. STEP - Plan]: %s',
+                            self._step_number,
+                            msg.content
                         )
                         self._planned_steps.append(msg)
                     if isinstance(msg, TinyReasoningMessage):
                         logger.debug(
-                            f'[{self._step_number}. STEP - Reasoning]: {msg.content}'
+                            '[%d. STEP - Reasoning]: %s',
+                            self._step_number,
+                            msg.content
                         )
                     self.memory.save_context(msg)
 
@@ -255,7 +281,9 @@ class TinyMultiStepAgent(BaseAgent):
 
                     if isinstance(msg, TinyChatMessage):
                         logger.debug(
-                            f'[{self._step_number}. STEP - Chat]: {msg.content}'
+                            '[%d. STEP - Chat]: %s',
+                            self._step_number,
+                            msg.content
                         )
                         returned_final_answer = True
 
@@ -266,13 +294,16 @@ class TinyMultiStepAgent(BaseAgent):
                             self._tool_calls.append(msg)
                         else:
                             logger.error(
-                                f'Tool {msg.tool_name} not found. Skipping tool call.'
+                                'Tool %s not found. Skipping tool call.',
+                                msg.tool_name
                             )
 
                         if isinstance(called_tool, ToolWithReasoning):
                             reasoning = msg.arguments.get('reasoning', '')
                             logger.debug(
-                                f'[{self._step_number}. STEP - Tool Reasoning]: {reasoning}'
+                                '[%d. STEP - Tool Reasoning]: %s',
+                                self._step_number,
+                                reasoning,
                             )
 
                         logger.debug(
@@ -290,7 +321,10 @@ class TinyMultiStepAgent(BaseAgent):
                             self._final_answer = msg.result.content
 
                     else:
-                        logger.warning(f'Unhandeled message type: {msg}')
+                        logger.warning(
+                            'Unhandeled message type: %s',
+                            msg
+                        )
 
                     yield msg
 
@@ -319,7 +353,7 @@ class TinyMultiStepAgent(BaseAgent):
         input_text: str,
         reset: bool = True,
     ) -> str:
-        logger.debug(f'[USER INPUT] {input_text}')
+        logger.debug('[USER INPUT] %s', input_text)
 
         if reset:
             self._final_answer = None
@@ -329,6 +363,6 @@ class TinyMultiStepAgent(BaseAgent):
 
         results = list(self._run_generator(input_text))
         for res in results:
-            logger.debug(f'[AGENT OUTPUT] {res.tiny_str}')
+            logger.debug('[AGENT OUTPUT] %s', res.tiny_str)
 
         return self.final_answer or 'No final answer provided.'

@@ -7,7 +7,7 @@ from tinygent.agents.multi_step_agent import FinalAnswerPromptTemplate
 from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
 from tinygent.agents.multi_step_agent import PlanPromptTemplate
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
-from tinygent.llms.openai import OpenAILLM
+from tinygent.llms import OpenAILLM
 from tinygent.logging import setup_general_loggers
 from tinygent.logging import setup_logger
 from tinygent.tools.tool import tool

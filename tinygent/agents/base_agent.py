@@ -1,17 +1,42 @@
+from __future__ import annotations
+
 from typing import Any
+from typing import Generic
 from typing import Sequence
+from typing import TypeVar
+
+from pydantic import Field
 
 from tinygent.datamodels.agent import AbstractAgent
+from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.agent_hooks import AgentHooks
 from tinygent.datamodels.llm import AbstractLLM
+from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.datamodels.llm_io import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.messages import TinyToolResult
 from tinygent.datamodels.tool import AbstractTool
+from tinygent.tools.tool import ToolConfig
+
+T = TypeVar('T', bound='AbstractAgent')
 
 
-class BaseAgent(AbstractAgent, AgentHooks):
+class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
+    """Configuration for BaseAgent."""
+
+    type: Any = 'base'
+
+    llm: AbstractLLMConfig
+    tools: Sequence[ToolConfig] = Field(default_factory=list)
+    memory_list: Sequence[AbstractMemory] = Field(default_factory=list)
+
+    def build(self) -> T:
+        """Build the BaseAgent instance from the configuration."""
+        raise NotImplementedError('Subclasses must implement this method.')
+
+
+class TinyBaseAgent(AbstractAgent, AgentHooks):
     def __init__(
         self,
         llm: AbstractLLM,

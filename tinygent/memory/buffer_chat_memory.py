@@ -1,4 +1,14 @@
-from tinygent.memory.base_chat_memory import BaseChatMemory
+from typing import Literal
+
+from tinygent.datamodels.memory import AbstractMemoryConfig
+from tinygent.memory import BaseChatMemory
+
+
+class BufferChatMemoryConfig(AbstractMemoryConfig['BufferChatMemory']):
+    type: Literal['buffer'] = 'buffer'
+
+    def build(self) -> 'BufferChatMemory':
+        return BufferChatMemory()
 
 
 class BufferChatMemory(BaseChatMemory):
