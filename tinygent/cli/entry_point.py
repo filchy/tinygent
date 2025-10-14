@@ -22,10 +22,10 @@ def cli_end(result, **kwargs: Any) -> None:
 
     ctx = get_click_context()
 
-    logger.debug(
+    logger.info(
         'Total execution time: %.2f seconds', time.time() - ctx.obj['start_time']
     )
-    logger.debug('TinyGent CLI finished! Nothing small about that result!')
+    logger.info('TinyGent CLI finished! Nothing small about that result!')
 
 
 @app.callback(invoke_without_command=True, result_callback=cli_end)
@@ -52,5 +52,5 @@ def cli(
     ctx.obj = ctx.obj or {}
     ctx.obj['start_time'] = time.time()
 
-    logger.debug("Starting 'Tinygent' CLI...")
-    logger.debug('Hold tight, tiny things are about to do huge work!')
+    logger.info("Starting 'Tinygent' CLI...")
+    logger.info('Hold tight, tiny things are about to do huge work!')

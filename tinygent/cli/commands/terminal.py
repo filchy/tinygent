@@ -30,8 +30,18 @@ def main(
             resolve_path=True,
         ),
     ],
+    query: Annotated[
+        list[str],
+        typer.Option(
+            '--query',
+            '-q',
+            help='Query or list of queries to run in the terminal.'
+        ),
+    ]
 ):
     data = tiny_yaml_load(str(config_path))
     agent = build_agent(data)
-    for tool in agent._tools:
-        logger.info(f'Loaded tool: {tool.info.name} - {tool.info.description}')
+
+    for q in query:
+        response = agent.run(q)
+        logger.info('Agent response: %s', response)

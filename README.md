@@ -10,6 +10,41 @@ ___
 
 Tinygent is a lightweight, easy-to-use (hopefully), and efficient (also hopefully ;-0) library for building and deploying generative AI applications. It provides a simple interface for working with various models and tools, making it ideal for developers who want to quickly prototype and deploy AI solutions.
 
+## Two Ways to Use Tinygent
+
+Use Tinygent however you like:
+
+1. **Python Library** – build agents in code.
+2. **Terminal Client** – run YAML-defined agents from the CLI.
+
+### Library (super quick)
+
+```python
+from tinygent.cli.builder import build_agent
+from tinygent.utils.yaml import tiny_yaml_load
+agent = build_agent(tiny_yaml_load("examples/terminal/multi_step/config.yaml"))
+print(agent.run("Jaké je dnes počasí v Přerově?"))
+```
+
+Or build in code (tools + LLM):
+
+```python
+@tool
+def get_weather(d): ...
+agent = TinyMultiStepAgent(llm=OpenAILLM(), tools=[get_weather])
+```
+
+> Set your API key first:
+> `export OPENAI_API_KEY="your_openai_api_key"`
+
+### Terminal (one-liner)
+
+```bash
+tiny terminal -c examples/terminal/multi_step/config.yaml -q "Jaké je dnes počasí v Přerově?"
+```
+
+See more: [examples/terminal](examples/terminal)
+
 ## Getting Started
 
 ### Prerequisites
@@ -51,6 +86,18 @@ Before you begin using tinygent, ensure that you meet the following software pre
 
 ## Examples
 
+1. Ensure you have set the `OPENAI_API_KEY` environment variable to allow the example to use OpenAI's API. An API key can be obtained from [`openai.com`](https://openai.com/).
+    ```bash
+    export OPENAI_API_KEY="your_openai_api_key"
+    ```
+
+2. Run the examples using `uv`:
+    ```bash
+    uv run examples/agents/multi-step/main.py
+    ```
+
+3. Explore more examples below:
+
 ### Basics
 
 1. [Tool Usage](examples/tool-usage)
@@ -65,6 +112,10 @@ Before you begin using tinygent, ensure that you meet the following software pre
 ### Agents
 
 1. [Multi-Step Agent](examples/agents/multi-step)
+
+### Terminal client
+
+1. [Terminal Client](examples/terminal)
 
 ## Linting & Formatting
 

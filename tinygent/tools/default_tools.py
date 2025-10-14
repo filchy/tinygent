@@ -24,3 +24,13 @@ class TinyReasoningInput(TinyModel):
 def log_reasoning_step(data: TinyReasoningInput) -> TinyReasoningMessage:
     """Log the reasoning step."""
     return TinyReasoningMessage(content=data.reasoning)
+
+
+class MockWeatherInput(TinyModel):
+    location: str = Field(..., description='The location to get the weather for.')
+
+
+@tool
+def get_weather_mock(location: MockWeatherInput) -> str:
+    """Get the current weather for a given location."""
+    return f'The current weather in {location} is sunny with a temperature of 75°F.'
