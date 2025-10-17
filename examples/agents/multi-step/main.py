@@ -66,7 +66,6 @@ def main():
     )
 
     logger.info(f'[MEMORY] {multi_step_agent.memory.load_variables()}')
-
     logger.info(f'[RESULT] {result}')
 
 
