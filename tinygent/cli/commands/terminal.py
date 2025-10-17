@@ -33,11 +33,9 @@ def main(
     query: Annotated[
         list[str],
         typer.Option(
-            '--query',
-            '-q',
-            help='Query or list of queries to run in the terminal.'
+            '--query', '-q', help='Query or list of queries to run in the terminal.'
         ),
-    ]
+    ],
 ):
     data = tiny_yaml_load(str(config_path))
     agent = build_agent(data)

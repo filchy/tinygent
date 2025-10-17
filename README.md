@@ -111,7 +111,8 @@ Before you begin using tinygent, ensure that you meet the following software pre
 
 ### Agents
 
-1. [Multi-Step Agent](examples/agents/multi-step)
+1. [Hooks in Agents](examples/hooks/)
+2. [Multi-Step Agent](examples/agents/multi-step)
 
 ### Terminal client
 

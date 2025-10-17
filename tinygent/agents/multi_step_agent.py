@@ -118,8 +118,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
         tools: list[AbstractTool] = [],
         max_steps: int = 15,
         plan_interval: int = 5,
+        **kwargs,
     ) -> None:
-        super().__init__(llm=llm, tools=tools)
+        super().__init__(llm=llm, tools=tools, **kwargs)
 
         _validate_prompt_template(prompt_template)
 
@@ -262,17 +263,15 @@ class TinyMultiStepAgent(TinyBaseAgent):
                 for msg in plan_generator:
                     if isinstance(msg, TinyPlanMessage):
                         logger.debug(
-                            '[%d. STEP - Plan]: %s',
-                            self._step_number,
-                            msg.content
+                            '[%d. STEP - Plan]: %s', self._step_number, msg.content
                         )
+                        self.on_plan(msg.content)
                         self._planned_steps.append(msg)
                     if isinstance(msg, TinyReasoningMessage):
                         logger.debug(
-                            '[%d. STEP - Reasoning]: %s',
-                            self._step_number,
-                            msg.content
+                            '[%d. STEP - Reasoning]: %s', self._step_number, msg.content
                         )
+                        self.on_reasoning(msg.content)
                     self.memory.save_context(msg)
 
             try:
@@ -281,11 +280,11 @@ class TinyMultiStepAgent(TinyBaseAgent):
 
                     if isinstance(msg, TinyChatMessage):
                         logger.debug(
-                            '[%d. STEP - Chat]: %s',
-                            self._step_number,
-                            msg.content
+                            '[%d. STEP - Chat]: %s', self._step_number, msg.content
                         )
                         returned_final_answer = True
+                        self._final_answer = msg.content
+                        self.on_answer(msg.content)
 
                     elif isinstance(msg, TinyToolCall):
                         called_tool = self.get_tool(msg.tool_name)
@@ -294,8 +293,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                             self._tool_calls.append(msg)
                         else:
                             logger.error(
-                                'Tool %s not found. Skipping tool call.',
-                                msg.tool_name
+                                'Tool %s not found. Skipping tool call.', msg.tool_name
                             )
 
                         if isinstance(called_tool, ToolWithReasoning):
@@ -305,6 +303,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                                 self._step_number,
                                 reasoning,
                             )
+                            self.on_reasoning(reasoning)
 
                         logger.debug(
                             '[%s. STEP - Tool Call]: %s(%s) = %s',
@@ -319,12 +318,10 @@ class TinyMultiStepAgent(TinyBaseAgent):
                         ):
                             returned_final_answer = True
                             self._final_answer = msg.result.content
+                            self.on_answer(msg.result.content)
 
                     else:
-                        logger.warning(
-                            'Unhandeled message type: %s',
-                            msg
-                        )
+                        logger.warning('Unhandled message type: %s', msg)
 
                     yield msg
 
@@ -345,6 +342,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
             final_answer_generator = self._stream_final_answer(input_text)
             for final_msg in final_answer_generator:
                 self._final_answer = final_msg.content
+                self.on_answer(final_msg.content)
                 self.memory.save_context(final_msg)
                 yield final_msg
 

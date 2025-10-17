@@ -42,8 +42,9 @@ class TinyBaseAgent(AbstractAgent, AgentHooks):
         llm: AbstractLLM,
         tools: Sequence[AbstractTool] = (),
         memory_list: Sequence[AbstractMemory] = (),
+        **hooks_kwargs: Any,
     ) -> None:
-        AgentHooks.__init__(self)
+        AgentHooks.__init__(self, **hooks_kwargs)
 
         self.llm = llm
         self.memory_list = memory_list

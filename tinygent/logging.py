@@ -1,5 +1,7 @@
 import logging
 
+from tinygent.utils.color_printer import TinyColorPrinter
+
 LOG_LEVELS = {
     'DEBUG': logging.DEBUG,
     'INFO': logging.INFO,
@@ -8,22 +10,25 @@ LOG_LEVELS = {
     'CRITICAL': logging.CRITICAL,
 }
 
-COLORS = {
-    'DEBUG': '\033[36m',  # Cyan
-    'INFO': '\033[32m',  # Green
-    'WARNING': '\033[33m',  # Yellow
-    'ERROR': '\033[31m',  # Red
-    'CRITICAL': '\033[41m',  # Red background
-    'RESET': '\033[0m',
-}
-
 
 class ColorFormatter(logging.Formatter):
+    level_map = {
+        'DEBUG': 'CYAN',
+        'INFO': 'GREEN',
+        'WARNING': 'YELLOW',
+        'ERROR': 'RED',
+        'CRITICAL': 'RED_BG',
+    }
+
     def format(self, record: logging.LogRecord) -> str:
-        levelname = record.levelname
-        color = COLORS.get(levelname, COLORS['RESET'])
-        record.levelname = f'{color}{levelname}{COLORS["RESET"]}'
-        record.msg = f'{color}{record.msg}{COLORS["RESET"]}'
+        color = TinyColorPrinter.COLORS.get(
+            self.level_map.get(record.levelname, ''), TinyColorPrinter.COLORS['RESET']
+        )
+        reset = TinyColorPrinter.COLORS['RESET']
+
+        record.levelname = f'{color}{record.levelname}{reset}'
+        record.msg = f'{color}{record.msg}{reset}'
+
         return super().format(record)
 
 
