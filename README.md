@@ -113,7 +113,7 @@ Before you begin using tinygent, ensure that you meet the following software pre
 1. [Hooks in Agents](examples/agents/hooks/)
 2. [Multi-Step Agent](examples/agents/multi-step)
 
-### Terminal client
+### Others
 
 1. [Terminal Client](examples/terminal)
 
