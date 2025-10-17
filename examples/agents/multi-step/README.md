@@ -63,9 +63,9 @@ from tinygent.agents.multi_step_agent import (
 )
 from tinygent.llms import OpenAILLM
 from tinygent.memory import BufferChatMemory
-from tinygent.utils.load_file import load_yaml
+from tinygent.utils.yaml import tiny_yaml_load
 
-multi_step_agent_prompt = load_yaml(str(Path(__file__).parent / "agent.yaml"))
+multi_step_agent_prompt = tiny_yaml_load(str(Path(__file__).parent / "agent.yaml"))
 
 multi_step_agent = TinyMultiStepAgent(
     llm=OpenAILLM(),
@@ -76,8 +76,8 @@ multi_step_agent = TinyMultiStepAgent(
             final_answer=multi_step_agent_prompt["acter"]["final_answer"],
         ),
         plan=PlanPromptTemplate(
-            init_plan=multi_step_agent_prompt["planner"]["init_plan"],
-            update_plan=multi_step_agent_prompt["planner"]["update_plan"],
+            init_plan=multi_step_agent_prompt["plan"]["init_plan"],
+            update_plan=multi_step_agent_prompt["plan"]["update_plan"],
         ),
         final=FinalAnswerPromptTemplate(
             final_answer=multi_step_agent_prompt["final"]["final_answer"],

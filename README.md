@@ -34,8 +34,7 @@ def get_weather(d): ...
 agent = TinyMultiStepAgent(llm=OpenAILLM(), tools=[get_weather])
 ```
 
-> Set your API key first:
-> `export OPENAI_API_KEY="your_openai_api_key"`
+See more: [examples/agents](examples/agents)
 
 ### Terminal (one-liner)
 

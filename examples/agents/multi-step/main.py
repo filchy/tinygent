@@ -12,7 +12,7 @@ from tinygent.logging import setup_general_loggers
 from tinygent.logging import setup_logger
 from tinygent.tools.tool import tool
 from tinygent.types.base import TinyModel
-from tinygent.utils.load_file import load_yaml
+from tinygent.utils.yaml import tiny_yaml_load
 
 logger = setup_logger('debug')
 setup_general_loggers('warning')
@@ -41,7 +41,7 @@ def get_best_destination(data: GetBestDestinationInput) -> list[str]:
 
 
 def main():
-    multi_step_agent_prompt = load_yaml(str(Path(__file__).parent / 'agent.yaml'))
+    multi_step_agent_prompt = tiny_yaml_load(str(Path(__file__).parent / 'prompts.yaml'))
 
     multi_step_agent = TinyMultiStepAgent(
         llm=OpenAILLM(),
@@ -51,8 +51,8 @@ def main():
                 final_answer=multi_step_agent_prompt['acter']['final_answer'],
             ),
             plan=PlanPromptTemplate(
-                init_plan=multi_step_agent_prompt['planner']['init_plan'],
-                update_plan=multi_step_agent_prompt['planner']['update_plan'],
+                init_plan=multi_step_agent_prompt['plan']['init_plan'],
+                update_plan=multi_step_agent_prompt['plan']['update_plan'],
             ),
             final=FinalAnswerPromptTemplate(
                 final_answer=multi_step_agent_prompt['final']['final_answer']

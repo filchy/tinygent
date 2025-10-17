@@ -15,5 +15,4 @@ prompt_template:
   final:
     final_answer: "Fallback answer for task {{ task }}, history {{ history }}, steps {{ steps }}"
 tools:
-  - name: provide_final_answer
   - name: get_weather_mock

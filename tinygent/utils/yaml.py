@@ -25,7 +25,7 @@ def _construct_include(safe_loader: TinySafeLoader, node: yaml.Node) -> Any:
     """Include file referenced at node."""
 
     scalar = cast(str, safe_loader.construct_scalar(cast(yaml.ScalarNode, node)))
-    filename = os.path.abspath(scalar)
+    filename = os.path.join(safe_loader._root, scalar)
     extension = os.path.splitext(filename)[1].lstrip('.')
 
     with open(filename, 'r') as f:
