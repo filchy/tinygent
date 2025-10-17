@@ -23,7 +23,7 @@ Use Tinygent however you like:
 from tinygent.cli.builder import build_agent
 from tinygent.utils.yaml import tiny_yaml_load
 agent = build_agent(tiny_yaml_load("examples/terminal/multi_step/config.yaml"))
-print(agent.run("Jaké je dnes počasí v Přerově?"))
+print(agent.run("What is the weather in Paris today?"))
 ```
 
 Or build in code (tools + LLM):
@@ -40,7 +40,7 @@ agent = TinyMultiStepAgent(llm=OpenAILLM(), tools=[get_weather])
 ### Terminal (one-liner)
 
 ```bash
-tiny terminal -c examples/terminal/multi_step/config.yaml -q "Jaké je dnes počasí v Přerově?"
+tiny terminal -c examples/terminal/multi_step/config.yaml -q "What is the weather in Paris today?"
 ```
 
 See more: [examples/terminal](examples/terminal)
