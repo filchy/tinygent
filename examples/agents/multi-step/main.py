@@ -37,7 +37,7 @@ class GetBestDestinationInput(TinyModel):
 def get_best_destination(data: GetBestDestinationInput) -> list[str]:
     """Get the best travel destinations."""
     destinations = {'Paris', 'New York', 'Tokyo', 'Barcelona', 'Rome'}
-    return destinations[: data.top_k]
+    return list(destinations)[: data.top_k]
 
 
 def main():
