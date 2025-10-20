@@ -3,15 +3,14 @@ from __future__ import annotations
 from collections.abc import Generator
 import logging
 import typing
+from typing import Any
 from typing import Literal
 
 from tinygent.agents import TinyBaseAgent
 from tinygent.agents import TinyBaseAgentConfig
 from tinygent.cli.builder import build_llm
 from tinygent.cli.builder import build_tool
-from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.datamodels.llm_io import TinyLLMInput
-from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyAIMessage
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyHumanMessage
@@ -19,13 +18,13 @@ from tinygent.datamodels.messages import TinyPlanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
+from tinygent.datamodels.prompt import TinyPromptTemplate
 from tinygent.memory import BufferChatMemory
 from tinygent.tools.default_tools import provide_final_answer
 from tinygent.tools.reasoning_tool import ToolWithReasoning
 from tinygent.types.base import TinyModel
 from tinygent.utils.answer_validation import is_final_answer
 from tinygent.utils.jinja_utils import render_template
-from tinygent.utils.jinja_utils import validate_template
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm import AbstractLLM
@@ -34,27 +33,40 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class PlanPromptTemplate(TinyModel):
+class PlanPromptTemplate(TinyPromptTemplate):
     """Used to generate or update the plan."""
 
     init_plan: str
     update_plan: str
 
+    _template_fields = {
+        'init_plan': {'task', 'tools'},
+        'update_plan': {'task', 'tools', 'history', 'steps', 'remaining_steps'},
+    }
 
-class ActionPromptTemplate(TinyModel):
+
+class ActionPromptTemplate(TinyPromptTemplate):
     """Used to generate the final answer or action."""
 
     system: str
     final_answer: str
 
+    _template_fields = {
+        'final_answer': {'task', 'tools', 'history', 'steps', 'tool_calls'},
+    }
 
-class FinalAnswerPromptTemplate(TinyModel):
+
+class FinalAnswerPromptTemplate(TinyPromptTemplate):
     """Used to generate the final answer if maximum steps achieved."""
 
     final_answer: str
 
+    _template_fields = {
+        'final_answer': {'task', 'history', 'steps'},
+    }
 
-class MultiStepPromptTemplate(TinyModel):
+
+class MultiStepPromptTemplate(TinyPromptTemplate):
     """Prompt templates for the multi-step agent."""
 
     plan: PlanPromptTemplate
@@ -67,7 +79,6 @@ class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
 
     type: Literal['multistep'] = 'multistep'
 
-    llm: AbstractLLMConfig
     prompt_template: MultiStepPromptTemplate
     max_steps: int = 15
     plan_interval: int = 5
@@ -82,35 +93,9 @@ class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
         )
 
 
-def _validate_prompt_template(prompt_template: MultiStepPromptTemplate) -> None:
-    if not validate_template(prompt_template.plan.init_plan, {'task', 'tools'}):
-        raise ValueError('plan.init_plan missing required fields {task, tools}')
-
-    if not validate_template(
-        prompt_template.plan.update_plan,
-        {'task', 'tools', 'history', 'steps', 'remaining_steps'},
-    ):
-        raise ValueError(
-            'plan.update_plan missing required fields {task, tools, history, steps, remaining_steps}'
-        )
-
-    if not validate_template(
-        prompt_template.acter.final_answer,
-        {'task', 'tools', 'history', 'steps', 'tool_calls'},
-    ):
-        raise ValueError(
-            'acter.final_answer missing required fields {task, tools, history}'
-        )
-
-    if not validate_template(
-        prompt_template.final.final_answer, {'task', 'history', 'steps'}
-    ):
-        raise ValueError(
-            'final.final_answer missing required fields {task, tools, history, steps}'
-        )
-
-
 class TinyMultiStepAgent(TinyBaseAgent):
+    """Multi-Step Agent implementation."""
+
     def __init__(
         self,
         llm: AbstractLLM,
@@ -122,9 +107,6 @@ class TinyMultiStepAgent(TinyBaseAgent):
     ) -> None:
         super().__init__(llm=llm, tools=tools, **kwargs)
 
-        _validate_prompt_template(prompt_template)
-
-        self._final_answer: str | None = None
         self._step_number: int = 1
         self._planned_steps: list[TinyPlanMessage] = []
         self._tool_calls: list[TinyToolCall] = []
@@ -150,39 +132,33 @@ class TinyMultiStepAgent(TinyBaseAgent):
             planned_steps: list[str]
             reasoning: str
 
+        variables: dict[str, Any]
+
         # Initial plan
         if self._step_number == 1:
-            messages = TinyLLMInput(
-                messages=[
-                    *self.memory.chat_messages,
-                    TinyHumanMessage(
-                        content=render_template(
-                            self.plan_prompt.init_plan,
-                            {'task': task, 'tools': self.tools},
-                        )
-                    ),
-                ]
-            )
+            template = self.plan_prompt.init_plan
+            variables = {'task': task, 'tools': self.tools}
         else:
-            messages = TinyLLMInput(
-                messages=[
-                    *self.memory.chat_messages,
-                    TinyHumanMessage(
-                        content=render_template(
-                            self.plan_prompt.update_plan,
-                            {
-                                'task': task,
-                                'tools': self.tools,
-                                'history': self.memory.load_variables(),
-                                'steps': self._planned_steps,
-                                'remaining_steps': self.max_steps
-                                - self._step_number
-                                + 1,
-                            },
-                        )
-                    ),
-                ]
-            )
+            template = self.plan_prompt.update_plan
+            variables = {
+                'task': task,
+                'tools': self.tools,
+                'history': self.memory.load_variables(),
+                'steps': self._planned_steps,
+                'remaining_steps': self.max_steps - self._step_number + 1,
+            }
+
+        messages = TinyLLMInput(
+            messages=[
+                *self.memory.chat_messages,
+                TinyHumanMessage(
+                    content=render_template(
+                        template,
+                        variables,
+                    )
+                ),
+            ]
+        )
 
         result = self.run_llm(
             self.llm.generate_structured,
@@ -244,7 +220,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
             if isinstance(msg, TinyChatMessage):
                 yield msg
 
-    def _run_generator(self, input_text: str) -> Generator[AllTinyMessages]:
+    def _run_agent(self, input_text: str) -> Generator[str]:
         self._step_number = 1
         returned_final_answer: bool = False
 
@@ -283,8 +259,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
                             '[%d. STEP - Chat]: %s', self._step_number, msg.content
                         )
                         returned_final_answer = True
-                        self._final_answer = msg.content
+
                         self.on_answer(msg.content)
+                        yield msg.content
 
                     elif isinstance(msg, TinyToolCall):
                         called_tool = self.get_tool(msg.tool_name)
@@ -317,13 +294,12 @@ class TinyMultiStepAgent(TinyBaseAgent):
                             msg.result
                         ):
                             returned_final_answer = True
-                            self._final_answer = msg.result.content
+
                             self.on_answer(msg.result.content)
+                            yield msg.result.content
 
                     else:
                         logger.warning('Unhandled message type: %s', msg)
-
-                    yield msg
 
                     if returned_final_answer:
                         break
@@ -341,10 +317,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
 
             final_answer_generator = self._stream_final_answer(input_text)
             for final_msg in final_answer_generator:
-                self._final_answer = final_msg.content
                 self.on_answer(final_msg.content)
                 self.memory.save_context(final_msg)
-                yield final_msg
+                yield final_msg.content
 
     def run(
         self,
@@ -354,13 +329,15 @@ class TinyMultiStepAgent(TinyBaseAgent):
         logger.debug('[USER INPUT] %s', input_text)
 
         if reset:
-            self._final_answer = None
+            logger.debug('[AGENT RESET]')
+
             self._step_number = 1
             self._planned_steps = []
+            self._tool_calls = []
             self.memory.clear()
 
-        results = list(self._run_generator(input_text))
-        for res in results:
-            logger.debug('[AGENT OUTPUT] %s', res.tiny_str)
+        final_answer: str = ''
+        for res in self._run_agent(input_text):
+            final_answer += res
 
-        return self.final_answer or 'No final answer provided.'
+        return final_answer

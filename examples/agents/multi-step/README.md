@@ -3,6 +3,32 @@
 This example demonstrates how to build and run a **multi-step ReAct-style agent** (`TinyMultiStepAgent`) using `tinygent`.
 The agent alternates between **planning** and **acting**, while keeping track of steps, tools, and conversation history.
 
+```mermaid
+flowchart RL
+
+userInputId([User])
+
+subgraph agentId[Agent]
+    stepsGeneratorId[Steps & Reasoning Generation]
+    actionGeneratorId[Action Generation]
+    memoryId[Memory]
+end
+
+subgraph envId[Environment]
+    toolId1[Tool 1]
+    toolId2[Tool 2]
+    ...
+end
+
+userInputId -->|Input query| stepsGeneratorId
+stepsGeneratorId -.-> actionGeneratorId
+actionGeneratorId -.->|Tool calls| envId
+actionGeneratorId -->|Final answer| userInputId
+envId -.->|Tool results| memoryId
+memoryId -.->|Every `plan_interval` turns| stepsGeneratorId
+memoryId -.->|Every non-`plan_interval` turns| actionGeneratorId
+```
+
 ---
 
 ## Concept
@@ -112,14 +138,3 @@ print("[MEMORY]", multi_step_agent.memory.load_variables())
 [RESULT] The best destination is Paris. The weather in Paris is sunny with a high of 75°F.
 [MEMORY] {'chat_history': '... full conversation log ...'}
 ```
-
----
-
-## When to Use
-
-* You want an agent that **reasons over multiple steps** before answering.
-* You need **plans that can be updated** during execution.
-* You want **tool use** deeply integrated into reasoning and final answers.
-* You want **memory persistence** for conversation continuity.
-
-This setup is ideal for complex workflows (e.g., travel planning, research assistants, or multi-tool problem solving) where a **plan → act → revise** loop improves results.
