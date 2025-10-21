@@ -28,4 +28,4 @@ jobs:
           uv sync --all-groups --all-extras
 
       - name: Run Mypy
-        run: uv run mypy .
+        run: uv run mypy
