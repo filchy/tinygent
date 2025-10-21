@@ -53,14 +53,6 @@ class TinyBaseAgent(AbstractAgent, AgentHooks):
         self._final_answer: str | None = None
 
     @property
-    def final_answer(self) -> str | None:
-        return self._final_answer
-
-    @final_answer.setter
-    def final_answer(self, value: str | None) -> None:
-        self._final_answer = value
-
-    @property
     def tools(self) -> Sequence[AbstractTool]:
         return self._tools
 

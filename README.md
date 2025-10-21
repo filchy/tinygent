@@ -8,41 +8,7 @@
 
 ___
 
-Tinygent is a lightweight, easy-to-use (hopefully), and efficient (also hopefully ;-0) library for building and deploying generative AI applications. It provides a simple interface for working with various models and tools, making it ideal for developers who want to quickly prototype and deploy AI solutions.
-
-## Two Ways to Use Tinygent
-
-Use Tinygent however you like:
-
-1. **Python Library** – build agents in code.
-2. **Terminal Client** – run YAML-defined agents from the CLI.
-
-### Library (super quick)
-
-```python
-from tinygent.cli.builder import build_agent
-from tinygent.utils.yaml import tiny_yaml_load
-agent = build_agent(tiny_yaml_load("examples/terminal/multi_step/config.yaml"))
-print(agent.run("What is the weather in Paris today?"))
-```
-
-Or build in code (tools + LLM):
-
-```python
-@tool
-def get_weather(d): ...
-agent = TinyMultiStepAgent(llm=OpenAILLM(), tools=[get_weather])
-```
-
-See more: [examples/agents](examples/agents)
-
-### Terminal (one-liner)
-
-```bash
-tiny terminal -c examples/terminal/multi_step/config.yaml -q "What is the weather in Paris today?"
-```
-
-See more: [examples/terminal](examples/terminal)
+Tinygent is a tiny agentic framework - lightweight, easy to use (hopefully), and efficient (also hopefully ;-0) library for building and deploying generative AI applications. It provides a simple interface for working with various models and tools, making it ideal for developers who want to quickly prototype and deploy AI solutions.
 
 ## Getting Started
 
@@ -83,7 +49,7 @@ Before you begin using tinygent, ensure that you meet the following software pre
     uv pip install -e .
     ```
 
-## Examples
+## Examples (Quick Start)
 
 1. Ensure you have set the `OPENAI_API_KEY` environment variable to allow the example to use OpenAI's API. An API key can be obtained from [`openai.com`](https://openai.com/).
     ```bash
@@ -111,11 +77,8 @@ Before you begin using tinygent, ensure that you meet the following software pre
 ### Agents
 
 1. [Hooks in Agents](examples/agents/hooks/)
-2. [Multi-Step Agent](examples/agents/multi-step)
-
-### Others
-
-1. [Terminal Client](examples/terminal)
+2. [ReAct Agent](examples/agents/react/)
+3. [Multi-Step Agent](examples/agents/multi-step)
 
 ## Linting & Formatting
 

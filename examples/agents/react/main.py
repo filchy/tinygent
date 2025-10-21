@@ -2,12 +2,11 @@ from pathlib import Path
 
 from pydantic import Field
 
-from tinygent.agents.multi_step_agent import ActionPromptTemplate
-from tinygent.agents.multi_step_agent import FinalAnswerPromptTemplate
-from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
-from tinygent.agents.multi_step_agent import PlanPromptTemplate
-from tinygent.agents.multi_step_agent import TinyMultiStepAgent
-from tinygent.llms import OpenAILLM
+from tinygent.agents.react_agent import ActionPromptTemplate
+from tinygent.agents.react_agent import ReActPromptTemplate
+from tinygent.agents.react_agent import ReasonPromptTemplate
+from tinygent.agents.react_agent import TinyReActAgent
+from tinygent.llms.openai import OpenAILLM
 from tinygent.logging import setup_general_loggers
 from tinygent.logging import setup_logger
 from tinygent.tools.tool import tool
@@ -41,32 +40,26 @@ def get_best_destination(data: GetBestDestinationInput) -> list[str]:
 
 
 def main():
-    multi_step_agent_prompt = tiny_yaml_load(str(Path(__file__).parent / 'prompts.yaml'))
+    react_agent_prompt = tiny_yaml_load(str(Path(__file__).parent / 'prompts.yaml'))
 
-    multi_step_agent = TinyMultiStepAgent(
+    react_agent = TinyReActAgent(
         llm=OpenAILLM(),
-        prompt_template=MultiStepPromptTemplate(
-            acter=ActionPromptTemplate(
-                system=multi_step_agent_prompt['acter']['system'],
-                final_answer=multi_step_agent_prompt['acter']['final_answer'],
+        prompt_template=ReActPromptTemplate(
+            reason=ReasonPromptTemplate(
+                init=react_agent_prompt['reason']['init'],
+                update=react_agent_prompt['reason']['update'],
             ),
-            plan=PlanPromptTemplate(
-                init_plan=multi_step_agent_prompt['plan']['init_plan'],
-                update_plan=multi_step_agent_prompt['plan']['update_plan'],
-            ),
-            final=FinalAnswerPromptTemplate(
-                final_answer=multi_step_agent_prompt['final']['final_answer']
-            ),
+            action=ActionPromptTemplate(action=react_agent_prompt['action']['action']),
         ),
         tools=[get_weather, get_best_destination],
     )
 
-    result = multi_step_agent.run(
+    result = react_agent.run(
         'What is the best travel destination and what is the weather like there?'
     )
 
     logger.info(f'[RESULT] {result}')
-    logger.info(f'[MEMORY] {multi_step_agent.memory.load_variables()}')
+    logger.info(f'[MEMORY] {react_agent.memory.load_variables()}')
 
 
 if __name__ == '__main__':
