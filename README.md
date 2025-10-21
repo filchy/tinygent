@@ -1,9 +1,17 @@
-<div align="center">
-    <picture>
-        <source media="(prefers-color-scheme: light)" srcset="docs/dark-logo.png">
-        <source media="(prefers-color-scheme: dark)" srcset="docs/light-logo.png">
-        <img alt="TinyCorp logo" src="docs/light-logo.png" width="50%" height="50%">
-    </picture>
+<div align="center" style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="docs/dark-avatar.png">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/light-avatar.png">
+    <img alt="TinyCorp avatar" src="docs/light-avatar.png" width="25%" height="25%">
+  </picture>
+
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="docs/dark-logo.png">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/light-logo.png">
+    <img alt="TinyCorp logo" src="docs/light-logo.png" width="50%" height="50%">
+  </picture>
+
 </div>
 
 ___
