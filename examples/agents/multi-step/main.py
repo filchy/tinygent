@@ -66,6 +66,7 @@ def main():
     )
 
     logger.info(f'[RESULT] {result}')
+    logger.info(f'[MEMORY] {multi_step_agent.memory.load_variables()}')
 
 
 if __name__ == '__main__':

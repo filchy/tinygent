@@ -17,27 +17,26 @@ logger = setup_logger('debug')
 setup_general_loggers('warning')
 
 
-class SearchAppleInput(TinyModel):
-    query: str = Field(
-        ..., description='The search query to look up information about apples.'
-    )
+class WeatherInput(TinyModel):
+    location: str = Field(..., description='The location to get the weather for.')
 
 
 @tool
-def search_apple_information(data: SearchAppleInput) -> str:
-    return 'Apple was founded by Steve Jobs, Steve Wozniak, and Ronald Wayne in 1976.'
+def get_weather(data: WeatherInput) -> str:
+    """Get the current weather in a given location."""
+
+    return f'The weather in {data.location} is sunny with a high of 75°F.'
 
 
-class SearchAmericanHistoryInput(TinyModel):
-    query: str = Field(
-        ...,
-        description='The search query to look up information about American history.',
-    )
+class GetBestDestinationInput(TinyModel):
+    top_k: int = Field(..., description='The number of top destinations to return.')
 
 
 @tool
-def search_american_history(data: SearchAmericanHistoryInput) -> str:
-    return 'Gerald Ford'
+def get_best_destination(data: GetBestDestinationInput) -> list[str]:
+    """Get the best travel destinations."""
+    destinations = {'Paris', 'New York', 'Tokyo', 'Barcelona', 'Rome'}
+    return list(destinations)[: data.top_k]
 
 
 def main():
@@ -52,12 +51,15 @@ def main():
             ),
             action=ActionPromptTemplate(action=react_agent_prompt['action']['action']),
         ),
-        tools=[search_apple_information, search_american_history],
+        tools=[get_weather, get_best_destination],
     )
 
-    result = react_agent.run('Who was the president of the USA when Apple was founded?')
+    result = react_agent.run(
+        'What is the best travel destination and what is the weather like there?'
+    )
 
-    logger.info(f'Final Result: {result}')
+    logger.info(f'[RESULT] {result}')
+    logger.info(f'[MEMORY] {react_agent.memory.load_variables()}')
 
 
 if __name__ == '__main__':

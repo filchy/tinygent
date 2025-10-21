@@ -80,7 +80,7 @@ class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
     type: Literal['multistep'] = 'multistep'
 
     prompt_template: MultiStepPromptTemplate
-    max_steps: int = 15
+    max_iterations: int = 15
     plan_interval: int = 5
 
     def build(self) -> TinyMultiStepAgent:
@@ -88,7 +88,7 @@ class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
             llm=build_llm(self.llm),
             prompt_template=self.prompt_template,
             tools=[build_tool(tool) for tool in self.tools],
-            max_steps=self.max_steps,
+            max_iterations=self.max_iterations,
             plan_interval=self.plan_interval,
         )
 
@@ -101,7 +101,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
         llm: AbstractLLM,
         prompt_template: MultiStepPromptTemplate,
         tools: list[AbstractTool] = [],
-        max_steps: int = 15,
+        max_iterations: int = 15,
         plan_interval: int = 5,
         **kwargs,
     ) -> None:
@@ -116,7 +116,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
             ToolWithReasoning(tool) for tool in __all_tools
         ]
 
-        self.max_steps = max_steps
+        self.max_iterations = max_iterations
         self.plan_interval = plan_interval
 
         self.acter_prompt = prompt_template.acter
@@ -145,7 +145,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                 'tools': self.tools,
                 'history': self.memory.load_variables(),
                 'steps': self._planned_steps,
-                'remaining_steps': self.max_steps - self._step_number + 1,
+                'remaining_steps': self.max_iterations - self._step_number + 1,
             }
 
         messages = TinyLLMInput(
@@ -226,8 +226,8 @@ class TinyMultiStepAgent(TinyBaseAgent):
 
         self.memory.save_context(TinyHumanMessage(content=input_text))
 
-        while not returned_final_answer and (self._step_number <= self.max_steps):
-            logger.debug('--- STEP %d ---', self._step_number)
+        while not returned_final_answer and (self._step_number <= self.max_iterations):
+            logger.debug('--- ITERATION %d ---', self._step_number)
 
             if self._step_number == 1 or (
                 (self._step_number - 1) % self.plan_interval == 0
@@ -239,13 +239,13 @@ class TinyMultiStepAgent(TinyBaseAgent):
                 for msg in plan_generator:
                     if isinstance(msg, TinyPlanMessage):
                         logger.debug(
-                            '[%d. STEP - Plan]: %s', self._step_number, msg.content
+                            '[%d. ITERATION - Plan]: %s', self._step_number, msg.content
                         )
                         self.on_plan(msg.content)
                         self._planned_steps.append(msg)
                     if isinstance(msg, TinyReasoningMessage):
                         logger.debug(
-                            '[%d. STEP - Reasoning]: %s', self._step_number, msg.content
+                            '[%d. ITERATION - Reasoning]: %s', self._step_number, msg.content
                         )
                         self.on_reasoning(msg.content)
                     self.memory.save_context(msg)
@@ -256,7 +256,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
 
                     if isinstance(msg, TinyChatMessage):
                         logger.debug(
-                            '[%d. STEP - Chat]: %s', self._step_number, msg.content
+                            '[%d. ITERATION - Chat]: %s', self._step_number, msg.content
                         )
                         returned_final_answer = True
 
@@ -276,14 +276,14 @@ class TinyMultiStepAgent(TinyBaseAgent):
                         if isinstance(called_tool, ToolWithReasoning):
                             reasoning = msg.arguments.get('reasoning', '')
                             logger.debug(
-                                '[%d. STEP - Tool Reasoning]: %s',
+                                '[%d. ITERATION - Tool Reasoning]: %s',
                                 self._step_number,
                                 reasoning,
                             )
                             self.on_reasoning(reasoning)
 
                         logger.debug(
-                            '[%s. STEP - Tool Call]: %s(%s) = %s',
+                            '[%s. ITERATION - Tool Call]: %s(%s) = %s',
                             self._step_number,
                             msg.tool_name,
                             msg.arguments,

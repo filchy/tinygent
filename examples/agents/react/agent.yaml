@@ -1,6 +1,5 @@
-type: multistep
+type: react
 max_iterations: 10
-plan_interval: 2
 llm:
   type: openai
   model: gpt-4o-mini

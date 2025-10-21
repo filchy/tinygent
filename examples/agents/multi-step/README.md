@@ -4,7 +4,7 @@ This example demonstrates how to build and run a **multi-step ReAct-style agent*
 The agent alternates between **planning** and **acting**, while keeping track of steps, tools, and conversation history.
 
 ```mermaid
-flowchart RL
+flowchart BT
 
 userInputId([User])
 
@@ -35,7 +35,7 @@ memoryId -.->|Every non-`plan_interval` turns| actionGeneratorId
 
 * **Planning**: the agent generates or updates a plan every `plan_interval` turns (default: 5).
 * **Acting**: the agent executes planned actions step by step, calling tools when needed.
-* **Final Answer**: if no final answer is reached within `max_steps` (default: 15), the agent generates one explicitly.
+* **Final Answer**: if no final answer is reached within `max_iterations` (default: 15), the agent generates one explicitly.
 * **Memory**: stores conversation history using `BufferChatMemory` (or any other memory backend).
 * **Tools**: user-defined functions decorated with `@tool`.
 
@@ -47,6 +47,14 @@ memoryId -.->|Every non-`plan_interval` turns| actionGeneratorId
 * `agent.yaml` — prompt templates for planning, acting, and final answer generation.
 
 ---
+
+## Quick Run
+```bash
+tiny terminal \
+  -c examples/agents/multi-step/agent.yaml \
+  -q "What is the weather like in Paris?" \
+  -q "What is the weather like in New York?" \
+```
 
 ## Example Tools
 
@@ -75,7 +83,6 @@ def get_best_destination(data: GetBestDestinationInput) -> list[str]:
 ```
 
 ---
-
 ## Example Agent
 
 ```python
