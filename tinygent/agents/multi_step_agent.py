@@ -245,7 +245,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
                         self._planned_steps.append(msg)
                     if isinstance(msg, TinyReasoningMessage):
                         logger.debug(
-                            '[%d. ITERATION - Reasoning]: %s', self._step_number, msg.content
+                            '[%d. ITERATION - Reasoning]: %s',
+                            self._step_number,
+                            msg.content,
                         )
                         self.on_reasoning(msg.content)
                     self.memory.save_context(msg)

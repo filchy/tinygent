@@ -6,9 +6,5 @@ from tinygent.runtime.global_registry import GlobalRegistry
 
 _registry = GlobalRegistry().get_registry()
 
-_registry.register_agent(
-    'multistep', TinyMultiStepAgentConfig, TinyMultiStepAgent
-)
-_registry.register_agent(
-    'react', TinyReActAgentConfig, TinyReActAgent
-)
+_registry.register_agent('multistep', TinyMultiStepAgentConfig, TinyMultiStepAgent)
+_registry.register_agent('react', TinyReActAgentConfig, TinyReActAgent)
