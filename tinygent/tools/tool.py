@@ -1,5 +1,7 @@
 from typing import Any
+from typing import Awaitable
 from typing import Callable
+from typing import Coroutine
 from typing import Generic
 from typing import Iterable
 from typing import Literal
@@ -33,7 +35,7 @@ class Tool(AbstractTool, Generic[T, R]):
     ) -> None:
         self.__original_fn = fn
 
-        self._cached_fn: Callable[[T], R] | None = None
+        self._cached_fn: Callable[..., Any] | Callable[..., Awaitable[Any]]
         self._info: ToolInfo[T, R] = ToolInfo.from_callable(
             fn, use_cache=use_cache, cache_size=cache_size
         )
@@ -48,7 +50,8 @@ class Tool(AbstractTool, Generic[T, R]):
             if self.info.is_coroutine:
                 from async_lru import alru_cache
 
-                self._cached_fn = alru_cache(maxsize=cache_size)(fn)  # type: ignore[misc]
+                async_fn = cast(Callable[..., Coroutine[Any, Any, Any]], fn)
+                self._cached_fn = alru_cache(maxsize=cache_size)(async_fn)
             else:
                 from functools import lru_cache
 

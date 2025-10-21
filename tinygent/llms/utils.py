@@ -166,7 +166,7 @@ def openai_result_to_tiny_result(resp: ChatCompletion) -> TinyLLMResult:
                         }
                     )
                 else:
-                    tool_calls.append({'id': tc.id, 'type': tc.type, 'raw': tc})
+                    tool_calls.append({'id': tc.id, 'type': tc.type, 'raw': repr(tc)})
             additional_kwargs['tool_calls'] = tool_calls
 
         ai_msg = AIMessage(content=text, additional_kwargs=additional_kwargs)
