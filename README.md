@@ -1,15 +1,15 @@
 <div align="center" style="display: flex; align-items: center; justify-content: center; gap: 20px;">
 
-  <picture>
+  <picture style="display: flex; align-items: center;">
     <source media="(prefers-color-scheme: light)" srcset="docs/dark-avatar.png">
     <source media="(prefers-color-scheme: dark)" srcset="docs/light-avatar.png">
-    <img alt="TinyCorp avatar" src="docs/light-avatar.png" width="25%" height="25%">
+    <img alt="TinyCorp avatar" src="docs/light-avatar.png" style="height: 120px; width: auto;">
   </picture>
 
-  <picture>
+  <picture style="display: flex; align-items: center;">
     <source media="(prefers-color-scheme: light)" srcset="docs/dark-logo.png">
     <source media="(prefers-color-scheme: dark)" srcset="docs/light-logo.png">
-    <img alt="TinyCorp logo" src="docs/light-logo.png" width="50%" height="50%">
+    <img alt="TinyCorp logo" src="docs/light-logo.png" style="height: 120px; width: auto;">
   </picture>
 
 </div>
