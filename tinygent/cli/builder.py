@@ -7,7 +7,6 @@ from typing import Union
 from pydantic import Field
 from pydantic import TypeAdapter
 
-from tinygent.cli.utils import discover_and_register_components
 from tinygent.datamodels.agent import AbstractAgent
 from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.llm import AbstractLLM
@@ -48,7 +47,6 @@ def _parse_config(
     if isinstance(config, TinyModel):
         config = config.model_dump()
 
-    discover_and_register_components()
     ConfigUnion = _make_union(getter)
     adapter = TypeAdapter(ConfigUnion)
     return adapter.validate_python(config)

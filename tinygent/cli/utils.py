@@ -46,7 +46,7 @@ def discover_and_register_components() -> None:
     count = 0
     for entry_point in entry_points:
         try:
-            logger.debug('Loading component: %s', entry_point.name)
+            logger.debug('Loading component %d: %s', count + 1, entry_point.name)
 
             start_time = time.time()
 
