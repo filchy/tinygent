@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import TypeVar
 import httpx
 from urllib.parse import urljoin
 
@@ -15,6 +16,8 @@ from tiny_brave.responses.news import NewsSearchApiResponse
 from tiny_brave.types.endpoints import BraveEndpoint
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar('T', bound=TinyModel)
 
 RETRYABLE_EXCEPTIONS = (
     httpx.ConnectError,
@@ -92,16 +95,18 @@ class TinyBraveClient:
         self,
         endpoint: BraveEndpoint,
         request: TinyModel,
+        response_model: type[T],
         max_retries: int = DEFAULT_MAX_RETRIES,
         timeout: int = DEFAULT_TIMEOUT,
-    ) -> httpx.Response:
+    ) -> T:
 
-        return await self._get(
+        response = await self._get(
             endpoint,
             params=request.model_dump(exclude_none=True, by_alias=True),
             max_retries=max_retries,
             timeout=timeout,
         )
+        return response_model.model_validate(response.json())
 
     async def news(
         self,
@@ -109,11 +114,10 @@ class TinyBraveClient:
         max_retries: int = DEFAULT_MAX_RETRIES,
         timeout: int = DEFAULT_TIMEOUT,
     ) -> NewsSearchApiResponse:
-        response = await self._use_brave(
+        return await self._use_brave(
             BraveEndpoint.news,
             request=request,
+            response_model=NewsSearchApiResponse,
             max_retries=max_retries,
             timeout=timeout,
         )
-
-        return NewsSearchApiResponse.model_validate(response.json())
