@@ -1,10 +1,7 @@
-import logging
 from typing import Any
 
 from tiny_brave.client import TinyBraveClient
 from tiny_brave.requests.news import NewsSearchRequest
-
-logger = logging.getLogger(__name__)
 
 
 async def brave_news_search(data: NewsSearchRequest) -> dict[str, Any]:

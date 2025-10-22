@@ -1,6 +1,6 @@
 from tinygent.tools.tool import tool
 
-from tiny_brave.tools.news_search import brave_news_search
+from tiny_brave.tools import brave_news_search
 
 
 def _register_tools() -> None:

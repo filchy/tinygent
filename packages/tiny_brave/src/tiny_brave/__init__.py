@@ -2,7 +2,7 @@ from .client import *
 from .exceptions import *
 from .responses.news import *
 from .requests.news import *
-from .tools.news_search import *
+from .tools import *
 
 
 __ALL__ = [
