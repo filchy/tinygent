@@ -16,6 +16,13 @@ from tiny_brave.types.endpoints import BraveEndpoint
 
 logger = logging.getLogger(__name__)
 
+RETRYABLE_EXCEPTIONS = (
+    httpx.ConnectError,
+    httpx.ReadTimeout,
+    httpx.RemoteProtocolError,
+    httpx.WriteError,
+)
+
 
 class TinyBraveClient:
     def __init__(self):
@@ -40,13 +47,14 @@ class TinyBraveClient:
         max_retries: int = DEFAULT_MAX_RETRIES,
         timeout: int = DEFAULT_TIMEOUT,
     ) -> httpx.Response:
+        last_exc: Exception | None = None
         url = urljoin(self._base_url, f'{endpoint.value}/search')
 
         async with httpx.AsyncClient(
             headers=self._headers,
             timeout=timeout,
         ) as client:
-            for _ in range(max_retries):
+            for attempt in range(1, max_retries + 1):
                 try:
                     response = await client.get(
                         url,
@@ -54,15 +62,31 @@ class TinyBraveClient:
                     )
                     response.raise_for_status()
                     return response
-                except httpx.HTTPError as e:
+
+                except RETRYABLE_EXCEPTIONS as e:
+                    last_exc = e
                     logger.warning(
-                        'Request to %s failed: %s',
+                        'Retryable network error calling %s: %s (attempt %d/%d)',
                         url,
-                        str(e)
+                        e,
+                        attempt,
+                        max_retries,
                     )
+
+                except httpx.HTTPStatusError as e:
+                    logger.error(
+                        'HTTP error calling %s: %s (status %d) – not retrying',
+                        url,
+                        e,
+                        e.response.status_code,
+                    )
+                    raise TinyBraveClientError(
+                        f'HTTP error {e.response.status_code} calling {url}: {e}'
+                    )
+
             raise TinyBraveAPIError(
                 f'Failed to fetch data from {url} after {max_retries} attempts.'
-            )
+            ) from last_exc
 
     async def _use_brave(
         self,
