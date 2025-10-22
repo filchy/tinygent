@@ -1,8 +1,12 @@
-from typing import Optional, List
-from pydantic import BaseModel, Field
+from typing import List
+from typing import Optional
+
+from pydantic import Field
+
+from tinygent.types.base import TinyModel
 
 
-class Thumbnail(BaseModel):
+class Thumbnail(TinyModel):
     """Aggregated details representing the news thumbnail."""
 
     src: str = Field(
@@ -15,7 +19,7 @@ class Thumbnail(BaseModel):
     )
 
 
-class MetaUrl(BaseModel):
+class MetaUrl(TinyModel):
     """Aggregated information about a URL."""
 
     scheme: Optional[str] = Field(
@@ -40,7 +44,7 @@ class MetaUrl(BaseModel):
     )
 
 
-class NewsResult(BaseModel):
+class NewsResult(TinyModel):
     """A model representing a news result for the requested query."""
 
     type: str = Field(
@@ -89,7 +93,7 @@ class NewsResult(BaseModel):
     )
 
 
-class Query(BaseModel):
+class Query(TinyModel):
     """A model representing information gathered around the requested query."""
 
     original: str = Field(
@@ -112,12 +116,14 @@ class Query(BaseModel):
     )
     show_strict_warning: Optional[bool] = Field(
         None,
-        description='True if lack of results is due to strict safesearch setting '
-                    '(adult content blocked).'
+        description=(
+            'True if lack of results is due to strict safesearch setting '
+            '(adult content blocked).'
+        )
     )
 
 
-class NewsSearchApiResponse(BaseModel):
+class NewsSearchApiResponse(TinyModel):
     """Top level response model for successful News Search API requests."""
 
     type: str = Field(

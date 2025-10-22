@@ -2,6 +2,7 @@ from typing import Any
 
 from tiny_brave.client import TinyBraveClient
 from tiny_brave.requests.news import NewsSearchRequest
+from tiny_brave.requests.web import WebSearchRequest
 
 
 async def brave_news_search(data: NewsSearchRequest) -> dict[str, Any]:
@@ -11,15 +12,28 @@ async def brave_news_search(data: NewsSearchRequest) -> dict[str, Any]:
     return result.model_dump()
 
 
+async def brave_web_search(data: WebSearchRequest) -> dict[str, Any]:
+    """Perform a web search using the Brave Search API."""
+
+    result = await TinyBraveClient().web(data)
+    return result.model_dump()
+
+
 if __name__ == '__main__':
     async def main():
-        result = await brave_news_search(
+        news = await brave_news_search(
             NewsSearchRequest(
                 query='Brave Search API',
             )
         )
+        print('News Search result: %s', news)
 
-        print('Brave Search result: %s', result)
+        web = await brave_web_search(
+            WebSearchRequest(
+                query='Brave Search API',
+            )
+        )
+        print('Web Search result: %s', web)
 
     import asyncio
     asyncio.run(main())

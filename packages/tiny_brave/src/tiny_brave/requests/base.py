@@ -1,14 +1,16 @@
 from pydantic import Field
 from pydantic import field_validator
 
-from tinygent.types.base import TinyModel
-
 from tiny_brave.constants import MAX_QUERY_LENGTH
 from tiny_brave.constants import MAX_QUERY_TERMS
 from tiny_brave.exceptions import TinyBraveClientError
+from tinygent.types.base import TinyModel
 
 
 class BaseSearchRequest(TinyModel):
+    class Config:
+        populate_by_name = True
+
     query: str = Field(
         ...,
         alias='q',

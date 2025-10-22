@@ -1,10 +1,9 @@
 import logging
 import os
 from typing import TypeVar
-import httpx
 from urllib.parse import urljoin
 
-from tinygent.types.base import TinyModel
+import httpx
 
 from tiny_brave.constants import BASE_URL
 from tiny_brave.constants import DEFAULT_MAX_RETRIES
@@ -12,8 +11,11 @@ from tiny_brave.constants import DEFAULT_TIMEOUT
 from tiny_brave.exceptions import TinyBraveAPIError
 from tiny_brave.exceptions import TinyBraveClientError
 from tiny_brave.requests.news import NewsSearchRequest
+from tiny_brave.requests.web import WebSearchRequest
 from tiny_brave.responses.news import NewsSearchApiResponse
+from tiny_brave.responses.web import WebSearchApiResponse
 from tiny_brave.types.endpoints import BraveEndpoint
+from tinygent.types.base import TinyModel
 
 logger = logging.getLogger(__name__)
 
@@ -118,6 +120,20 @@ class TinyBraveClient:
             BraveEndpoint.news,
             request=request,
             response_model=NewsSearchApiResponse,
+            max_retries=max_retries,
+            timeout=timeout,
+        )
+
+    async def web(
+        self,
+        request: WebSearchRequest,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        timeout: int = DEFAULT_TIMEOUT,
+    ) -> WebSearchApiResponse:
+        return await self._use_brave(
+            BraveEndpoint.web,
+            request=request,
+            response_model=WebSearchApiResponse,
             max_retries=max_retries,
             timeout=timeout,
         )
