@@ -5,7 +5,7 @@ from pydantic import Field
 from pydantic import field_validator
 
 from tiny_brave.exceptions import TinyBraveClientError
-from tiny_brave.requests.base import BaseSearchRequest
+from tiny_brave.datamodels.requests.base import BaseSearchRequest
 
 
 class NewsSearchRequest(BaseSearchRequest):

@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from tiny_brave.requests.base import BaseSearchRequest
+from tiny_brave.datamodels.requests.base import BaseSearchRequest
 
 
 class WebSearchRequest(BaseSearchRequest):

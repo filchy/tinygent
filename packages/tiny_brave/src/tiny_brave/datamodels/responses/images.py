@@ -1,10 +1,12 @@
 from typing import Literal
 from typing import Optional
-from pydantic import BaseModel
+
 from pydantic import Field
 
+from tinygent.types.base import TinyModel
 
-class Query(BaseModel):
+
+class Query(TinyModel):
     original: str = Field(..., description='The original query that was requested.')
     altered: Optional[str] = Field(
         None, description='The altered query by the spellchecker.'
@@ -18,7 +20,7 @@ class Query(BaseModel):
     )
 
 
-class Thumbnail(BaseModel):
+class Thumbnail(TinyModel):
     src: Optional[str] = Field(
         None, description='The served URL of the image.'
     )
@@ -30,7 +32,7 @@ class Thumbnail(BaseModel):
     )
 
 
-class Properties(BaseModel):
+class Properties(TinyModel):
     url: Optional[str] = Field(
         None, description='The image URL.'
     )
@@ -45,7 +47,7 @@ class Properties(BaseModel):
     )
 
 
-class MetaUrl(BaseModel):
+class MetaUrl(TinyModel):
     scheme: Optional[str] = Field(
         None, description='The protocol scheme from the URL.'
     )
@@ -63,7 +65,7 @@ class MetaUrl(BaseModel):
     )
 
 
-class ImageResult(BaseModel):
+class ImageResult(TinyModel):
     type: Literal['image_result'] = Field(
         'image_result', description='The type of image search API result.'
     )
@@ -93,13 +95,13 @@ class ImageResult(BaseModel):
     )
 
 
-class Extra(BaseModel):
+class Extra(TinyModel):
     might_be_offensive: bool = Field(
         ..., description='Indicates if results might be offensive.'
     )
 
 
-class ImageSearchApiResponse(BaseModel):
+class ImageSearchApiResponse(TinyModel):
     type: Literal['images'] = Field(
         'images', description='The type of search API result.'
     )

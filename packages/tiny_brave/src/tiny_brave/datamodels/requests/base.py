@@ -8,12 +8,13 @@ from tinygent.types.base import TinyModel
 
 
 class BaseSearchRequest(TinyModel):
-    class Config:
-        populate_by_name = True
+    model_config = {
+        'populate_by_name': True,
+        'alias_generator': lambda f: 'q' if f == 'query' else f
+    }
 
     query: str = Field(
         ...,
-        alias='q',
         min_length=1,
         max_length=MAX_QUERY_LENGTH,
         description=(

@@ -1,9 +1,10 @@
 from typing import Any
 
 from tiny_brave.client import TinyBraveClient
-from tiny_brave.requests.images import ImagesSearchReuest
-from tiny_brave.requests.news import NewsSearchRequest
-from tiny_brave.requests.web import WebSearchRequest
+from tiny_brave.datamodels.requests.images import ImagesSearchReuest
+from tiny_brave.datamodels.requests.news import NewsSearchRequest
+from tiny_brave.datamodels.requests.videos import VideoSearchRequest
+from tiny_brave.datamodels.requests.web import WebSearchRequest
 
 
 async def brave_news_search(data: NewsSearchRequest) -> dict[str, Any]:
@@ -24,6 +25,13 @@ async def brave_images_search(data: ImagesSearchReuest) -> dict[str, Any]:
     """Perform an image search using the Brave Search API."""
 
     result = await TinyBraveClient().images(data)
+    return result.model_dump()
+
+
+async def brave_videos_search(data: VideoSearchRequest) -> dict[str, Any]:
+    """Perform a video search using the Brave Search API."""
+
+    result = await TinyBraveClient().videos(data)
     return result.model_dump()
 
 
@@ -49,6 +57,13 @@ if __name__ == '__main__':
             )
         )
         print('Image Search result: %s', images)
+
+        videos = await brave_videos_search(
+            VideoSearchRequest(
+                query='Brave Search API',
+            )
+        )
+        print('Video Search result: %s', videos)
 
     import asyncio
     asyncio.run(main())
