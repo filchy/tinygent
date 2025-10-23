@@ -2,24 +2,24 @@ import logging
 import os
 from typing import TypeVar
 from urllib.parse import urljoin
-import httpx
 
-from tinygent.types.base import TinyModel
+import httpx
 
 from tiny_brave.constants import BASE_URL
 from tiny_brave.constants import DEFAULT_MAX_RETRIES
 from tiny_brave.constants import DEFAULT_TIMEOUT
-from tiny_brave.datamodels.requests.videos import VideoSearchRequest
-from tiny_brave.datamodels.responses.videos import VideoSearchApiResponse
-from tiny_brave.exceptions import TinyBraveAPIError
-from tiny_brave.exceptions import TinyBraveClientError
+from tiny_brave.datamodels.endpoints import BraveEndpoint
 from tiny_brave.datamodels.requests.images import ImagesSearchReuest
 from tiny_brave.datamodels.requests.news import NewsSearchRequest
+from tiny_brave.datamodels.requests.videos import VideoSearchRequest
 from tiny_brave.datamodels.requests.web import WebSearchRequest
 from tiny_brave.datamodels.responses.images import ImageSearchApiResponse
 from tiny_brave.datamodels.responses.news import NewsSearchApiResponse
+from tiny_brave.datamodels.responses.videos import VideoSearchApiResponse
 from tiny_brave.datamodels.responses.web import WebSearchApiResponse
-from tiny_brave.datamodels.endpoints import BraveEndpoint
+from tiny_brave.exceptions import TinyBraveAPIError
+from tiny_brave.exceptions import TinyBraveClientError
+from tinygent.types.base import TinyModel
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +36,7 @@ RETRYABLE_EXCEPTIONS = (
 class TinyBraveClient:
     def __init__(self):
         if not (brave_token := os.getenv('BRAVE_API_KEY')):
-            raise TinyBraveClientError(
-                '\'BRAVE_API_KEY\' environment variable not set.'
-            )
+            raise TinyBraveClientError("'BRAVE_API_KEY' environment variable not set.")
 
         self._base_url = BASE_URL
 
@@ -65,10 +63,7 @@ class TinyBraveClient:
         ) as client:
             for attempt in range(1, max_retries + 1):
                 try:
-                    response = await client.get(
-                        url,
-                        params=params
-                    )
+                    response = await client.get(url, params=params)
                     response.raise_for_status()
                     return response
 
@@ -105,7 +100,6 @@ class TinyBraveClient:
         max_retries: int = DEFAULT_MAX_RETRIES,
         timeout: int = DEFAULT_TIMEOUT,
     ) -> T:
-
         response = await self._get(
             endpoint,
             params=request.model_dump(exclude_none=True, by_alias=True),

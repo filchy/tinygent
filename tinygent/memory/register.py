@@ -8,9 +8,7 @@ from tinygent.runtime.global_registry import GlobalRegistry
 def _register_memories() -> None:
     registry = GlobalRegistry().get_registry()
 
-    registry.register_memory(
-        'buffer', BufferChatMemoryConfig, BufferChatMemory
-    )
+    registry.register_memory('buffer', BufferChatMemoryConfig, BufferChatMemory)
     registry.register_memory(
         'buffer_window', BufferWindowChatMemoryConfig, BufferWindowChatMemory
     )

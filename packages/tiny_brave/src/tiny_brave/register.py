@@ -2,7 +2,6 @@ from tiny_brave.tools import brave_images_search
 from tiny_brave.tools import brave_news_search
 from tiny_brave.tools import brave_videos_search
 from tiny_brave.tools import brave_web_search
-
 from tinygent.tools.tool import tool
 
 

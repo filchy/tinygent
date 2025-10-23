@@ -4,32 +4,28 @@ from typing import Literal
 from pydantic import Field
 from pydantic import field_validator
 
-from tiny_brave.exceptions import TinyBraveClientError
 from tiny_brave.datamodels.requests.base import BaseSearchRequest
+from tiny_brave.exceptions import TinyBraveClientError
 
 
 class NewsSearchRequest(BaseSearchRequest):
     ui_lang: str | None = Field(
-        default='en-US',
-        description='UI language preferred in response (e.g. en-US).'
+        default='en-US', description='UI language preferred in response (e.g. en-US).'
     )
 
     count: int = Field(
         default=3,
         ge=1,
         le=50,
-        description='The number of search results to return (1–50).'
+        description='The number of search results to return (1–50).',
     )
 
     offset: int = Field(
-        default=0,
-        le=9,
-        description='Zero-based page offset for pagination (max 9).'
+        default=0, le=9, description='Zero-based page offset for pagination (max 9).'
     )
 
     safesearch: Literal['off', 'moderate', 'strict'] = Field(
-        default='moderate',
-        description='Adult content filter level.'
+        default='moderate', description='Adult content filter level.'
     )
 
     freshness: str | None = Field(
@@ -38,22 +34,20 @@ class NewsSearchRequest(BaseSearchRequest):
             'Time filter for results. '
             'Options: pd (24h), pw (7d), pm (31d), py (365d), '
             'or custom YYYY-MM-DDtoYYYY-MM-DD'
-        )
+        ),
     )
 
     extra_snippets: bool | None = Field(
         default=None,
-        description='If true, return up to 5 additional alternative snippets.'
+        description='If true, return up to 5 additional alternative snippets.',
     )
 
     goggles: list[str] | None = Field(
-        default=None,
-        description='List of goggle URLs or definitions for re-ranking.'
+        default=None, description='List of goggle URLs or definitions for re-ranking.'
     )
 
     operators: bool = Field(
-        default=True,
-        description='Whether to apply search operators.'
+        default=True, description='Whether to apply search operators.'
     )
 
     @field_validator('country')

@@ -10,7 +10,7 @@ from tinygent.types.base import TinyModel
 class BaseSearchRequest(TinyModel):
     model_config = {
         'populate_by_name': True,
-        'alias_generator': lambda f: 'q' if f == 'query' else f
+        'alias_generator': lambda f: 'q' if f == 'query' else f,
     }
 
     query: str = Field(
@@ -20,17 +20,17 @@ class BaseSearchRequest(TinyModel):
         description=(
             f'The search query string used to find relevant news articles. '
             f'Maximum length is {MAX_QUERY_LENGTH} characters.'
-        )
+        ),
     )
 
     country: str | None = Field(
         default='US',
-        description='2-character country code for where the results come from.'
+        description='2-character country code for where the results come from.',
     )
 
     spellcheck: bool = Field(
         default=False,
-        description='Whether to enable spellchecking for the search query.'
+        description='Whether to enable spellchecking for the search query.',
     )
 
     search_lang: str | None = Field(

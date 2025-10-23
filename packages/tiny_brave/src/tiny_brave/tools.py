@@ -36,6 +36,7 @@ async def brave_videos_search(data: VideoSearchRequest) -> dict[str, Any]:
 
 
 if __name__ == '__main__':
+
     async def main():
         news = await brave_news_search(
             NewsSearchRequest(
@@ -66,4 +67,5 @@ if __name__ == '__main__':
         print('Video Search result: %s', videos)
 
     import asyncio
+
     asyncio.run(main())
