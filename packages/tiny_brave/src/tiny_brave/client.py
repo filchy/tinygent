@@ -10,8 +10,10 @@ from tiny_brave.constants import DEFAULT_MAX_RETRIES
 from tiny_brave.constants import DEFAULT_TIMEOUT
 from tiny_brave.exceptions import TinyBraveAPIError
 from tiny_brave.exceptions import TinyBraveClientError
+from tiny_brave.requests.images import ImagesSearchReuest
 from tiny_brave.requests.news import NewsSearchRequest
 from tiny_brave.requests.web import WebSearchRequest
+from tiny_brave.responses.images import ImageSearchApiResponse
 from tiny_brave.responses.news import NewsSearchApiResponse
 from tiny_brave.responses.web import WebSearchApiResponse
 from tiny_brave.types.endpoints import BraveEndpoint
@@ -134,6 +136,20 @@ class TinyBraveClient:
             BraveEndpoint.web,
             request=request,
             response_model=WebSearchApiResponse,
+            max_retries=max_retries,
+            timeout=timeout,
+        )
+
+    async def images(
+        self,
+        request: ImagesSearchReuest,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        timeout: int = DEFAULT_TIMEOUT,
+    ) -> ImageSearchApiResponse:
+        return await self._use_brave(
+            BraveEndpoint.images,
+            request=request,
+            response_model=ImageSearchApiResponse,
             max_retries=max_retries,
             timeout=timeout,
         )

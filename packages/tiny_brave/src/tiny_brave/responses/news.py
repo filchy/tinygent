@@ -1,4 +1,5 @@
 from typing import List
+from typing import Literal
 from typing import Optional
 
 from pydantic import Field
@@ -126,9 +127,8 @@ class Query(TinyModel):
 class NewsSearchApiResponse(TinyModel):
     """Top level response model for successful News Search API requests."""
 
-    type: str = Field(
-        ...,
-        description='The type of search API result. The value is always news.'
+    type: Literal['news'] = Field(
+        'news', description='The type of search API result.'
     )
     query: Query = Field(
         ...,

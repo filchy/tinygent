@@ -22,6 +22,11 @@ class BaseSearchRequest(TinyModel):
         )
     )
 
+    country: str | None = Field(
+        default='US',
+        description='2-character country code for where the results come from.'
+    )
+
     spellcheck: bool = Field(
         default=False,
         description='Whether to enable spellchecking for the search query.'

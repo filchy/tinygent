@@ -1,4 +1,5 @@
 from typing import Any
+from typing import Literal
 
 from pydantic import Field
 
@@ -273,9 +274,9 @@ class VideoResults(TinyModel):
 
 
 class WebSearchApiResponse(TinyModel):
-    type: str = Field(
-        ...,
-        description='The type of web search API result. Always "search".',
+    type: Literal['search'] = Field(
+        'search',
+        description='The type of web search API result',
     )
     query: Query | None = Field(
         default=None,

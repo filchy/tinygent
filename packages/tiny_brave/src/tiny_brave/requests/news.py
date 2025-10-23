@@ -9,11 +9,6 @@ from tiny_brave.requests.base import BaseSearchRequest
 
 
 class NewsSearchRequest(BaseSearchRequest):
-    country: str | None = Field(
-        default='US',
-        description='2-character country code for where the results come from.'
-    )
-
     ui_lang: str | None = Field(
         default='en-US',
         description='UI language preferred in response (e.g. en-US).'

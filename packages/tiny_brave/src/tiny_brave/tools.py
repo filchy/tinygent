@@ -1,6 +1,7 @@
 from typing import Any
 
 from tiny_brave.client import TinyBraveClient
+from tiny_brave.requests.images import ImagesSearchReuest
 from tiny_brave.requests.news import NewsSearchRequest
 from tiny_brave.requests.web import WebSearchRequest
 
@@ -19,6 +20,13 @@ async def brave_web_search(data: WebSearchRequest) -> dict[str, Any]:
     return result.model_dump()
 
 
+async def brave_images_search(data: ImagesSearchReuest) -> dict[str, Any]:
+    """Perform an image search using the Brave Search API."""
+
+    result = await TinyBraveClient().images(data)
+    return result.model_dump()
+
+
 if __name__ == '__main__':
     async def main():
         news = await brave_news_search(
@@ -34,6 +42,13 @@ if __name__ == '__main__':
             )
         )
         print('Web Search result: %s', web)
+
+        images = await brave_images_search(
+            ImagesSearchReuest(
+                query='Brave Search API',
+            )
+        )
+        print('Image Search result: %s', images)
 
     import asyncio
     asyncio.run(main())
