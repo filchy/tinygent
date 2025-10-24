@@ -35,7 +35,7 @@ class Tool(AbstractTool, Generic[T, R]):
     ) -> None:
         self.__original_fn = fn
 
-        self._cached_fn: Callable[..., Any] | Callable[..., Awaitable[Any]]
+        self._cached_fn: Callable[..., Any] | Callable[..., Awaitable[Any]] | None = None
         self._info: ToolInfo[T, R] = ToolInfo.from_callable(
             fn, use_cache=use_cache, cache_size=cache_size
         )

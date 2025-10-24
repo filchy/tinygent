@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tiny-brave"
+version = "0.1.0"
+dependencies = [
+    "httpx>=0.28.1",
+    "pydantic>=2.11.7",
+    "tinygent",
+]
+
+[project.entry-points.components]
+tiny_brave_tools = "tiny_brave.register"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tiny_brave"]
+
+[tool.uv.sources]
+tinygent = { workspace = true }

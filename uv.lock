@@ -1,6 +1,12 @@
 version = 1
 requires-python = "==3.12.*"
 
+[manifest]
+members = [
+    "tiny-brave",
+    "tinygent",
+]
+
 [[package]]
 name = "annotated-types"
 version = "0.7.0"
@@ -544,6 +550,23 @@ wheels = [
 ]
 
 [[package]]
+name = "tiny-brave"
+version = "0.1.0"
+source = { editable = "packages/tiny_brave" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "tinygent" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "pydantic", specifier = ">=2.11.7" },
+    { name = "tinygent", editable = "." },
+]
+
+[[package]]
 name = "tinygent"
 version = "0.1.0"
 source = { editable = "." }
@@ -558,6 +581,9 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+brave = [
+    { name = "tiny-brave" },
+]
 dev = [
     { name = "black" },
     { name = "mypy" },
@@ -575,6 +601,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.11.7" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12.11" },
+    { name = "tiny-brave", marker = "extra == 'brave'", editable = "packages/tiny_brave" },
     { name = "typer", specifier = ">=0.19.2" },
 ]
 

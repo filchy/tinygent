@@ -47,10 +47,13 @@ Before you begin using tinygent, ensure that you meet the following software pre
     uv sync
     ```
 
-    To install the tinygent library along with all of the optional dependencies. Including developer tools (`--all-groups`) and all of the dependencies needed for profiling and plugins (`--all-extras`) in the source repository, run the following:
+    To install the tinygent library along with all of the optional dependencies. Including developer tools (`--all-groups`), additional packages and all of the dependencies needed for profiling and plugins (`--all-extras`) in the source repository, run the following:
     ```bash
     uv sync --all-groups --all-extras
     ```
+
+    > [!NOTE]
+    > Not all packages are included in the default installation to keep the library lightweight. You can customize your installation by specifying the optional dependencies you need.
 
 4. Install tinygent in editable mode (development mode), so that changes in the source code are immediately reflected:
     ```bash

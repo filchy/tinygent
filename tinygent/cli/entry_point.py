@@ -6,6 +6,7 @@ from typing import Any
 import click
 import typer
 
+from tinygent.cli.utils import discover_and_register_components
 from tinygent.cli.utils import get_click_context
 from tinygent.cli.utils import register_commands_from_package
 from tinygent.logging import LOG_LEVELS
@@ -54,3 +55,5 @@ def cli(
 
     logger.info("Starting 'Tinygent' CLI...")
     logger.info('Hold tight, tiny things are about to do huge work!')
+
+    discover_and_register_components()

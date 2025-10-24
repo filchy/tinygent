@@ -1,5 +1,5 @@
 target-version = "py312"
-src = ["tinygent", "scripts"]
+src = ["tinygent", "scripts", "packages"]
 line-length = 89
 
 [format]
