@@ -1,5 +1,6 @@
 from pydantic import Field
 
+from tinygent.tools.tool import register_tool
 from tinygent.tools.tool import tool
 from tinygent.types.base import TinyModel
 
@@ -9,7 +10,7 @@ class AddInput(TinyModel):
     b: int = Field(..., description='The second number to add.')
 
 
-@tool(use_cache=True)
+@register_tool(use_cache=True)
 def add(data: AddInput) -> int:
     """Adds two numbers together."""
 
@@ -20,7 +21,7 @@ class GreetInput(TinyModel):
     name: str = Field(..., description='The name to greet.')
 
 
-@tool(use_cache=True)
+@register_tool(use_cache=True)
 async def greet(data: GreetInput) -> str:
     """Greets a person by name."""
 
@@ -89,11 +90,10 @@ if __name__ == '__main__':
     registry_greet = registry.get_tool('greet')
     global_registry_print(registry_greet({'name': 'TinyGent'}))
 
-    registry_count = registry.get_tool('count')
-    global_registry_print(list(registry_count(n=3)))
+    header_print('Local Tool Executions')
 
-    registry_async_count = registry.get_tool('async_count')
-    global_registry_print(list(registry_async_count({'n': 4})))
+    classic_print(list(count(n=5)))
+    classic_print(list(async_count({'n': 6})))
 
     # Cache info
     header_print('Cache Info')

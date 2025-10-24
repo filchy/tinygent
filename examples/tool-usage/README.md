@@ -1,6 +1,9 @@
 # Tool Example
 
-This example demonstrates how to use the `@tool` decorator from **tinygent** to wrap various types of Python functions (sync, async, generators) into a unified execution interface. Every decorated function is automatically registered into the **global runtime tool registry**, making it instantly accessible via `GlobalRegistry.get_registry().get_tool('<name>')`.
+This example demonstrates how to use the `@tool` and `@register_tool` decorators from **tinygent**.
+
+* **`@tool`** wraps a function into a `Tool` object (unified interface, metadata, schema validation).
+* **`@register_tool`** does the same, but also **registers it automatically** into the global runtime tool registry, making it instantly accessible via `GlobalRegistry.get_registry().get_tool('<name>')`.
 
 ---
 
@@ -10,14 +13,9 @@ Each tool **must accept zero or one argument**, and if it does accept an argumen
 
 This design allows:
 
-1. **Parameter validation & introspection**
-   Input parameters are modeled as Pydantic fields, providing type checking and field descriptions (via `Field(...)`).
-
-2. **LLM-compatible tool definitions**
-   Tools can be described with OpenAI-compatible schemas and used directly for function-calling with models.
-
-3. **Auto-registration in the runtime registry**
-   Each use of `@tool` not only wraps the function, but also **registers it automatically** into the global registry. This means you can dynamically retrieve any tool by name at runtime.
+1. **Schema validation** — arguments validated against Pydantic (`TinyModel`).
+2. **LLM compatibility** — tools have OpenAI-compatible schemas for function calling.
+3. **Optional auto-registration** — tools are globally available if you use `@register_tool`.
 
 ---
 
@@ -28,137 +26,113 @@ from pydantic import Field
 from tinygent.types.base import TinyModel
 
 class AddInput(TinyModel):
-    a: int = Field(..., description="First number to add")
-    b: int = Field(..., description="Second number to add")
+    a: int = Field(..., description='First number to add')
+    b: int = Field(..., description='Second number to add')
 ```
 
 ---
 
-## Features
+## Decorators
+
+### `@tool`
+
+Creates a `Tool` instance but does **not** register it.
+
+```python
+from tinygent.tools.tool import tool
+
+@tool
+def local_add(data: AddInput) -> int:
+    """Adds two numbers."""
+    return data.a + data.b
+
+print(local_add(AddInput(a=1, b=2)))  # works directly
+```
+
+### `@register_tool`
+
+Creates a `Tool` instance **and registers it** into the global registry.
+
+```python
+from tinygent.tools.tool import register_tool
+
+@register_tool(use_cache=True)
+def add(data: AddInput) -> int:
+    """Adds two numbers together."""
+    return data.a + data.b
+
+from tinygent.runtime.global_registry import GlobalRegistry
+
+registry = GlobalRegistry.get_registry()
+add_tool = registry.get_tool('add')
+print(add_tool(a=1, b=2))
+```
+
+---
+
+## Global vs Local Tools
+
+You can decide whether a tool is registered globally or kept local.
+
+* **Global tools** (`@register_tool`)
+
+  * Automatically stored in the `GlobalRegistry`
+  * Discoverable by name from anywhere in your runtime
+  * Great when you want tools to be available for LLM function calling across the system
+
+* **Local tools** (`@tool`)
+
+  * Return a `Tool` instance only
+  * Not stored in the registry
+  * You manage them explicitly (e.g., pass into `llm.generate_with_tools`)
+  * Useful for ephemeral or experimental utilities
+
+---
+
+## Tool Features
 
 Each decorated function becomes a `Tool` instance that:
 
 * Exposes a unified `__call__()` interface
-* Supports the following function types:
+* Supports:
 
   * Sync function
   * Async coroutine
   * Sync generator
   * Async generator
-* Automatically parses:
+* Accepts input as:
 
-  * Pydantic model instances
-  * Plain dicts
-  * `**kwargs`
-  * `*args` (including a single dict as positional input)
-* Registers itself into the `GlobalRegistry` under its function name
+  * `TinyModel` instance
+  * Raw `dict` (validated)
+  * `**kwargs` (validated)
+  * Positional dict (`*args`)
 * Provides full metadata via `ToolInfo`
-
----
-
-## Tool Description
-
-The tool's **description** is automatically extracted from the function's **docstring**.
-
-This is used for introspection, OpenAI-compatible tool schemas, and registry summaries.
-
-```python
-@tool
-def add(data: AddInput) -> int:
-    """Adds two numbers together."""
-    return data.a + data.b
-```
-
-In this case, the description for the `add` tool will be `"Adds two numbers together."`
-
-Writing clear and concise docstrings is essential, as this metadata is often used in LLM-assisted reasoning and tool selection.
-
----
-
-## `__call__()` Behavior
-
-The public interface for tools is the `__call__()` method. It supports:
-
-* TinyModel input
-* Raw `dict` input (validated)
-* `**kwargs` input (validated)
-* Positional `*args` (e.g., one dict argument)
-
-Execution logic:
-
-* Async coroutine: awaited
-* Generator: iterated and collected
-* Async generator: asynchronously iterated and collected
-* Sync function: called directly and returned
 
 ---
 
 ## Caching Support
 
-You can enable **in-memory LRU caching** for any synchronous or asynchronous tool function by passing `use_cache=True` to the `@tool` decorator:
+You can enable in-memory LRU caching for sync/async tools with `use_cache=True`:
 
 ```python
-@tool(use_cache=True)
-def add(data: AddInput) -> int:
-    return data.a + data.b
-```
-
-* Internally uses:
-
-  * `functools.lru_cache` for synchronous functions
-  * `async_lru.alru_cache` for asynchronous functions
-* **Not supported** for generator functions (sync or async)
-* Cache size is configurable using `cache_size`:
-
-```python
-@tool(use_cache=True, cache_size=256)
-def expensive_tool(...):
-    ...
-```
-
-### Cache Inspection & Clearing
-
-Each tool exposes standard methods for cache management:
-
-```python
-add.cache_info()
-# -> CacheInfo(hits=3, misses=5, maxsize=128, currsize=5)
-
-add.clear_cache()
-```
-
-* **hits**: how many times a cached result was returned
-* **misses**: how many times the function was actually called
-* **currsize**: number of items currently cached
-
----
-
-## Included Examples
-
-```python
-@tool
-def add(data: AddInput) -> int:
+@register_tool(use_cache=True, cache_size=256)
+def expensive_tool(data: AddInput) -> int:
     return data.a + data.b
 
-
-@tool
-async def greet(data: GreetInput) -> str:
-    return f'Hello, {data.name}!'
-
-
-@tool
-def count(data: CountInput):
-    for i in range(1, data.n + 1):
-        yield i
-
-
-@tool
-async def async_count(data: CountInput):
-    for i in range(1, data.n + 1):
-        yield i
+print(expensive_tool(AddInput(a=1, b=2)))
+print(expensive_tool.cache_info())
 ```
 
-All of the above tools are automatically registered and retrievable from the global registry using their function names.
+* Uses `functools.lru_cache` (sync) or `async_lru.alru_cache` (async)
+* **Not supported for generator tools** (`count`, `async_count`)
+* Cache inspection and clearing:
+
+```python
+expensive_tool.cache_info()
+expensive_tool.clear_cache()
+```
+
+⚠️ **Note:** For generator and async generator tools, `use_cache=True` is ignored and `cache_info()` always returns `None`.
 
 ---
 
@@ -177,15 +151,16 @@ print(list(count(n=3)))
 # Positional dict (args)
 print(list(async_count({"n": 4})))
 
-# Access from global registry
+# Access from global registry (registered tools)
 from tinygent.runtime.global_registry import GlobalRegistry
 registry = GlobalRegistry.get_registry()
 
-greet_tool = registry.get_tool("greet")
-print(greet_tool(name="TinyGent"))
-```
+print(registry.get_tool("greet")({"name": "TinyGent"}))
 
-Each call style is automatically parsed and dispatched based on the function type and the tool's schema.
+# Local-only tools (not in registry)
+print(list(count(n=5)))
+print(list(async_count({"n": 6})))
+```
 
 ---
 
@@ -203,4 +178,6 @@ Hello, TinyGent!
 [1, 2, 3]
 [1, 2, 3, 4]
 Hello, TinyGent!
+[1, 2, 3, 4, 5]
+[1, 2, 3, 4, 5, 6]
 ```

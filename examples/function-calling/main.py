@@ -3,7 +3,6 @@ from pydantic import Field
 from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.llms import OpenAILLM
-from tinygent.runtime.global_registry import GlobalRegistry
 from tinygent.tools.tool import tool
 from tinygent.types.base import TinyModel
 
@@ -42,14 +41,14 @@ if __name__ == '__main__':
         tools=my_tools,
     )
 
+    tool_map = {tool.info.name: tool for tool in my_tools}
+
     for message in response.tiny_iter():
         if message.type == 'chat':
             print(f'LLM response: {message.content}')
 
         elif message.type == 'tool':
-            selected_tool = GlobalRegistry.get_registry().get_tool(message.tool_name)
-
-            result = selected_tool(**message.arguments)
+            result = tool_map[message.tool_name](**message.arguments)
 
             print(
                 'Tool %s called with arguments %s, result: %s'

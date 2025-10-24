@@ -6,7 +6,6 @@ from pydantic import Field
 from pydantic import create_model
 
 from tinygent.datamodels.tool import AbstractTool
-from tinygent.types.base import TinyModel
 
 
 class ToolWithReasoning(AbstractTool):
@@ -30,7 +29,7 @@ class ToolWithReasoning(AbstractTool):
 
         self._input_model = create_model(  # type: ignore[call-overload]
             f'{original_input.__name__}WithReasoning',
-            __base__=TinyModel,
+            __base__=original_input,
             **fields,
         )
 

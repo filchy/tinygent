@@ -40,6 +40,10 @@ class Tool(AbstractTool, Generic[T, R]):
             fn, use_cache=use_cache, cache_size=cache_size
         )
 
+        if self.info.is_generator or self.info.is_async_generator:
+            use_cache = False
+            self.info.use_cache = False
+
         if use_cache:
             if not self.info.is_cachable:
                 raise ValueError(
@@ -124,7 +128,7 @@ def tool(fn: Callable[[T], R]) -> Tool[T, R]: ...
 
 @overload
 def tool(
-    *, use_cache: bool = False, cache_size: int = 128, hidden: bool = False
+    *, use_cache: bool = False, cache_size: int = 128
 ) -> Callable[[Callable[[T], R]], Tool[T, R]]: ...
 
 
@@ -133,9 +137,34 @@ def tool(
     *,
     use_cache: bool = False,
     cache_size: int = 128,
-    hidden: bool = False,
 ) -> Tool[T, R] | Callable[[Callable[[T], R]], Tool[T, R]]:
     def wrapper(f: Callable[[T], R]) -> Tool[T, R]:
+        tool_instance = Tool(f, use_cache=use_cache, cache_size=cache_size)
+        return tool_instance
+
+    if fn is None:
+        return wrapper
+    return wrapper(fn)
+
+
+@overload
+def register_tool(fn: Callable[[T], Any]) -> Tool[T, Any]: ...
+
+
+@overload
+def register_tool(
+    *, use_cache: bool = False, cache_size: int = 128, hidden: bool = False
+) -> Callable[[Callable[[T], Any]], Tool[T, Any]]: ...
+
+
+def register_tool(
+    fn: Callable[[T], Any] | None = None,
+    *,
+    use_cache: bool = False,
+    cache_size: int = 128,
+    hidden: bool = False,
+) -> Tool[T, Any] | Callable[[Callable[[T], Any]], Tool[T, Any]]:
+    def wrapper(f: Callable[[T], Any]) -> Tool[T, Any]:
         tool_instance = Tool(f, use_cache=use_cache, cache_size=cache_size)
         GlobalRegistry.get_registry().register_tool(tool_instance, hidden=hidden)
         return tool_instance
