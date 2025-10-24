@@ -52,6 +52,9 @@ Before you begin using tinygent, ensure that you meet the following software pre
     uv sync --all-groups --all-extras
     ```
 
+    > [!NOTE]
+    > Not all packages are included in the default installation to keep the library lightweight. You can customize your installation by specifying the optional dependencies you need.
+
 4. Install tinygent in editable mode (development mode), so that changes in the source code are immediately reflected:
     ```bash
     uv pip install -e .
