@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import typing
-from typing import Union
 from typing import cast
 
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration
 from langchain_core.outputs import Generation
 from openai.types.chat import ChatCompletion
+from openai.types.chat import ChatCompletionChunk
 from openai.types.chat import ChatCompletionAssistantMessageParam
 from openai.types.chat import ChatCompletionContentPartTextParam
 from openai.types.chat import ChatCompletionMessageFunctionToolCall
@@ -18,16 +18,20 @@ from openai.types.chat import ChatCompletionToolMessageParam
 from openai.types.chat import ChatCompletionUserMessageParam
 
 from tinygent.datamodels.messages import TinyChatMessage
+from tinygent.datamodels.messages import TinyChatMessageChunk
+from tinygent.datamodels.messages import TinyToolCallChunk
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyPlanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.messages import TinyToolResult
+from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
+from tinygent.datamodels.llm_io_result import TinyLLMResult
+from tinygent.utils import normalize_content
 
 if typing.TYPE_CHECKING:
-    from tinygent.datamodels.llm_io import TinyLLMInput
-    from tinygent.datamodels.llm_io import TinyLLMResult
+    from tinygent.datamodels.llm_io_input import TinyLLMInput
 
 
 def _to_text_parts(
@@ -142,8 +146,6 @@ def tiny_prompt_to_openai_params(
 
 def openai_result_to_tiny_result(resp: ChatCompletion) -> TinyLLMResult:
     """Convert an OpenAI ChatCompletion response to a TinyLLMResult."""
-    from tinygent.datamodels.llm_io import TinyLLMResult
-
     generations: list[list[Generation]] = []
 
     for choice in resp.choices:
@@ -176,19 +178,50 @@ def openai_result_to_tiny_result(resp: ChatCompletion) -> TinyLLMResult:
         'id': resp.id,
         'model': resp.model,
         'created': resp.created,
-        'usage': resp.usage.dict() if resp.usage else None,
+        'usage': resp.usage.model_dump() if resp.usage else None,
         'finish_reasons': [c.finish_reason for c in resp.choices],
     }
 
     return TinyLLMResult(generations=generations, llm_output=llm_output)
 
 
-def normalize_content(content: Union[str, list[str | dict]]) -> str:
-    """Normalize content which can be a string or a list of strings and dicts."""
-    if isinstance(content, str):
-        return content
+def openai_chunk_to_tiny_chunk(resp_chunk: ChatCompletionChunk) -> TinyLLMResultChunk:
+    """Convert an OpenAI ChatCompletionChunk to a TinyLLMResultChunk."""
+    choice = resp_chunk.choices[0]
+    delta = choice.delta
 
-    return ''.join(
-        part if isinstance(part, str) else f'[{part.get("type", "object")}]'
-        for part in content
-    )
+    # tool call chunk
+    if delta.tool_calls:
+        for tc in delta.tool_calls:
+            if tc.function:  # no need for isinstance check
+                return TinyLLMResultChunk(
+                    type='tool_call',
+                    tool_call=TinyToolCallChunk(
+                        tool_name=tc.function.name or '',
+                        arguments=tc.function.arguments or '',
+                        call_id=tc.id or None,
+                        index=tc.index,
+                        metadata={'raw': tc.model_dump()},
+                    ),
+                    metadata={'finish_reason': choice.finish_reason},
+                )
+
+    # text chunk
+    if delta.content:
+        return TinyLLMResultChunk(
+            type='message',
+            message=TinyChatMessageChunk(
+                content=normalize_content(delta.content),
+                metadata={'raw': delta.model_dump()},
+            ),
+            metadata={'finish_reason': choice.finish_reason},
+        )
+
+    # end of stream
+    if choice.finish_reason is not None:
+        return TinyLLMResultChunk(
+            type='end',
+            metadata={'finish_reason': choice.finish_reason},
+        )
+
+    return TinyLLMResultChunk(type='end', metadata={'raw': delta.model_dump()})

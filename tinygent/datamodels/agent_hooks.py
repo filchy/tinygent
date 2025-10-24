@@ -3,7 +3,7 @@ import logging
 from typing import Any
 from typing import Callable
 
-from tinygent.datamodels.llm_io import TinyLLMInput
+from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.tool import AbstractTool
 
 logger = logging.getLogger(__name__)

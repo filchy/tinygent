@@ -2,7 +2,7 @@ import asyncio
 
 from pydantic import Field
 
-from tinygent.datamodels.llm_io import TinyLLMInput
+from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.llms import OpenAILLM
 from tinygent.runtime.global_registry import GlobalRegistry
@@ -101,9 +101,42 @@ async def async_generation():
         print(f'[ASYNC TEXT GENERATION] {msg}')
 
 
+async def text_streaming():
+    llm = OpenAILLM()
+
+    async for chunk in llm.stream_text(
+        llm_input=TinyLLMInput(
+            messages=[TinyHumanMessage(content='Tell me a joke about programmers.')]
+        )
+    ):
+        if chunk.is_message:
+            assert chunk.message is not None
+            print(f'[STREAMED CHUNK] {chunk.message.content}')
+
+
+async def tool_call_streaming():
+    llm = OpenAILLM()
+
+    tools = [add, capitalize]
+
+    async for chunk in llm.stream_with_tools(
+        llm_input=TinyLLMInput(
+            messages=[
+                TinyHumanMessage(
+                    content='Capitalize "tinygent is powerful". Then add 5 and 7.'
+                )
+            ]
+        ),
+        tools=tools,
+    ):
+        print(f'[STREAMED CHUNK] {chunk}')
+
+
 if __name__ == '__main__':
     basic_generation()
     structured_generation()
     generation_with_tools()
 
     asyncio.run(async_generation())
+    asyncio.run(text_streaming())
+    asyncio.run(tool_call_streaming())
