@@ -12,7 +12,7 @@ from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.agent_hooks import AgentHooks
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
-from tinygent.datamodels.llm_io import TinyLLMInput
+from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.messages import TinyToolResult

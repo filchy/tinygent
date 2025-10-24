@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from tinygent.datamodels.llm_io import TinyLLMInput
+from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.llms import OpenAILLM
 from tinygent.runtime.global_registry import GlobalRegistry

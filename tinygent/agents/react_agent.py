@@ -9,7 +9,7 @@ from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
 from tinygent.cli.builder import build_llm
 from tinygent.cli.builder import build_tool
-from tinygent.datamodels.llm_io import TinyLLMInput
+from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
@@ -17,7 +17,7 @@ from tinygent.datamodels.messages import TinyToolCall
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.tools.reasoning_tool import ToolWithReasoning
 from tinygent.types.base import TinyModel
-from tinygent.utils.jinja_utils import render_template
+from tinygent.utils import render_template
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm import AbstractLLM

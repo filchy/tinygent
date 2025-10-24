@@ -101,6 +101,20 @@ class TinyChatMessage(BaseMessage[Literal['chat']]):
         return f'AI: {self.content}'
 
 
+class TinyChatMessageChunk(BaseMessage[Literal['chat']]):
+    """Message representing a chunk of a chat from the AI."""
+
+    type: Literal['chat'] = 'chat'
+    """The type of the message."""
+
+    content: str
+    """The content chunk of the chat message."""
+
+    @property
+    def tiny_str(self) -> str:
+        return f'AI Chunk: {self.content}'
+
+
 class TinyToolCall(BaseMessage[Literal['tool']]):
     """Message representing a tool call from the AI."""
 
@@ -139,6 +153,29 @@ class TinyToolCall(BaseMessage[Literal['tool']]):
         ) + f'Tool Call: {self.tool_name}({self.arguments}){result_str}'
 
 
+class TinyToolCallChunk(BaseMessage[Literal['tool']]):
+    """Message representing a chunk of a tool call from the AI."""
+
+    type: Literal['tool'] = 'tool'
+    """The type of the message."""
+
+    tool_name: str | None = None
+    """The name of the tool being called."""
+
+    arguments: str | None = None
+    """The arguments chunk for the tool call."""
+
+    call_id: str | None = None
+    """An optional identifier for the tool call."""
+
+    index: int
+    """The index of the tool call in the message stream."""
+
+    @property
+    def tiny_str(self) -> str:
+        return f'Tool Call Chunk: {self.tool_name or "?"}({self.arguments or ""})'
+
+
 class TinyToolResult(BaseMessage[Literal['tool_result']]):
     """Message representing the result of a tool call."""
 
@@ -173,3 +210,7 @@ class TinyHumanMessage(BaseMessage[Literal['human']]):
 TinyAIMessage = TinyPlanMessage | TinyReasoningMessage | TinyChatMessage | TinyToolCall
 
 AllTinyMessages = TinyAIMessage | TinyHumanMessage | TinySystemMessage | TinyToolResult
+
+TinyAIMessageChunk = TinyChatMessageChunk | TinyToolCallChunk
+
+AllTinyMessageChunks = TinyAIMessageChunk

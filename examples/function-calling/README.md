@@ -96,7 +96,7 @@ from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration, LLMResult
 
 from tinygent.types.base import TinyModel
-from tinygent.llms.utils import normalize_content
+from tinygent.utils import normalize_content
 
 
 class TinyChatMessage(TinyModel):
