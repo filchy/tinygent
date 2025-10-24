@@ -1,6 +1,7 @@
 from pydantic import Field
 
 from tinygent.tools.tool import register_tool
+from tinygent.tools.tool import tool
 from tinygent.types.base import TinyModel
 
 
@@ -31,7 +32,7 @@ class CountInput(TinyModel):
     n: int = Field(..., description='The number to count to.')
 
 
-@register_tool
+@tool
 def count(data: CountInput):
     """Counts from 1 to n, yielding each number."""
 
@@ -43,7 +44,7 @@ class AsyncCountInput(TinyModel):
     n: int = Field(..., description='The number to count to.')
 
 
-@register_tool
+@tool
 async def async_count(data: AsyncCountInput):
     """Asynchronously counts from 1 to n, yielding each number."""
 
@@ -89,11 +90,10 @@ if __name__ == '__main__':
     registry_greet = registry.get_tool('greet')
     global_registry_print(registry_greet({'name': 'TinyGent'}))
 
-    registry_count = registry.get_tool('count')
-    global_registry_print(list(registry_count(n=3)))
+    header_print('Local Tool Executions')
 
-    registry_async_count = registry.get_tool('async_count')
-    global_registry_print(list(registry_async_count({'n': 4})))
+    classic_print(list(count(n=5)))
+    classic_print(list(async_count({'n': 6})))
 
     # Cache info
     header_print('Cache Info')

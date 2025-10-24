@@ -40,6 +40,10 @@ class Tool(AbstractTool, Generic[T, R]):
             fn, use_cache=use_cache, cache_size=cache_size
         )
 
+        if self.info.is_generator or self.info.is_async_generator:
+            use_cache = False
+            self.info.use_cache = False
+
         if use_cache:
             if not self.info.is_cachable:
                 raise ValueError(
