@@ -13,9 +13,9 @@ from tinygent.types.base import TinyModel
 from tinygent.types.builder import TinyModelBuildable
 
 if typing.TYPE_CHECKING:
+    from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
     from tinygent.datamodels.llm_io_input import TinyLLMInput
     from tinygent.datamodels.llm_io_result import TinyLLMResult
-    from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
     from tinygent.datamodels.tool import AbstractTool
 
 T = TypeVar('T', bound='AbstractLLM')
@@ -76,7 +76,9 @@ class AbstractLLM(ABC, Generic[LLMConfigT]):
         raise NotImplementedError('Subclasses must implement this method.')
 
     @abstractmethod
-    async def stream_text(self, llm_input: TinyLLMInput) -> AsyncGenerator[TinyLLMResultChunk]:
+    async def stream_text(
+        self, llm_input: TinyLLMInput
+    ) -> AsyncGenerator[TinyLLMResultChunk]:
         """Stream text generation based on the given LLM input."""
         raise NotImplementedError('Subclasses must implement this method.')
 

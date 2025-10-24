@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import os
-import json
 from collections import defaultdict
 from collections.abc import AsyncGenerator
+import json
+import os
 import typing
 from typing import Any
 from typing import Literal
@@ -16,11 +16,11 @@ from openai.types.chat import ChatCompletionFunctionToolParam
 
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
+from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.llms.utils import openai_chunk_to_tiny_chunk
 from tinygent.llms.utils import openai_result_to_tiny_result
 from tinygent.llms.utils import tiny_prompt_to_openai_params
-from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm import LLMStructuredT
@@ -119,7 +119,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
                     'type': 'object',
                     'properties': properties,
                     'required': list(properties.keys()),
-                    'additionalProperties': False
+                    'additionalProperties': False,
                 },
                 'strict': True,
             },
@@ -152,7 +152,9 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
 
         return openai_result_to_tiny_result(res)
 
-    async def stream_text(self, llm_input: TinyLLMInput) -> AsyncGenerator[TinyLLMResultChunk, None]:  # type: ignore[override]
+    async def stream_text(  # type: ignore[override]
+        self, llm_input: TinyLLMInput
+    ) -> AsyncGenerator[TinyLLMResultChunk, None]:
         messages = tiny_prompt_to_openai_params(llm_input)
 
         async with self._async_client.chat.completions.stream(

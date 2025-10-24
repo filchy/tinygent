@@ -7,8 +7,8 @@ from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration
 from langchain_core.outputs import Generation
 from openai.types.chat import ChatCompletion
-from openai.types.chat import ChatCompletionChunk
 from openai.types.chat import ChatCompletionAssistantMessageParam
+from openai.types.chat import ChatCompletionChunk
 from openai.types.chat import ChatCompletionContentPartTextParam
 from openai.types.chat import ChatCompletionMessageFunctionToolCall
 from openai.types.chat import ChatCompletionMessageParam
@@ -17,17 +17,17 @@ from openai.types.chat import ChatCompletionSystemMessageParam
 from openai.types.chat import ChatCompletionToolMessageParam
 from openai.types.chat import ChatCompletionUserMessageParam
 
+from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
+from tinygent.datamodels.llm_io_result import TinyLLMResult
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyChatMessageChunk
-from tinygent.datamodels.messages import TinyToolCallChunk
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyPlanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
+from tinygent.datamodels.messages import TinyToolCallChunk
 from tinygent.datamodels.messages import TinyToolResult
-from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
-from tinygent.datamodels.llm_io_result import TinyLLMResult
 from tinygent.utils import normalize_content
 
 if typing.TYPE_CHECKING:

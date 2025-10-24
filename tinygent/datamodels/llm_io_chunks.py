@@ -1,5 +1,8 @@
 from typing import Literal
-from tinygent.datamodels.messages import TinyChatMessageChunk, TinyToolCall, TinyToolCallChunk
+
+from tinygent.datamodels.messages import TinyChatMessageChunk
+from tinygent.datamodels.messages import TinyToolCall
+from tinygent.datamodels.messages import TinyToolCallChunk
 from tinygent.types.base import TinyModel
 
 
