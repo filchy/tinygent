@@ -1,5 +1,9 @@
+from pydantic import BaseModel
 from pydantic import Field
+from pydantic import ValidationError
+from pydantic import create_model
 from pydantic import field_validator
+from pydantic import model_validator
 
 from tiny_brave.constants import MAX_QUERY_LENGTH
 from tiny_brave.constants import MAX_QUERY_TERMS
@@ -8,12 +12,7 @@ from tinygent.types.base import TinyModel
 
 
 class BaseSearchRequest(TinyModel):
-    model_config = {
-        'populate_by_name': True,
-        'alias_generator': lambda f: 'q' if f == 'query' else f,
-    }
-
-    query: str = Field(
+    q: str = Field(
         ...,
         min_length=1,
         max_length=MAX_QUERY_LENGTH,
@@ -41,10 +40,33 @@ class BaseSearchRequest(TinyModel):
         ),
     )
 
-    @field_validator('query')
+    @field_validator('q')
     def validate_query(cls, value: str) -> str:
         if len(value.strip().split()) > MAX_QUERY_TERMS:
             raise TinyBraveClientError(
                 f'Query exceeds maximum term limit of {MAX_QUERY_TERMS}.'
             )
         return value
+
+    @model_validator(mode='before')
+    def sanitize(cls, values: dict) -> dict:
+        for name, field in cls.model_fields.items():
+            if name not in values:
+                continue
+            v = values[name]
+            if v is None:
+                continue
+
+            Tmp = create_model(  # type: ignore
+                f'_Tmp_{cls.__name__}_{name}',
+                __base__=BaseModel,
+                **{name: (field.annotation, field)},  # type: ignore
+            )
+
+            try:
+                validated = Tmp(**{name: v})
+                values[name] = getattr(validated, name)
+            except ValidationError:
+                values[name] = field.default
+
+        return values

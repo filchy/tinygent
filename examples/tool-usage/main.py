@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from tinygent.tools.tool import tool
+from tinygent.tools.tool import register_tool
 from tinygent.types.base import TinyModel
 
 
@@ -9,7 +9,7 @@ class AddInput(TinyModel):
     b: int = Field(..., description='The second number to add.')
 
 
-@tool(use_cache=True)
+@register_tool(use_cache=True)
 def add(data: AddInput) -> int:
     """Adds two numbers together."""
 
@@ -20,7 +20,7 @@ class GreetInput(TinyModel):
     name: str = Field(..., description='The name to greet.')
 
 
-@tool(use_cache=True)
+@register_tool(use_cache=True)
 async def greet(data: GreetInput) -> str:
     """Greets a person by name."""
 
@@ -31,7 +31,7 @@ class CountInput(TinyModel):
     n: int = Field(..., description='The number to count to.')
 
 
-@tool
+@register_tool
 def count(data: CountInput):
     """Counts from 1 to n, yielding each number."""
 
@@ -43,7 +43,7 @@ class AsyncCountInput(TinyModel):
     n: int = Field(..., description='The number to count to.')
 
 
-@tool
+@register_tool
 async def async_count(data: AsyncCountInput):
     """Asynchronously counts from 1 to n, yielding each number."""
 

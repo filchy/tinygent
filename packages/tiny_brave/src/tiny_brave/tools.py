@@ -40,28 +40,28 @@ if __name__ == '__main__':
     async def main():
         news = await brave_news_search(
             NewsSearchRequest(
-                query='Brave Search API',
+                q='Brave Search API',
             )
         )
         print('News Search result: %s', news)
 
         web = await brave_web_search(
             WebSearchRequest(
-                query='Brave Search API',
+                q='Brave Search API',
             )
         )
         print('Web Search result: %s', web)
 
         images = await brave_images_search(
             ImagesSearchReuest(
-                query='Brave Search API',
+                q='Brave Search API',
             )
         )
         print('Image Search result: %s', images)
 
         videos = await brave_videos_search(
             VideoSearchRequest(
-                query='Brave Search API',
+                q='Brave Search API',
             )
         )
         print('Video Search result: %s', videos)
