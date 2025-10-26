@@ -1,5 +1,7 @@
 from pydantic import Field
 
+from tinygent.runtime.tool_catalog import GlobalToolCatalog
+from tinygent.tools.reasoning_tool import register_reasoning_tool
 from tinygent.tools.tool import register_tool
 from tinygent.tools.tool import tool
 from tinygent.types.base import TinyModel
@@ -52,10 +54,20 @@ async def async_count(data: AsyncCountInput):
         yield i
 
 
+class SearchInput(TinyModel):
+    query: str = Field(..., description='Search query')
+
+
+@register_reasoning_tool(reasoning_prompt="Explain why you are performing this search.")
+def search(data: SearchInput) -> str:
+    """Search for something."""
+    return f'Results for {data.query}'
+
+
 if __name__ == '__main__':
     header_print = lambda title: print('\n' + '*' * 10 + f' {title} ' + '*' * 10 + '\n')
     classic_print = lambda msg: print(f'[Classic] {msg}')
-    global_registry_print = lambda msg: print(f'[GlobalRegistry] {msg}')
+    global_registry_print = lambda msg: print(f'[GlobalToolCatalog] {msg}')
     cache_print = lambda msg: print(f'[Cache] {msg}')
 
     # Tool summaries
@@ -80,14 +92,12 @@ if __name__ == '__main__':
     # Global registry
     header_print('Global Registry Executions')
 
-    from tinygent.runtime.global_registry import GlobalRegistry
+    registry = GlobalToolCatalog().get_active_catalog()
 
-    registry = GlobalRegistry.get_registry()
-
-    registry_add = registry.get_active_tool('add')
+    registry_add = registry.get_tool('add')
     global_registry_print(registry_add(a=1, b=2))
 
-    registry_greet = registry.get_active_tool('greet')
+    registry_greet = registry.get_tool('greet')
     global_registry_print(registry_greet({'name': 'TinyGent'}))
 
     header_print('Local Tool Executions')
@@ -114,5 +124,11 @@ if __name__ == '__main__':
     cache_print(greet.cache_info())
     cache_print(count.cache_info())
     cache_print(async_count.cache_info())
+
+    # Reasoning tool
+    header_print('Reasoning Tool Execution')
+
+    global_registry_search = registry.get_tool('search')
+    global_registry_print(global_registry_search({"query": "TinyGent"}))
 
     # NOTE: count and async_count are not cachable, so their cache_info will be None

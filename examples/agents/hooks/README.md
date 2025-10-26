@@ -15,6 +15,7 @@ When you build an agent, you can pass hook functions (like `on_before_llm_call`,
 * **on_before_tool_call** – Triggered before a tool function is executed.
 * **on_after_tool_call** – Triggered after a tool returns a result.
 * **on_reasoning** – Triggered when the agent produces reasoning steps.
+* **on_tool_reasoning** - Triggered when the agent produces reasoning specific to tool usage.
 * **on_answer** – Triggered when the agent produces its final answer.
 * **on_error** – Triggered when any error occurs.
 
@@ -33,7 +34,7 @@ When you build an agent, you can pass hook functions (like `on_before_llm_call`,
 
 1. **Agent receives user input** → triggers `on_before_llm_call`.
 2. **LLM generates reasoning or a plan** → triggers `on_reasoning`.
-3. **Agent decides to call a tool** → triggers `on_before_tool_call` → executes tool → triggers `on_after_tool_call`.
+3. **Agent decides to call a tool** → triggers `on_before_tool_call` → executes tool → triggers `on_after_tool_call`. -> triggers `on_tool_reasoning` if applicable.
 4. **Agent gathers results and formulates answer** → triggers `on_after_llm_call`.
 5. **Final answer is produced** → triggers `on_answer`.
 6. **If an error occurs** at any stage → triggers `on_error`.

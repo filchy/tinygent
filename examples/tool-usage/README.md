@@ -3,7 +3,7 @@
 This example demonstrates how to use the `@tool` and `@register_tool` decorators from **tinygent**.
 
 * **`@tool`** wraps a function into a `Tool` object (unified interface, metadata, schema validation).
-* **`@register_tool`** does the same, but also **registers it automatically** into the global runtime tool registry, making it instantly accessible via `GlobalRegistry.get_registry().get_active_tool('<name>')`.
+* **`@register_tool`** does the same, but also **registers it automatically** into the global runtime tool registry catalog, making it instantly accessible via `GlobalToolCatalog().get_active_catalog().get_tool('<name>')`.
 
 ---
 
@@ -32,6 +32,42 @@ class AddInput(TinyModel):
 
 ---
 
+## Tool Types
+
+TinyGent supports several kinds of tools:
+
+| Type                        | Decorator(s)                            | Registered globally | Extra behavior |
+|-----------------------------|-----------------------------------------|---------------------|----------------|
+| **Local Tool**              | `@tool`                                 | ❌                  | Basic schema validation and execution |
+| **Registered Tool**         | `@register_tool`                        | ✅                  | Auto-added to `GlobalToolCatalog`, accessible by name |
+| **Reasoning Tool (local)**  | `@reasoning_tool`                       | ❌                  | Adds a `reasoning: str` field to the tool input, so the agent must state *why* it’s calling the tool |
+| **Reasoning Tool (global)** | `@register_reasoning_tool`              | ✅                  | Same as above, but also auto-registered in the global catalog |
+
+---
+
+### Reasoning Tools
+
+Reasoning tools extend normal tools by requiring an additional field
+`reasoning: str` in the input schema.  
+When an LLM selects such a tool, it must also explain *why* it is calling it.  
+
+This reasoning is captured and emitted through the **`on_tool_reasoning`** hook,  
+allowing you to log or inspect the agent’s motivation behind each tool call.
+
+---
+
+## Tool Hooks
+
+Whenever a tool is executed, the agent can emit the following [hooks](../agents/hooks/README.md):
+
+* **`on_before_tool_call(tool_name, arguments)`** – Triggered before the tool runs.  
+* **`on_after_tool_call(tool_name, arguments, result)`** – Triggered after the tool returns.  
+* **`on_tool_reasoning(reasoning: str)`** – Triggered when a `ReasoningTool` provides reasoning.  
+
+These hooks make it possible to monitor, debug, or extend tool usage.
+
+---
+
 ## Decorators
 
 ### `@tool`
@@ -54,17 +90,17 @@ print(local_add(AddInput(a=1, b=2)))  # works directly
 Creates a `Tool` instance **and registers it** into the global registry.
 
 ```python
-from tinygent.tools.tool import register_tool
+from tinygent.tools import register_tool
 
 @register_tool(use_cache=True)
 def add(data: AddInput) -> int:
     """Adds two numbers together."""
     return data.a + data.b
 
-from tinygent.runtime.global_registry import GlobalRegistry
+from tinygent.runtime.tool_catalog import GlobalToolCatalog
 
-registry = GlobalRegistry.get_registry()
-add_tool = registry.get_active_tool('add')
+registry = GlobalToolCatalog().get_active_catalog()
+add_tool = registry.get_tool('add')
 print(add_tool(a=1, b=2))
 ```
 
@@ -74,15 +110,15 @@ print(add_tool(a=1, b=2))
 
 You can decide whether a tool is registered globally or kept local.
 
-* **Global tools** (`@register_tool`)
+* **Global tools** (`@register_tool`, `@register_reasoning_tool`)
 
-  * Automatically stored in the `GlobalRegistry`
+  * Automatically stored in the `GlobalToolCatalog`
   * Discoverable by name from anywhere in your runtime
   * Great when you want tools to be available for LLM function calling across the system
 
-* **Local tools** (`@tool`)
+* **Local tools** (`@tool`, `@reasoning_tool`)
 
-  * Return a `Tool` instance only
+  * Return a `Tool`\/`ReasoningTool` instance only
   * Not stored in the registry
   * You manage them explicitly (e.g., pass into `llm.generate_with_tools`)
   * Useful for ephemeral or experimental utilities
@@ -91,7 +127,7 @@ You can decide whether a tool is registered globally or kept local.
 
 ## Tool Features
 
-Each decorated function becomes a `Tool` instance that:
+Each decorated function becomes a `Tool`\/`ReasoningTool` instance that:
 
 * Exposes a unified `__call__()` interface
 * Supports:
@@ -152,10 +188,10 @@ print(list(count(n=3)))
 print(list(async_count({"n": 4})))
 
 # Access from global registry (registered tools)
-from tinygent.runtime.global_registry import GlobalRegistry
-registry = GlobalRegistry.get_registry()
+from tinygent.runtime.tool_catalog import GlobalToolCatalog
+registry = GlobalToolCatalog.get_registry()
 
-print(registry.get_active_tool("greet")({"name": "TinyGent"}))
+print(registry.get_tool("greet")({"name": "TinyGent"}))
 
 # Local-only tools (not in registry)
 print(list(count(n=5)))

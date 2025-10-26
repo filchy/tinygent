@@ -92,8 +92,6 @@ class TinyReActAgent(TinyBaseAgent):
         self._iteration_number: int = 1
         self._react_iterations: list[TinyReactIteration] = []
 
-        self._tools: list[ReasoningTool] = [ReasoningTool(tool) for tool in tools]
-
         self.prompt_template = prompt_template
         self.max_iterations = max_iterations
 
@@ -206,7 +204,7 @@ class TinyReActAgent(TinyBaseAgent):
                                     self._iteration_number,
                                     reasoning,
                                 )
-                                self.on_reasoning(reasoning)
+                                self.on_tool_reasoning(reasoning)
                         else:
                             logger.error(
                                 'Tool %s not found. Skipping tool call.', msg.tool_name

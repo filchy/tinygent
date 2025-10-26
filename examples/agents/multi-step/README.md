@@ -41,6 +41,21 @@ memoryId -.->|Every non-`plan_interval` turns| actionGeneratorId
 
 ---
 
+## Hooks
+
+The `TinyMultiStepAgent` emits several **[hooks](../hooks/README.md)** during execution.  
+You can subclass the agent and override these methods, or attach callbacks, to handle custom logging, monitoring, or UI integration.
+
+| Hook                  | Trigger                                                                 |
+|------------------------|-------------------------------------------------------------------------|
+| `on_plan(step: str)`   | Whenever a **plan step** is generated (every `plan_interval` turns).     |
+| `on_reasoning(text: str)` | When the agent emits **reasoning/explanation** about its plan.         |
+| `on_tool_reasoning(text: str)` | When the **ReasoningTool** is used and produces intermediate reasoning. |
+| `on_answer(answer: str)` | When the agent emits a **final answer** (either directly or via a tool). |
+| `on_error(error: Exception)` | When an **exception** occurs during planning, acting, or tool execution. |
+
+---
+
 ## Files
 
 * `example.py` — runnable demo with two example tools.

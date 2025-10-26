@@ -112,7 +112,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
         self._tool_calls: list[TinyToolCall] = []
 
         __all_tools = list(tools) + [provide_final_answer]
-        self._tools: list[ReasoningTool] = [ReasoningTool(tool) for tool in __all_tools]
+        self._tools: list[AbstractTool] = [tool for tool in __all_tools]
 
         self.max_iterations = max_iterations
         self.plan_interval = plan_interval
@@ -280,7 +280,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                                 self._step_number,
                                 reasoning,
                             )
-                            self.on_reasoning(reasoning)
+                            self.on_tool_reasoning(reasoning)
 
                         logger.debug(
                             '[%s. ITERATION - Tool Call]: %s(%s) = %s',

@@ -28,6 +28,7 @@ class AgentHooks(ABC):
         ) = None,
         on_plan: Callable[[str], None] | None = None,
         on_reasoning: Callable[[str], None] | None = None,
+        on_tool_reasoning: Callable[[str], None] | None = None,
         on_answer: Callable[[str], None] | None = None,
         on_error: Callable[[Exception], None] | None = None,
     ) -> None:
@@ -68,6 +69,10 @@ class AgentHooks(ABC):
 
         self.on_reasoning: Callable[[str], None] = on_reasoning or (
             lambda reasoning: _log_hook(f'Reasoning: {reasoning}')
+        )
+
+        self.on_tool_reasoning: Callable[[str], None] = on_tool_reasoning or (
+            lambda reasoning: _log_hook(f'Tool Reasoning: {reasoning}')
         )
 
         self.on_answer: Callable[[str], None] = on_answer or (

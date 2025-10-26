@@ -6,7 +6,7 @@ from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
 from tinygent.agents.multi_step_agent import PlanPromptTemplate
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
 from tinygent.llms import OpenAILLM
-from tinygent.tools.tool import tool
+from tinygent.tools import reasoning_tool
 from tinygent.types.base import TinyModel
 from tinygent.utils.color_printer import TinyColorPrinter
 
@@ -15,7 +15,7 @@ class GreetInput(TinyModel):
     name: str = Field(..., description='The name of the person to greet.')
 
 
-@tool
+@reasoning_tool
 def greet(data: GreetInput) -> str:
     """Return a simple greeting."""
     return f'Hello, {data.name}!'
@@ -47,6 +47,10 @@ def after_tool(tool, args, result):
 
 def reasoning_hook(r):
     print(TinyColorPrinter.custom('REASONING', r, color='BLUE'))
+
+
+def tool_reasoning_hook(r):
+    print(TinyColorPrinter.custom('TOOL REASONING', r, color='CYAN'))
 
 
 def answer_hook(ans):
@@ -96,11 +100,12 @@ def main():
         llm=OpenAILLM(model_name='gpt-4o-mini'),
         prompt_template=prompt_template,
         tools=[greet],
-        max_steps=3,
+        max_iterations=3,
         on_before_llm_call=before_llm,
         on_after_llm_call=after_llm,
         on_before_tool_call=before_tool,
         on_after_tool_call=after_tool,
+        on_tool_reasoning=tool_reasoning_hook,
         on_reasoning=reasoning_hook,
         on_answer=answer_hook,
         on_error=error_hook,
