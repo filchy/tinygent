@@ -83,7 +83,7 @@ def generation_with_tools():
         if message.type == 'chat':
             print(f'[LLM RESPONSE] {message.content}')
         elif message.type == 'tool':
-            tool_fn = GlobalRegistry.get_registry().get_tool(message.tool_name)
+            tool_fn = GlobalRegistry.get_registry().get_active_tool(message.tool_name)
             output = tool_fn(**message.arguments)
             print(f'[TOOL CALL] {message.tool_name}({message.arguments}) => {output}')
 

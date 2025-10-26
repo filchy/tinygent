@@ -3,15 +3,15 @@ from __future__ import annotations
 import logging
 import typing
 
-from tinygent.datamodels.memory import AbstractMemory
-from tinygent.datamodels.memory import AbstractMemoryConfig
-
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.agent import AbstractAgent
     from tinygent.datamodels.agent import AbstractAgentConfig
     from tinygent.datamodels.llm import AbstractLLM
     from tinygent.datamodels.llm import AbstractLLMConfig
+    from tinygent.datamodels.memory import AbstractMemory
+    from tinygent.datamodels.memory import AbstractMemoryConfig
     from tinygent.datamodels.tool import AbstractTool
+    from tinygent.datamodels.tool import AbstractToolConfig
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +34,9 @@ class Registry:
         ] = {}
 
         # tools
-        self._registered_tools: dict[str, AbstractTool] = {}
-        self._registered_hidden_tools: dict[str, AbstractTool] = {}
+        self._registered_tools: dict[
+            str, tuple[type[AbstractToolConfig], type[AbstractTool]]
+        ] = {}
 
     # agents
     def register_agent(
@@ -118,28 +119,28 @@ class Registry:
         return self._registered_memories
 
     # tools
-    def register_tool(self, tool: AbstractTool, hidden: bool = False) -> None:
-        logger.debug(f'Registering tool {tool.info.name} (hidden={hidden})')
-        if tool.info.name in self.get_tools(include_hidden=True):
-            raise ValueError(f'Tool {tool.info.name} already registered.')
-
-        if hidden:
-            self._registered_hidden_tools[tool.info.name] = tool
-        else:
-            self._registered_tools[tool.info.name] = tool
-
-    def get_tool(self, name: str) -> AbstractTool:
-        logger.debug(f'Getting tool {name}')
+    def register_tool(
+        self,
+        name: str,
+        config_class: type[AbstractToolConfig],
+        tool_class: type[AbstractTool],
+    ) -> None:
+        logger.debug(f'Registering tool {name}')
         if name in self._registered_tools:
-            return self._registered_tools[name]
-        if name in self._registered_hidden_tools:
-            return self._registered_hidden_tools[name]
-        raise ValueError(f'Tool {name} not registered.')
+            raise ValueError(f'Tool {name} already registered.')
+        self._registered_tools[name] = (config_class, tool_class)
 
-    def get_tools(self, include_hidden: bool = False) -> dict[str, AbstractTool]:
-        logger.debug(f'Getting all registered tools (include_hidden={include_hidden})')
-        if include_hidden:
-            return {**self._registered_tools, **self._registered_hidden_tools}
+    def get_tool(self, name: str) -> tuple[type[AbstractToolConfig], type[AbstractTool]]:
+        logger.debug(f'Getting tool {name}')
+        if name not in self._registered_tools:
+            raise ValueError(f'Tool {name} not registered.')
+
+        return self._registered_tools[name]
+
+    def get_tools(
+        self,
+    ) -> dict[str, tuple[type[AbstractToolConfig], type[AbstractTool]]]:
+        logger.debug('Getting all registered tools')
         return self._registered_tools
 
 

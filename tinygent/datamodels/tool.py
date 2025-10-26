@@ -5,12 +5,35 @@ from abc import abstractmethod
 import typing
 from typing import Any
 from typing import Callable
+from typing import ClassVar
+from typing import Generic
 from typing import TypeVar
+
+from tinygent.types.builder import TinyModelBuildable
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.tool_info import ToolInfo
 
 T = TypeVar('T', bound='AbstractTool')
+
+
+class AbstractToolConfig(TinyModelBuildable[T], Generic[T]):
+    """Abstract base class for tool configurations."""
+
+    type: Any  # used as discriminator
+
+    name: str
+
+    _discriminator_field: ClassVar[str] = 'type'
+
+    @classmethod
+    def get_discriminator_field(cls) -> str:
+        """Get the name of the discriminator field."""
+        return cls._discriminator_field
+
+    def build(self) -> T:
+        """Build the Tool instance from the configuration."""
+        raise NotImplementedError('Subclasses must implement this method.')
 
 
 class AbstractTool(ABC):
@@ -30,6 +53,12 @@ class AbstractTool(ABC):
     @abstractmethod
     def info(self) -> ToolInfo:
         """Get the information about the tool."""
+        pass
+
+    @property
+    @abstractmethod
+    def raw(self) -> Callable[..., Any]:
+        """Get the original function of the tool."""
         pass
 
     @abstractmethod

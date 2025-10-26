@@ -7,4 +7,5 @@ llm:
   temperature: 0.4
 prompt_template: !include prompts.yaml
 tools:
-  - name: get_weather_mock
+  - type: simple
+    name: get_weather_mock

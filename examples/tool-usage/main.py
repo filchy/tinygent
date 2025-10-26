@@ -84,10 +84,10 @@ if __name__ == '__main__':
 
     registry = GlobalRegistry.get_registry()
 
-    registry_add = registry.get_tool('add')
+    registry_add = registry.get_active_tool('add')
     global_registry_print(registry_add(a=1, b=2))
 
-    registry_greet = registry.get_tool('greet')
+    registry_greet = registry.get_active_tool('greet')
     global_registry_print(registry_greet({'name': 'TinyGent'}))
 
     header_print('Local Tool Executions')

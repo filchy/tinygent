@@ -1,15 +1,40 @@
 from dataclasses import replace
 from typing import Any
+from typing import Callable
+from typing import Literal
+from typing import TypeVar
 from typing import cast
+from typing import overload
 
 from pydantic import Field
 from pydantic import create_model
 
 from tinygent.datamodels.tool import AbstractTool
+from tinygent.datamodels.tool import AbstractToolConfig
+from tinygent.runtime.tool_catalog import GlobalToolCatalog
+from tinygent.tools.tool import Tool
+from tinygent.types.base import TinyModel
+
+T = TypeVar('T', bound=TinyModel)
 
 
-class ToolWithReasoning(AbstractTool):
-    def __init__(self, inner_tool: AbstractTool) -> None:
+class ReasoningToolConfig(AbstractToolConfig['ReasoningTool']):
+    type: Literal['reasoning'] = 'reasoning'
+
+    prompt: str
+
+    def build(self) -> 'ReasoningTool':
+        raw_tool = GlobalToolCatalog().get_active_catalog().get_tool(self.name)
+        return ReasoningTool(
+            raw_tool,
+            reasoning_prompt=self.prompt,
+        )
+
+
+class ReasoningTool(AbstractTool):
+    def __init__(
+        self, inner_tool: AbstractTool, reasoning_prompt: str | None = None
+    ) -> None:
         self._inner = inner_tool
         self._reasoning: str | None = None
         self.__reasoning_field_name = 'reasoning'
@@ -23,7 +48,9 @@ class ToolWithReasoning(AbstractTool):
             **{k: (v.annotation, v) for k, v in original_input.model_fields.items()},
             self.__reasoning_field_name: (
                 str,
-                Field(..., description='Why this tool is being called'),
+                Field(
+                    ..., description=reasoning_prompt or 'Why this tool is being called'
+                ),
             ),
         }
 
@@ -47,6 +74,10 @@ class ToolWithReasoning(AbstractTool):
     def info(self) -> Any:
         inner_info = self._inner.info
         return replace(inner_info, input_schema=self._input_model)
+
+    @property
+    def raw(self) -> Callable[..., Any]:
+        return self._inner.raw
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         if args and isinstance(args[0], dict):
@@ -77,3 +108,69 @@ class ToolWithReasoning(AbstractTool):
 
     def __getattr__(self, item: str) -> Any:
         return getattr(self._inner, item)
+
+
+@overload
+def reasoning_tool(fn: Callable[[T], Any]) -> ReasoningTool: ...
+
+
+@overload
+def reasoning_tool(
+    *, use_cache: bool = False, cache_size: int = 128
+) -> Callable[[Callable[[T], Any]], ReasoningTool]: ...
+
+
+def reasoning_tool(
+    fn: Callable[[T], Any] | None = None,
+    *,
+    reasoning_prompt: str | None = None,
+    use_cache: bool = False,
+    cache_size: int = 128,
+) -> ReasoningTool | Callable[[Callable[[T], Any]], ReasoningTool]:
+    def wrapper(f: Callable[[T], Any]) -> ReasoningTool:
+        raw_tool = Tool(f, use_cache=use_cache, cache_size=cache_size)
+        return ReasoningTool(
+            raw_tool,
+            reasoning_prompt=reasoning_prompt,
+        )
+
+    if fn is None:
+        return wrapper
+    return wrapper(fn)
+
+
+@overload
+def register_reasoning_tool(fn: Callable[[T], Any]) -> ReasoningTool: ...
+
+
+@overload
+def register_reasoning_tool(
+    *,
+    reasoning_prompt: str | None = None,
+    use_cache: bool = False,
+    cache_size: int = 128,
+    hidden: bool = False,
+) -> Callable[[Callable[[T], Any]], ReasoningTool]: ...
+
+
+def register_reasoning_tool(
+    fn: Callable[[T], Any] | None = None,
+    *,
+    reasoning_prompt: str | None = None,
+    use_cache: bool = False,
+    cache_size: int = 128,
+    hidden: bool = False,
+) -> ReasoningTool | Callable[[Callable[[T], Any]], ReasoningTool]:
+    def wrapper(f: Callable[[T], Any]) -> ReasoningTool:
+        GlobalToolCatalog().get_active_catalog().register(
+            f, use_cache=use_cache, cache_size=cache_size, hidden=hidden
+        )
+        raw_tool = Tool(f, use_cache=use_cache, cache_size=cache_size)
+        return ReasoningTool(
+            raw_tool,
+            reasoning_prompt=reasoning_prompt,
+        )
+
+    if fn is None:
+        return wrapper
+    return wrapper(fn)

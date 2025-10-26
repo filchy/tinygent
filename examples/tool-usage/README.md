@@ -3,7 +3,7 @@
 This example demonstrates how to use the `@tool` and `@register_tool` decorators from **tinygent**.
 
 * **`@tool`** wraps a function into a `Tool` object (unified interface, metadata, schema validation).
-* **`@register_tool`** does the same, but also **registers it automatically** into the global runtime tool registry, making it instantly accessible via `GlobalRegistry.get_registry().get_tool('<name>')`.
+* **`@register_tool`** does the same, but also **registers it automatically** into the global runtime tool registry, making it instantly accessible via `GlobalRegistry.get_registry().get_active_tool('<name>')`.
 
 ---
 
@@ -64,7 +64,7 @@ def add(data: AddInput) -> int:
 from tinygent.runtime.global_registry import GlobalRegistry
 
 registry = GlobalRegistry.get_registry()
-add_tool = registry.get_tool('add')
+add_tool = registry.get_active_tool('add')
 print(add_tool(a=1, b=2))
 ```
 
@@ -155,7 +155,7 @@ print(list(async_count({"n": 4})))
 from tinygent.runtime.global_registry import GlobalRegistry
 registry = GlobalRegistry.get_registry()
 
-print(registry.get_tool("greet")({"name": "TinyGent"}))
+print(registry.get_active_tool("greet")({"name": "TinyGent"}))
 
 # Local-only tools (not in registry)
 print(list(count(n=5)))

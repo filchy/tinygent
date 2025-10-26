@@ -15,7 +15,7 @@ from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
-from tinygent.tools.reasoning_tool import ToolWithReasoning
+from tinygent.tools.reasoning_tool import ReasoningTool
 from tinygent.types.base import TinyModel
 from tinygent.utils import render_template
 
@@ -92,9 +92,7 @@ class TinyReActAgent(TinyBaseAgent):
         self._iteration_number: int = 1
         self._react_iterations: list[TinyReactIteration] = []
 
-        self._tools: list[ToolWithReasoning] = [
-            ToolWithReasoning(tool) for tool in tools
-        ]
+        self._tools: list[ReasoningTool] = [ReasoningTool(tool) for tool in tools]
 
         self.prompt_template = prompt_template
         self.max_iterations = max_iterations
@@ -201,7 +199,7 @@ class TinyReActAgent(TinyBaseAgent):
 
                             tool_calls.append(msg)
 
-                            if isinstance(called_tool, ToolWithReasoning):
+                            if isinstance(called_tool, ReasoningTool):
                                 reasoning = msg.arguments.get('reasoning', '')
                                 logger.debug(
                                     '[%d. ITERATION - Tool Reasoning]: %s',

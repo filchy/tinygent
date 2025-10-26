@@ -21,7 +21,7 @@ from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.prompt import TinyPromptTemplate
 from tinygent.memory import BufferChatMemory
 from tinygent.tools.default_tools import provide_final_answer
-from tinygent.tools.reasoning_tool import ToolWithReasoning
+from tinygent.tools.reasoning_tool import ReasoningTool
 from tinygent.types.base import TinyModel
 from tinygent.utils import is_final_answer
 from tinygent.utils import render_template
@@ -112,9 +112,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
         self._tool_calls: list[TinyToolCall] = []
 
         __all_tools = list(tools) + [provide_final_answer]
-        self._tools: list[ToolWithReasoning] = [
-            ToolWithReasoning(tool) for tool in __all_tools
-        ]
+        self._tools: list[ReasoningTool] = [ReasoningTool(tool) for tool in __all_tools]
 
         self.max_iterations = max_iterations
         self.plan_interval = plan_interval
@@ -275,7 +273,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                                 'Tool %s not found. Skipping tool call.', msg.tool_name
                             )
 
-                        if isinstance(called_tool, ToolWithReasoning):
+                        if isinstance(called_tool, ReasoningTool):
                             reasoning = msg.arguments.get('reasoning', '')
                             logger.debug(
                                 '[%d. ITERATION - Tool Reasoning]: %s',

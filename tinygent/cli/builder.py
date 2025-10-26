@@ -80,6 +80,5 @@ def build_tool(config: dict | ToolConfig) -> AbstractTool:
     if isinstance(config, dict):
         config = ToolConfig.model_validate(config)
 
-    if not (tool := GlobalRegistry.get_registry().get_tool(config.name)):
-        raise ValueError(f'Tool {config.name} not registered.')
-    return tool
+    tool_config = _parse_config(config.model_dump(), lambda r: r.get_tools())
+    return tool_config.build()

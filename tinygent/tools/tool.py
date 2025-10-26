@@ -10,9 +10,10 @@ from typing import cast
 from typing import overload
 
 from tinygent.datamodels.tool import AbstractTool
+from tinygent.datamodels.tool import AbstractToolConfig
 from tinygent.datamodels.tool_info import ToolInfo
 from tinygent.runtime.executors import run_async_in_executor
-from tinygent.runtime.global_registry import GlobalRegistry
+from tinygent.runtime.tool_catalog import GlobalToolCatalog
 from tinygent.types.base import TinyModel
 from tinygent.utils.schema_validator import validate_schema
 
@@ -20,10 +21,17 @@ T = TypeVar('T', bound=TinyModel)
 R = TypeVar('R')
 
 
-class ToolConfig(TinyModel):
-    type: Literal['tool'] = 'tool'
+class ToolConfig(AbstractToolConfig['Tool[T, R]'], Generic[T, R]):
+    type: Literal['simple'] = 'simple'
 
-    name: str
+    def build(self) -> 'Tool[T, R]':
+        raw_tool = GlobalToolCatalog().get_active_catalog().get_tool(self.name)
+
+        return Tool(
+            raw_tool.raw,
+            use_cache=raw_tool.info.use_cache,
+            cache_size=raw_tool.info.cache_size,
+        )
 
 
 class Tool(AbstractTool, Generic[T, R]):
@@ -62,6 +70,10 @@ class Tool(AbstractTool, Generic[T, R]):
                 self._cached_fn = lru_cache(maxsize=cache_size)(fn)
 
         self._fn = self._cached_fn or self.__original_fn
+
+    @property
+    def raw(self) -> Callable[[T], R]:
+        return self.__original_fn
 
     @property
     def info(self) -> ToolInfo[T, R]:
@@ -165,9 +177,14 @@ def register_tool(
     hidden: bool = False,
 ) -> Tool[T, Any] | Callable[[Callable[[T], Any]], Tool[T, Any]]:
     def wrapper(f: Callable[[T], Any]) -> Tool[T, Any]:
-        tool_instance = Tool(f, use_cache=use_cache, cache_size=cache_size)
-        GlobalRegistry.get_registry().register_tool(tool_instance, hidden=hidden)
-        return tool_instance
+        GlobalToolCatalog().get_active_catalog().register(
+            f, use_cache=use_cache, cache_size=cache_size, hidden=hidden
+        )
+        return Tool(
+            f,
+            use_cache=use_cache,
+            cache_size=cache_size,
+        )
 
     if fn is None:
         return wrapper
