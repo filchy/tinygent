@@ -1,11 +1,11 @@
-from tinygent.tools.reasoning_tool import ReasoningTool
-from tinygent.tools.reasoning_tool import ReasoningToolConfig
-from tinygent.tools.reasoning_tool import reasoning_tool
-from tinygent.tools.reasoning_tool import register_reasoning_tool
-from tinygent.tools.tool import Tool
-from tinygent.tools.tool import ToolConfig
-from tinygent.tools.tool import register_tool
-from tinygent.tools.tool import tool
+from .reasoning_tool import ReasoningTool
+from .reasoning_tool import ReasoningToolConfig
+from .reasoning_tool import reasoning_tool
+from .reasoning_tool import register_reasoning_tool
+from .tool import Tool
+from .tool import ToolConfig
+from .tool import register_tool
+from .tool import tool
 
 __all__ = [
     'ReasoningTool',

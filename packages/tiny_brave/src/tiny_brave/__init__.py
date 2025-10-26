@@ -1,17 +1,17 @@
-from tiny_brave.client import TinyBraveClient
-from tiny_brave.datamodels.requests.images import ImagesSearchReuest
-from tiny_brave.datamodels.requests.news import NewsSearchRequest
-from tiny_brave.datamodels.requests.videos import VideoSearchRequest
-from tiny_brave.datamodels.requests.web import WebSearchRequest
-from tiny_brave.datamodels.responses.images import ImageSearchApiResponse
-from tiny_brave.datamodels.responses.news import NewsSearchApiResponse
-from tiny_brave.datamodels.responses.videos import VideoSearchApiResponse
-from tiny_brave.datamodels.responses.web import WebSearchApiResponse
-from tiny_brave.exceptions import TinyBraveAPIError
-from tiny_brave.exceptions import TinyBraveClientError
-from tiny_brave.exceptions import TinyBraveError
-from tiny_brave.tools import brave_news_search
-from tiny_brave.tools import brave_web_search
+from .client import TinyBraveClient
+from .datamodels.requests.images import ImagesSearchReuest
+from .datamodels.requests.news import NewsSearchRequest
+from .datamodels.requests.videos import VideoSearchRequest
+from .datamodels.requests.web import WebSearchRequest
+from .datamodels.responses.images import ImageSearchApiResponse
+from .datamodels.responses.news import NewsSearchApiResponse
+from .datamodels.responses.videos import VideoSearchApiResponse
+from .datamodels.responses.web import WebSearchApiResponse
+from .exceptions import TinyBraveAPIError
+from .exceptions import TinyBraveClientError
+from .exceptions import TinyBraveError
+from .tools import brave_news_search
+from .tools import brave_web_search
 
 __all__ = [
     'TinyBraveClient',
