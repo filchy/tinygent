@@ -37,8 +37,11 @@ fmt = "scripts.fmt:main"
 [project.entry-points.components]
 tiny_agents = "tinygent.agents.register"
 tiny_llms = "tinygent.llms.register"
-tiny_tools = "tinygent.tools.default_tools"
+tiny_tools = "tinygent.tools.register"
 tiny_memory = "tinygent.memory.register"
+
+[project.entry-points.functions]
+tiny_default_tools = "tinygent.tools.default_tools"
 
 [tool.uv]
 package = true

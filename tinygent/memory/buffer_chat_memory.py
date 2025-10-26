@@ -1,3 +1,4 @@
+from io import StringIO
 from typing import Literal
 
 from tinygent.datamodels.memory import AbstractMemoryConfig
@@ -20,3 +21,13 @@ class BufferChatMemory(BaseChatMemory):
 
     def load_variables(self) -> dict[str, str]:
         return {self._memory_key: str(self._chat_history)}
+
+    def __str__(self) -> str:
+        base = super().__str__()
+
+        buff = StringIO()
+
+        buff.write(base)
+        buff.write('\ttype: Buffer Chat Memory\n')
+
+        return buff.getvalue()

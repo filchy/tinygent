@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
+from io import StringIO
 import typing
 
 from pydantic import PrivateAttr
@@ -24,3 +25,11 @@ class BaseChatMemory(AbstractMemory, ABC):
 
     def clear(self) -> None:
         self._chat_history.clear()
+
+    def __str__(self) -> str:
+        buff = StringIO()
+
+        buff.write('Chat Memory:\n')
+        buff.write(f'\tNumber of messages stored: {len(self._chat_history.messages)}\n')
+
+        return buff.getvalue()

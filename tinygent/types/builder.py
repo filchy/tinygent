@@ -18,3 +18,32 @@ class TinyModelBuildable(TinyModel, Generic[T], ABC):
     @abstractmethod
     def build(self) -> Any:
         pass
+
+    @classmethod
+    def rebuild_annotations(cls) -> bool:
+        from tinygent.cli.builder import make_union
+        from tinygent.runtime.global_registry import GlobalRegistry
+
+        registry = GlobalRegistry.get_registry()
+        should_rebuild = False
+
+        mapping = {
+            'llm': registry.get_llms,
+            'tools': registry.get_tools,
+            'memory_list': registry.get_memories,
+            'agents': registry.get_agents,
+        }
+
+        for field_name, getter in mapping.items():
+            if field_name not in cls.model_fields:
+                continue
+
+            union_ann = make_union(getter)  # type: ignore[arg-type]
+            if cls.__annotations__.get(field_name) != union_ann:
+                cls.__annotations__[field_name] = union_ann
+                should_rebuild = True
+
+        if should_rebuild:
+            cls.model_rebuild(force=True)
+            return True
+        return False

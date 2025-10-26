@@ -6,4 +6,6 @@ llm:
   temperature: 0.4
 prompt_template: !include prompts.yaml
 tools:
-  - name: get_weather_mock
+  - type: reasoning
+    name: get_weather_mock
+    prompt: 'Explain why are you using this tool and what information you expect to get from it.'

@@ -10,6 +10,7 @@ from tinygent.agents.multi_step_agent import TinyMultiStepAgent
 from tinygent.llms import OpenAILLM
 from tinygent.logging import setup_general_loggers
 from tinygent.logging import setup_logger
+from tinygent.tools.reasoning_tool import reasoning_tool
 from tinygent.tools.tool import tool
 from tinygent.types.base import TinyModel
 from tinygent.utils.yaml import tiny_yaml_load
@@ -22,7 +23,9 @@ class WeatherInput(TinyModel):
     location: str = Field(..., description='The location to get the weather for.')
 
 
-@tool
+@reasoning_tool(
+    reasoning_prompt='Provide reasoning for why the weather information is needed.'
+)
 def get_weather(data: WeatherInput) -> str:
     """Get the current weather in a given location."""
 
@@ -67,6 +70,7 @@ def main():
 
     logger.info(f'[RESULT] {result}')
     logger.info(f'[MEMORY] {multi_step_agent.memory.load_variables()}')
+    logger.info(f'[AGENT SUMMARY] {str(multi_step_agent)}')
 
 
 if __name__ == '__main__':

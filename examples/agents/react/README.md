@@ -33,11 +33,24 @@ memoryId -.->|History of toolcalls & reasonings| actionGeneratorId
 
 ## Concept
 
-* **Reasoning**: the agent generates reasoning steps based on the task and past context.
-* **Acting**: the agent performs tool calls guided by the reasoning.
-* **Iteration**: the agent loops through reasoning + acting until a final answer is produced or `max_iterations` is reached (default: 10).
-* **Memory**: stores conversation history and tool results using `BufferChatMemory`.
-* **Tools**: user-defined functions decorated with `@tool`.
+The `TinyReActAgent` emits several **[hooks](../hooks/README.md)** during execution.  
+You can subclass the agent and override these methods, or attach callbacks, to handle custom logging, monitoring, or UI integration.
+
+| Hook                          | Trigger                                                             |
+|-------------------------------|---------------------------------------------------------------------|
+| `on_answer(answer: str)`      | When the agent emits a **final answer**.                            |
+| `on_tool_reasoning(text: str)`| When the **ReasoningTool** is used and produces intermediate reasoning. |
+| `on_error(error: Exception)`  | When an **exception** occurs during reasoning or tool execution.    |
+
+---
+
+## Hooks
+
+The `TinyReActAgent` can emit:
+
+- `on_answer(answer: str)` — when a final answer is produced  
+- `on_tool_reasoning(reasoning: str)` — when a `ReasoningTool` emits reasoning  
+- `on_error(error: Exception)` — when an exception occurs  
 
 ---
 

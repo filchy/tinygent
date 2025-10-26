@@ -32,16 +32,24 @@ def register_commands_from_package(app: typer.Typer, package: str) -> None:
             app.command(name=module_name, help=help_text)(module.main)
 
 
-def discover_entry_points(group: str) -> list[importlib.metadata.EntryPoint]:
+def discover_entry_points(
+    groups: str | list[str],
+) -> list[importlib.metadata.EntryPoint]:
     """Discover entry points for 'tinygent'."""
     entry_points = importlib.metadata.entry_points()
 
-    return list(entry_points.select(group=group))
+    if isinstance(groups, str):
+        return list(entry_points.select(group=groups))
+
+    discovered: list[importlib.metadata.EntryPoint] = []
+    for group in groups:
+        discovered.extend(entry_points.select(group=group))
+    return discovered
 
 
 def discover_and_register_components() -> None:
     """Discover and register components from the 'tinygent' package."""
-    entry_points = discover_entry_points('components')
+    entry_points = discover_entry_points(['components', 'functions'])
 
     count = 0
     for entry_point in entry_points:

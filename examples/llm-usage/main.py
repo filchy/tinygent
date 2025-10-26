@@ -5,8 +5,8 @@ from pydantic import Field
 from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.llms import OpenAILLM
-from tinygent.runtime.global_registry import GlobalRegistry
-from tinygent.tools.tool import tool
+from tinygent.tools import reasoning_tool
+from tinygent.tools import tool
 from tinygent.types.base import TinyModel
 
 
@@ -24,7 +24,7 @@ class CapitalizeInput(TinyModel):
     text: str = Field(..., description='Text to capitalize')
 
 
-@tool
+@reasoning_tool
 def capitalize(data: CapitalizeInput) -> str:
     return data.text.upper()
 
@@ -66,7 +66,8 @@ def structured_generation():
 def generation_with_tools():
     llm = OpenAILLM()
 
-    tools = [add, capitalize]
+    tools_list = [add, capitalize]
+    tools = {tool.info.name: tool for tool in tools_list}
 
     result = llm.generate_with_tools(
         llm_input=TinyLLMInput(
@@ -76,15 +77,14 @@ def generation_with_tools():
                 )
             ]
         ),
-        tools=tools,
+        tools=tools_list,
     )
 
     for message in result.tiny_iter():
         if message.type == 'chat':
             print(f'[LLM RESPONSE] {message.content}')
         elif message.type == 'tool':
-            tool_fn = GlobalRegistry.get_registry().get_tool(message.tool_name)
-            output = tool_fn(**message.arguments)
+            output = tools[message.tool_name](**message.arguments)
             print(f'[TOOL CALL] {message.tool_name}({message.arguments}) => {output}')
 
 
