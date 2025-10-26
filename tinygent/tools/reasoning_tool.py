@@ -1,6 +1,8 @@
 from dataclasses import replace
+from io import StringIO
 from typing import Any
 from typing import Callable
+from typing import Generic
 from typing import Literal
 from typing import TypeVar
 from typing import cast
@@ -18,7 +20,7 @@ from tinygent.types.base import TinyModel
 T = TypeVar('T', bound=TinyModel)
 
 
-class ReasoningToolConfig(AbstractToolConfig['ReasoningTool']):
+class ReasoningToolConfig(AbstractToolConfig['ReasoningTool'], Generic[T]):
     type: Literal['reasoning'] = 'reasoning'
 
     prompt: str
@@ -37,6 +39,7 @@ class ReasoningTool(AbstractTool):
     ) -> None:
         self._inner = inner_tool
         self._reasoning: str | None = None
+        self._reasoning_prompt = reasoning_prompt or 'Why this tool is being called'
         self.__reasoning_field_name = 'reasoning'
 
         # Dynamically create a new input schema with `reasoning: str`
@@ -48,9 +51,7 @@ class ReasoningTool(AbstractTool):
             **{k: (v.annotation, v) for k, v in original_input.model_fields.items()},
             self.__reasoning_field_name: (
                 str,
-                Field(
-                    ..., description=reasoning_prompt or 'Why this tool is being called'
-                ),
+                Field(..., description=self._reasoning_prompt),
             ),
         }
 
@@ -108,6 +109,15 @@ class ReasoningTool(AbstractTool):
 
     def __getattr__(self, item: str) -> Any:
         return getattr(self._inner, item)
+
+    def __str__(self) -> str:
+        base = str(self._inner)
+
+        buf = StringIO()
+        buf.write(base)
+        buf.write(f'\tReasoning Prompt: {self._reasoning_prompt}\n')
+
+        return buf.getvalue()
 
 
 @overload

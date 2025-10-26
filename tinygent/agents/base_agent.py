@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from io import StringIO
+import textwrap
 from typing import Any
 from typing import Generic
 from typing import Sequence
@@ -17,7 +19,7 @@ from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.messages import TinyToolResult
 from tinygent.datamodels.tool import AbstractTool
-from tinygent.tools.tool import ToolConfig
+from tinygent.datamodels.tool import AbstractToolConfig
 
 T = TypeVar('T', bound='AbstractAgent')
 
@@ -28,7 +30,7 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
     type: Any = 'base'
 
     llm: AbstractLLMConfig
-    tools: Sequence[ToolConfig] = Field(default_factory=list)
+    tools: Sequence[AbstractToolConfig] = Field(default_factory=list)
     memory_list: Sequence[AbstractMemory] = Field(default_factory=list)
 
     def build(self) -> T:
@@ -89,3 +91,24 @@ class TinyBaseAgent(AbstractAgent, AgentHooks):
         except Exception as e:
             self.on_error(e)
             raise
+
+    def __str__(self) -> str:
+        buf = StringIO()
+
+        buf.write('\n')
+        buf.write('Agent Summary:\n')
+        buf.write(f'{textwrap.indent(str(self.llm), "\t")}\n')
+
+        buf.write(f'\tNumber of tools: {len(self.tools)}\n')
+        if len(self.tools) > 0:
+            buf.write('\tTools:\n')
+            for tool in self.tools:
+                buf.write(f'{textwrap.indent(str(tool), "\t\t")}\n')
+
+        buf.write(f'\tNumber of memories: {len(self.memory_list)}\n')
+        if len(self.memory_list) > 0:
+            buf.write('\tMemories:\n')
+            for memory in self.memory_list:
+                buf.write(f'{textwrap.indent(str(memory), "\t\t")}\n')
+
+        return buf.getvalue()

@@ -38,6 +38,23 @@ class Registry:
             str, tuple[type[AbstractToolConfig], type[AbstractTool]]
         ] = {}
 
+    def _rebuild_annotations(self) -> None:
+        from tinygent.types.builder import TinyModelBuildable
+
+        configs: list[type[TinyModelBuildable]] = []
+        configs.extend(cfg for cfg, _ in self._registered_agents.values())
+        configs.extend(cfg for cfg, _ in self._registered_llms.values())
+        configs.extend(cfg for cfg, _ in self._registered_memories.values())
+        configs.extend(cfg for cfg, _ in self._registered_tools.values())
+
+        for config_cls in configs:
+            if issubclass(config_cls, TinyModelBuildable):
+                config_cls.rebuild_annotations()
+
+    def _registration_changed(self) -> None:
+        logger.debug('Registry changed, rebuilding annotations')
+        self._rebuild_annotations()
+
     # agents
     def register_agent(
         self,
@@ -50,6 +67,7 @@ class Registry:
             raise ValueError(f'Agent {name} already registered.')
 
         self._registered_agents[name] = (config_class, agent_class)
+        self._registration_changed()
 
     def get_agent(
         self, name: str
@@ -78,6 +96,7 @@ class Registry:
             raise ValueError(f'LLM {name} already registered.')
 
         self._registered_llms[name] = (config_class, llm_class)
+        self._registration_changed()
 
     def get_llm(self, name: str) -> tuple[type[AbstractLLMConfig], type[AbstractLLM]]:
         logger.debug(f'Getting LLM {name}')
@@ -102,6 +121,7 @@ class Registry:
             raise ValueError(f'Memory {name} already registered.')
 
         self._registered_memories[name] = (config_class, memory_class)
+        self._registration_changed()
 
     def get_memory(
         self, name: str
@@ -128,7 +148,9 @@ class Registry:
         logger.debug(f'Registering tool {name}')
         if name in self._registered_tools:
             raise ValueError(f'Tool {name} already registered.')
+
         self._registered_tools[name] = (config_class, tool_class)
+        self._registration_changed()
 
     def get_tool(self, name: str) -> tuple[type[AbstractToolConfig], type[AbstractTool]]:
         logger.debug(f'Getting tool {name}')

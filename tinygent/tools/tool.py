@@ -1,3 +1,4 @@
+from io import StringIO
 from typing import Any
 from typing import Awaitable
 from typing import Callable
@@ -132,6 +133,15 @@ class Tool(AbstractTool, Generic[T, R]):
                 return list(cast(Iterable[Any], result))
             else:
                 return result
+
+    def __str__(self) -> str:
+        buf = StringIO()
+
+        buf.write(f'Tool - {self.info.name}\n')
+        buf.write(f'\tDescription: {self.info.description}\n')
+        buf.write(f'\tNumber of Args: {self.info.arg_count}\n')
+
+        return buf.getvalue()
 
 
 @overload

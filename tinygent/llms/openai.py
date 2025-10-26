@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import AsyncGenerator
+from io import StringIO
 import json
 import os
+import textwrap
 import typing
 from typing import Any
 from typing import Literal
@@ -296,3 +298,13 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
                             ),
                             metadata=tiny_chunk.metadata,
                         )
+
+    def __str__(self) -> str:
+        buf = StringIO()
+
+        buf.write('OpenAI LLM Summary:\n')
+        buf.write(textwrap.indent(f'Model: {self.model_name}\n', '\t'))
+        buf.write(textwrap.indent(f'Base URL: {self.base_url}\n', '\t'))
+        buf.write(textwrap.indent(f'Temperature: {self.temperature}\n', '\t'))
+        buf.write(textwrap.indent(f'Timeout: {self.timeout}\n', '\t'))
+        return buf.getvalue()

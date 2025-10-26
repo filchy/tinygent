@@ -105,7 +105,8 @@ class TinyMultiStepAgent(TinyBaseAgent):
         plan_interval: int = 5,
         **kwargs,
     ) -> None:
-        super().__init__(llm=llm, tools=tools, **kwargs)
+        self.memory = BufferChatMemory()
+        super().__init__(llm=llm, tools=tools, memory_list=[self.memory], **kwargs)
 
         self._step_number: int = 1
         self._planned_steps: list[TinyPlanMessage] = []
@@ -120,8 +121,6 @@ class TinyMultiStepAgent(TinyBaseAgent):
         self.acter_prompt = prompt_template.acter
         self.plan_prompt = prompt_template.plan
         self.final_prompt = prompt_template.final
-
-        self.memory = BufferChatMemory()
 
     def _stream_steps(
         self, task: str

@@ -44,6 +44,7 @@ def main():
 
     react_agent = TinyReActAgent(
         llm=OpenAILLM(),
+        max_iterations=3,
         prompt_template=ReActPromptTemplate(
             reason=ReasonPromptTemplate(
                 init=react_agent_prompt['reason']['init'],
@@ -60,6 +61,7 @@ def main():
 
     logger.info(f'[RESULT] {result}')
     logger.info(f'[MEMORY] {react_agent.memory.load_variables()}')
+    logger.info(f'[AGENT SUMMARY] {str(react_agent)}')
 
 
 if __name__ == '__main__':
