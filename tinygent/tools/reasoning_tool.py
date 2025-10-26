@@ -116,7 +116,10 @@ def reasoning_tool(fn: Callable[[T], Any]) -> ReasoningTool: ...
 
 @overload
 def reasoning_tool(
-    *, reasoning_prompt: str | None = None, use_cache: bool = False, cache_size: int = 128
+    *,
+    reasoning_prompt: str | None = None,
+    use_cache: bool = False,
+    cache_size: int = 128,
 ) -> Callable[[Callable[[T], Any]], ReasoningTool]: ...
 
 

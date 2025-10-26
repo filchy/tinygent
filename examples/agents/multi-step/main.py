@@ -23,7 +23,9 @@ class WeatherInput(TinyModel):
     location: str = Field(..., description='The location to get the weather for.')
 
 
-@reasoning_tool(reasoning_prompt='Provide reasoning for why the weather information is needed.')
+@reasoning_tool(
+    reasoning_prompt='Provide reasoning for why the weather information is needed.'
+)
 def get_weather(data: WeatherInput) -> str:
     """Get the current weather in a given location."""
 

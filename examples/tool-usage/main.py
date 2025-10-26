@@ -58,7 +58,7 @@ class SearchInput(TinyModel):
     query: str = Field(..., description='Search query')
 
 
-@register_reasoning_tool(reasoning_prompt="Explain why you are performing this search.")
+@register_reasoning_tool(reasoning_prompt='Explain why you are performing this search.')
 def search(data: SearchInput) -> str:
     """Search for something."""
     return f'Results for {data.query}'
@@ -129,6 +129,6 @@ if __name__ == '__main__':
     header_print('Reasoning Tool Execution')
 
     global_registry_search = registry.get_tool('search')
-    global_registry_print(global_registry_search({"query": "TinyGent"}))
+    global_registry_print(global_registry_search({'query': 'TinyGent'}))
 
     # NOTE: count and async_count are not cachable, so their cache_info will be None
