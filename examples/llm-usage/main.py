@@ -1,10 +1,8 @@
-import asyncio
-
 from pydantic import Field
 
 from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.messages import TinyHumanMessage
-from tinygent.llms import OpenAILLM
+from tinygent.llms.base import init_llm
 from tinygent.tools import reasoning_tool
 from tinygent.tools import tool
 from tinygent.types.base import TinyModel
@@ -34,7 +32,7 @@ class SummaryResponse(TinyModel):
 
 
 def basic_generation():
-    llm = OpenAILLM()
+    llm = init_llm('openai:gpt-4o')
 
     result = llm.generate_text(
         llm_input=TinyLLMInput(
@@ -47,7 +45,7 @@ def basic_generation():
 
 
 def structured_generation():
-    llm = OpenAILLM()
+    llm = init_llm('openai:gpt-4o')
 
     result = llm.generate_structured(
         llm_input=TinyLLMInput(
@@ -64,7 +62,7 @@ def structured_generation():
 
 
 def generation_with_tools():
-    llm = OpenAILLM()
+    llm = init_llm('openai:gpt-4o')
 
     tools_list = [add, capitalize]
     tools = {tool.info.name: tool for tool in tools_list}
@@ -89,7 +87,7 @@ def generation_with_tools():
 
 
 async def async_generation():
-    llm = OpenAILLM()
+    llm = init_llm('openai:gpt-4o')
 
     result = await llm.agenerate_text(
         llm_input=TinyLLMInput(
@@ -102,7 +100,7 @@ async def async_generation():
 
 
 async def text_streaming():
-    llm = OpenAILLM()
+    llm = init_llm('openai:gpt-4o')
 
     async for chunk in llm.stream_text(
         llm_input=TinyLLMInput(
@@ -115,7 +113,7 @@ async def text_streaming():
 
 
 async def tool_call_streaming():
-    llm = OpenAILLM()
+    llm = init_llm('openai:gpt-4o')
 
     tools = [add, capitalize]
 
@@ -133,10 +131,16 @@ async def tool_call_streaming():
 
 
 if __name__ == '__main__':
-    basic_generation()
-    structured_generation()
-    generation_with_tools()
 
-    asyncio.run(async_generation())
-    asyncio.run(text_streaming())
-    asyncio.run(tool_call_streaming())
+    async def main():
+        basic_generation()
+        structured_generation()
+        generation_with_tools()
+
+        await async_generation()
+        await text_streaming()
+        await tool_call_streaming()
+
+    import asyncio
+
+    asyncio.run(main())

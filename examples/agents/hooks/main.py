@@ -1,11 +1,11 @@
 from pydantic import Field
 
 from tinygent.agents.multi_step_agent import ActionPromptTemplate
-from tinygent.agents.multi_step_agent import FinalAnswerPromptTemplate
+from tinygent.agents.multi_step_agent import FallbackAnswerPromptTemplate
 from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
 from tinygent.agents.multi_step_agent import PlanPromptTemplate
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
-from tinygent.llms import OpenAILLM
+from tinygent.llms.base import init_llm
 from tinygent.tools import reasoning_tool
 from tinygent.types.base import TinyModel
 from tinygent.utils.color_printer import TinyColorPrinter
@@ -81,8 +81,8 @@ action_prompt = ActionPromptTemplate(
     ),
 )
 
-final_prompt = FinalAnswerPromptTemplate(
-    final_answer=(
+fallback_prompt = FallbackAnswerPromptTemplate(
+    fallback_answer=(
         'Provide the final answer for {{ task }} '
         'based on history: {{ history }} and steps {{ steps }}'
     )
@@ -91,13 +91,13 @@ final_prompt = FinalAnswerPromptTemplate(
 prompt_template = MultiStepPromptTemplate(
     plan=plan_prompt,
     acter=action_prompt,
-    final=final_prompt,
+    fallback=fallback_prompt,
 )
 
 
 def main():
     agent = TinyMultiStepAgent(
-        llm=OpenAILLM(model_name='gpt-4o-mini'),
+        llm=init_llm('openai:gpt-4o'),
         prompt_template=prompt_template,
         tools=[greet],
         max_iterations=3,

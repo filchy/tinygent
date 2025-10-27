@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncIterator
 import typing
 from typing import Generic
 from typing import TypeVar
@@ -65,9 +65,7 @@ class AbstractLLM(ABC, Generic[LLMConfigT]):
         raise NotImplementedError('Subclasses must implement this method.')
 
     @abstractmethod
-    async def stream_text(
-        self, llm_input: TinyLLMInput
-    ) -> AsyncGenerator[TinyLLMResultChunk]:
+    def stream_text(self, llm_input: TinyLLMInput) -> AsyncIterator[TinyLLMResultChunk]:
         """Stream text generation based on the given LLM input."""
         raise NotImplementedError('Subclasses must implement this method.')
 
@@ -100,8 +98,8 @@ class AbstractLLM(ABC, Generic[LLMConfigT]):
         raise NotImplementedError('Subclasses must implement this method.')
 
     @abstractmethod
-    async def stream_with_tools(
+    def stream_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
-    ) -> AsyncGenerator[TinyLLMResultChunk, None]:
+    ) -> AsyncIterator[TinyLLMResultChunk]:
         """Stream text generation using the given LLM input and tools."""
         raise NotImplementedError('Subclasses must implement this method.')

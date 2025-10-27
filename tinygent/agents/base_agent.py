@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
+from collections.abc import AsyncIterator
 from io import StringIO
 import textwrap
 from typing import Any
@@ -86,8 +87,8 @@ class TinyBaseAgent(AbstractAgent, AgentHooks):
         self,
         fn: Callable[
             ...,
-            AsyncGenerator[TinyLLMResultChunk, None]
-            | Awaitable[AsyncGenerator[TinyLLMResultChunk, None]],
+            AsyncIterator[TinyLLMResultChunk]
+            | Awaitable[AsyncIterator[TinyLLMResultChunk]],
         ],
         llm_input: TinyLLMInput,
         **kwargs: Any,

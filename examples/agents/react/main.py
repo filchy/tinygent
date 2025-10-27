@@ -7,7 +7,7 @@ from tinygent.agents.react_agent import FallbackPromptTemplate
 from tinygent.agents.react_agent import ReActPromptTemplate
 from tinygent.agents.react_agent import ReasonPromptTemplate
 from tinygent.agents.react_agent import TinyReActAgent
-from tinygent.llms.openai import OpenAILLM
+from tinygent.llms.base import init_llm
 from tinygent.logging import setup_general_loggers
 from tinygent.logging import setup_logger
 from tinygent.tools.tool import tool
@@ -44,7 +44,7 @@ def main():
     react_agent_prompt = tiny_yaml_load(str(Path(__file__).parent / 'prompts.yaml'))
 
     react_agent = TinyReActAgent(
-        llm=OpenAILLM(),
+        llm=init_llm('openai:gpt-4o', temperature=0.1),
         max_iterations=3,
         prompt_template=ReActPromptTemplate(
             reason=ReasonPromptTemplate(
