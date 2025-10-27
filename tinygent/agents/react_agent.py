@@ -280,14 +280,14 @@ class TinyReActAgent(TinyBaseAgent):
             finally:
                 self._iteration_number += 1
 
-        yielded_final_answer = False
-        final_yielded_answer = ''
-
         if not returned_final_answer:
             logger.warning(
                 'Max iterations reached without final answer. Using fallback.'
                 'Returning fallback answer.'
             )
+
+            yielded_final_answer = False
+            final_yielded_answer = ''
 
             async for fallback_chunk in self._stream_fallback(task=input_text):
                 yielded_final_answer = True
@@ -299,6 +299,7 @@ class TinyReActAgent(TinyBaseAgent):
                 final_yielded_answer = 'I have completed my reasoning and tool usage but did not arrive at a final answer.'
                 yield final_yielded_answer
 
+            self.memory.save_context(TinyChatMessage(content=final_yielded_answer))
             self.on_answer(final_yielded_answer)
 
     def run(
@@ -315,7 +316,7 @@ class TinyReActAgent(TinyBaseAgent):
             self._react_iterations = []
             self.memory.clear()
 
-        async def _run():
+        async def _run() -> str:
             final_answer = ''
             async for output in self._run_agent(input_text):
                 final_answer += output

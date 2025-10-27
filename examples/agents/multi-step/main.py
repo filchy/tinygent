@@ -3,7 +3,7 @@ from pathlib import Path
 from pydantic import Field
 
 from tinygent.agents.multi_step_agent import ActionPromptTemplate
-from tinygent.agents.multi_step_agent import FinalAnswerPromptTemplate
+from tinygent.agents.multi_step_agent import FallbackAnswerPromptTemplate
 from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
 from tinygent.agents.multi_step_agent import PlanPromptTemplate
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
@@ -57,8 +57,8 @@ def main():
                 init_plan=multi_step_agent_prompt['plan']['init_plan'],
                 update_plan=multi_step_agent_prompt['plan']['update_plan'],
             ),
-            final=FinalAnswerPromptTemplate(
-                final_answer=multi_step_agent_prompt['final']['final_answer']
+            fallback=FallbackAnswerPromptTemplate(
+                fallback_answer=multi_step_agent_prompt['fallback']['fallback_answer']
             ),
         ),
         tools=[get_weather, get_best_destination],
