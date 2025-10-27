@@ -1,4 +1,3 @@
-````markdown
 # CombinedMemory — Compose Multiple Memory Backends
 
 `CombinedMemory` lets you wire together multiple memory strategies and expose them as a single memory to an agent. Each underlying memory receives all messages; their exported variables are merged. This is useful when you want both a full transcript and a short sliding window (or any other custom combination) simultaneously.
@@ -68,5 +67,3 @@ Use `CombinedMemory` when you need multiple views of conversation state at once:
 * Key collisions: later memories in the `memory_list` overwrite earlier keys when merging.
 * Order matters if you depend on override behavior; place specific/shorter memories later.
 * Keep an eye on total token contribution if you merge large buffers.
-
-````
