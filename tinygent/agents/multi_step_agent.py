@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Generator
 from collections.abc import AsyncGenerator
+from collections.abc import Generator
 import logging
 import typing
 from typing import Any
@@ -14,8 +14,8 @@ from tinygent.cli.builder import build_llm
 from tinygent.cli.builder import build_tool
 from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 from tinygent.datamodels.llm_io_input import TinyLLMInput
-from tinygent.datamodels.messages import TinyChatMessageChunk
 from tinygent.datamodels.messages import TinyChatMessage
+from tinygent.datamodels.messages import TinyChatMessageChunk
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyPlanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
@@ -195,7 +195,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
         ):
             yield chunk
 
-    async def _stream_fallback_answer(self, task: str) -> AsyncGenerator[TinyChatMessageChunk]:
+    async def _stream_fallback_answer(
+        self, task: str
+    ) -> AsyncGenerator[TinyChatMessageChunk]:
         messages = TinyLLMInput(
             messages=[
                 *self.memory.chat_messages,
@@ -212,9 +214,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
             ]
         )
 
-        async for chunk in self.run_llm_stream(
-            self.llm.stream_text, llm_input=messages
-        ):
+        async for chunk in self.run_llm_stream(self.llm.stream_text, llm_input=messages):
             if chunk.is_message and isinstance(chunk.message, TinyChatMessageChunk):
                 yield chunk.message
 
@@ -237,23 +237,23 @@ class TinyMultiStepAgent(TinyBaseAgent):
                 plan_generator = self._stream_steps(input_text)
                 self._planned_steps = []
 
-                for msg in plan_generator:
-                    if isinstance(msg, TinyPlanMessage):
+                for planner_msg in plan_generator:
+                    if isinstance(planner_msg, TinyPlanMessage):
                         logger.debug(
                             '[%d. ITERATION - Plan]: %s',
                             self._iteration_number,
-                            msg.content,
+                            planner_msg.content,
                         )
-                        self.on_plan(msg.content)
-                        self._planned_steps.append(msg)
-                    if isinstance(msg, TinyReasoningMessage):
+                        self.on_plan(planner_msg.content)
+                        self._planned_steps.append(planner_msg)
+                    if isinstance(planner_msg, TinyReasoningMessage):
                         logger.debug(
                             '[%d. ITERATION - Reasoning]: %s',
                             self._iteration_number,
-                            msg.content,
+                            planner_msg.content,
                         )
-                        self.on_reasoning(msg.content)
-                    self.memory.save_context(msg)
+                        self.on_reasoning(planner_msg.content)
+                    self.memory.save_context(planner_msg)
 
             try:
                 # Execute action
@@ -263,16 +263,21 @@ class TinyMultiStepAgent(TinyBaseAgent):
                         yielded_final_answer += msg.message.content
                         yield msg.message.content
 
-                    elif msg.is_tool_call and isinstance(msg.full_tool_call, TinyToolCall):
+                    elif msg.is_tool_call and isinstance(
+                        msg.full_tool_call, TinyToolCall
+                    ):
                         tool_call: TinyToolCall = msg.full_tool_call
                         self.memory.save_context(tool_call)
                         called_tool = self.get_tool(tool_call.tool_name)
                         if called_tool:
-                            self.memory.save_context(self.run_tool(called_tool, tool_call))
+                            self.memory.save_context(
+                                self.run_tool(called_tool, tool_call)
+                            )
                             self._tool_calls.append(tool_call)
                         else:
                             logger.error(
-                                'Tool %s not found. Skipping tool call.', tool_call.tool_name
+                                'Tool %s not found. Skipping tool call.',
+                                tool_call.tool_name,
                             )
 
                         if isinstance(called_tool, ReasoningTool):
@@ -292,9 +297,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
                             tool_call.result,
                         )
 
-                        if isinstance(tool_call.result, TinyChatMessage) and is_final_answer(
-                            tool_call.result
-                        ):
+                        if isinstance(
+                            tool_call.result, TinyChatMessage
+                        ) and is_final_answer(tool_call.result):
                             returned_final_answer = True
 
                             self.memory.save_context(tool_call.result)
@@ -320,18 +325,20 @@ class TinyMultiStepAgent(TinyBaseAgent):
                 'Returning the last known answer or a default message.'
             )
 
-            yielded_final_answer = False
+            yield_fallback = False
             final_yielded_answer = ''
 
             logger.debug('--- FALLBACK FINAL ANSWER ---')
             async for chunk in self._stream_fallback_answer(input_text):
-                yielded_final_answer = True
+                yield_fallback = True
                 final_yielded_answer += chunk.content
 
                 yield chunk.content
 
-            if not yielded_final_answer:
-                final_yielded_answer = 'I am unable to provide a final answer at this time.'
+            if not yield_fallback:
+                final_yielded_answer = (
+                    'I am unable to provide a final answer at this time.'
+                )
                 yield final_yielded_answer
 
             self.memory.save_context(TinyChatMessage(content=final_yielded_answer))
