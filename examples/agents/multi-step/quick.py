@@ -15,11 +15,10 @@ def main():
 
     agent = build_agent(tiny_yaml_load(str(Path(__file__).parent / 'agent.yaml')))
 
-    logger.info(str(agent))
+    result = agent.run('What is the weather like in Paris?')
 
-    # result = agent.run('What is the weather like in Paris?')
-    #
-    # logger.info(f'[RESULT] {result}')
+    logger.info(f'[RESULT] {result}')
+    logger.info(f'[AGENT] {str(agent)}')
 
 
 if __name__ == '__main__':

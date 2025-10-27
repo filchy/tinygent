@@ -20,7 +20,9 @@ class BufferChatMemory(BaseChatMemory):
         return [self._memory_key]
 
     def load_variables(self) -> dict[str, str]:
-        return {self._memory_key: str(self._chat_history)}
+        return {
+            self._memory_key: str([msg.tiny_str for msg in self._chat_history.messages])
+        }
 
     def __str__(self) -> str:
         base = super().__str__()

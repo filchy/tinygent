@@ -7,6 +7,7 @@ from tinygent.cli.builder import build_memory
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.memory import AbstractMemoryConfig
 from tinygent.datamodels.messages import AllTinyMessages
+from tinygent.memory.base_chat_memory import BaseChatMemory
 
 
 class CombinedMemoryConfig(AbstractMemoryConfig['CombinedMemory']):
@@ -19,7 +20,7 @@ class CombinedMemoryConfig(AbstractMemoryConfig['CombinedMemory']):
         return CombinedMemory(memory_list=memories)
 
 
-class CombinedMemory(AbstractMemory):
+class CombinedMemory(BaseChatMemory):
     memory_list: list[AbstractMemory]
 
     @property
@@ -36,6 +37,8 @@ class CombinedMemory(AbstractMemory):
         return memory_vars
 
     def save_context(self, message: AllTinyMessages) -> None:
+        self._chat_history.add_message(message)
+
         for memory in self.memory_list:
             memory.save_context(message)
 

@@ -24,6 +24,12 @@ class AbstractMemory(TinyModel, ABC):
 
     @property
     @abstractmethod
+    def chat_messages(self) -> list[AllTinyMessages]:
+        """Get the chat messages stored in memory."""
+        raise NotImplementedError('Subclasses must implement this method.')
+
+    @property
+    @abstractmethod
     def memory_keys(self) -> list[str]:
         """List of keys used in the memory."""
         raise NotImplementedError('Subclasses must implement this method.')
