@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from io import StringIO
 import textwrap
 from typing import Any
+from typing import Awaitable
+from typing import Callable
 from typing import Generic
 from typing import Sequence
 from typing import TypeVar
@@ -14,6 +17,7 @@ from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.agent_hooks import AgentHooks
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
+from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import TinyToolCall
@@ -72,6 +76,32 @@ class TinyBaseAgent(AbstractAgent, AgentHooks):
             result = fn(llm_input=llm_input, **kwargs)
             self.on_after_llm_call(llm_input, result)
             return result
+        except Exception as e:
+            self.on_error(e)
+            raise
+
+    async def run_llm_stream(
+        self,
+        fn: Callable[
+            ...,
+            AsyncGenerator[TinyLLMResultChunk, None]
+            | Awaitable[AsyncGenerator[TinyLLMResultChunk, None]],
+        ],
+        llm_input: TinyLLMInput,
+        **kwargs: Any,
+    ) -> AsyncGenerator[TinyLLMResultChunk, None]:
+        self.on_before_llm_call(llm_input)
+        try:
+            result = fn(llm_input=llm_input, **kwargs)
+
+            # if coroutine, await it to get async generator
+            if isinstance(result, Awaitable):
+                result = await result
+
+            async for chunk in result:
+                yield chunk
+
+            self.on_after_llm_call(llm_input, None)
         except Exception as e:
             self.on_error(e)
             raise

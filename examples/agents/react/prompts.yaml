@@ -41,3 +41,18 @@ action:
     {% for tool in tools %}
     - {{ tool.info.name }}: {{ tool.info.description }}
     {% endfor %}
+
+fallback:
+  fallback_answer: |-
+    You have reached the maximum number of reasoning iterations without arriving at a Final Answer.
+
+    Based on all the reasoning and information you have gathered so far, provide the best possible Final Answer to the original task.
+
+    --- Original Task ---
+    {{ task }}
+
+    --- Summary of reasoning so far ---
+    {{ overview }}
+
+    Now, give your Final Answer:
+    Final Answer:

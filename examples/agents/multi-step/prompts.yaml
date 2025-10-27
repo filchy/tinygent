@@ -136,8 +136,8 @@ plan:
 
     First complete part 1, to fully understand the task and then move to part 2, write your plan.
 
-final:
-  final_answer: |-
+fallback:
+  fallback_answer: |-
     You are an expert at analyzing situations and providing clear, concise answers.
     You have been given following task:
 

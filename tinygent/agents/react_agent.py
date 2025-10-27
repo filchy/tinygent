@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Generator
+import asyncio
+from collections.abc import AsyncGenerator
 import logging
 import typing
 from typing import Literal
@@ -9,8 +10,10 @@ from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
 from tinygent.cli.builder import build_llm
 from tinygent.cli.builder import build_tool
+from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.messages import TinyChatMessage
+from tinygent.datamodels.messages import TinyChatMessageChunk
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinyToolCall
@@ -27,6 +30,8 @@ logger = logging.getLogger(__name__)
 
 
 class ReasonPromptTemplate(TinyModel):
+    """Used to define the reasoning step."""
+
     init: str
     update: str
 
@@ -34,14 +39,27 @@ class ReasonPromptTemplate(TinyModel):
 
 
 class ActionPromptTemplate(TinyModel):
+    """Used to define the final answer or action."""
+
     action: str
 
     _template_fields = {'action': {'reasoning', 'tools'}}
 
 
+class FallbackPromptTemplate(TinyModel):
+    """Used to define the fallback if agent don't answer in time."""
+
+    fallback_answer: str
+
+    _template_fields = {'fallback_answer': {'task', 'overview'}}
+
+
 class ReActPromptTemplate(TinyModel):
+    """Prompt template for ReAct Agent."""
+
     reason: ReasonPromptTemplate
     action: ActionPromptTemplate
+    fallback: FallbackPromptTemplate
 
 
 class TinyReActAgentConfig(TinyBaseAgentConfig['TinyReActAgent']):
@@ -131,7 +149,7 @@ class TinyReActAgent(TinyBaseAgent):
             return TinyChatMessage(content=result.content)
         return TinyReasoningMessage(content=result.content)
 
-    def _stream_action(self, reasoning: str) -> Generator[TinyToolCall]:
+    async def _stream_action(self, reasoning: str) -> AsyncGenerator[TinyToolCall]:
         messages = TinyLLMInput(
             messages=[
                 *self.memory.chat_messages,
@@ -144,16 +162,41 @@ class TinyReActAgent(TinyBaseAgent):
             ]
         )
 
-        result = self.run_llm(
-            fn=self.llm.generate_with_tools,
+        async for chunk in self.run_llm_stream(
+            fn=self.llm.stream_with_tools,
             llm_input=messages,
             tools=self._tools,
-        )
-        for message in result.tiny_iter():
-            if isinstance(message, TinyToolCall):
-                yield message
+        ):
+            if chunk.is_tool_call and chunk.full_tool_call:
+                yield chunk.full_tool_call
 
-    def _run_agent(self, input_text: str) -> Generator[str]:
+    async def _stream_fallback(self, task: str) -> AsyncGenerator[str]:
+        messages = TinyLLMInput(
+            messages=[
+                *self.memory.chat_messages,
+                TinyHumanMessage(
+                    content=render_template(
+                        self.prompt_template.fallback.fallback_answer,
+                        {
+                            'task': task,
+                            'overview': '\n'.join(
+                                iteration.summary for iteration in self._react_iterations
+                            ),
+                        },
+                    )
+                ),
+            ]
+        )
+
+        async for chunk in self.run_llm_stream(
+            fn=self.llm.stream_text,
+            llm_input=messages,
+        ):
+            if isinstance(chunk, TinyLLMResultChunk) and chunk.is_message:
+                assert isinstance(chunk.message, TinyChatMessageChunk)
+                yield chunk.message.content
+
+    async def _run_agent(self, input_text: str) -> AsyncGenerator[str]:
         self._iteration_number = 1
         returned_final_answer: bool = False
 
@@ -186,8 +229,14 @@ class TinyReActAgent(TinyBaseAgent):
                     yield reasoning_result.content
 
                 else:
+                    logger.debug(
+                        '[%d. ITERATION - Streaming Action]', self._iteration_number
+                    )
+
                     tool_calls: list[TinyToolCall] = []
-                    for msg in self._stream_action(reasoning=reasoning_result.content):
+                    async for msg in self._stream_action(
+                        reasoning=reasoning_result.content
+                    ):
                         called_tool = self.get_tool(msg.tool_name)
                         if called_tool:
                             tool_result = self.run_tool(called_tool, msg)
@@ -231,6 +280,27 @@ class TinyReActAgent(TinyBaseAgent):
             finally:
                 self._iteration_number += 1
 
+        yielded_final_answer = False
+        final_yielded_answer = ''
+
+        if not returned_final_answer:
+            logger.warning(
+                'Max iterations reached without final answer. Using fallback.'
+                'Returning fallback answer.'
+            )
+
+            async for fallback_chunk in self._stream_fallback(task=input_text):
+                yielded_final_answer = True
+                final_yielded_answer += fallback_chunk
+
+                yield fallback_chunk
+
+            if not yielded_final_answer:
+                final_yielded_answer = 'I have completed my reasoning and tool usage but did not arrive at a final answer.'
+                yield final_yielded_answer
+
+            self.on_answer(final_yielded_answer)
+
     def run(
         self,
         input_text: str,
@@ -245,8 +315,10 @@ class TinyReActAgent(TinyBaseAgent):
             self._react_iterations = []
             self.memory.clear()
 
-        final_answer = ''
-        for output in self._run_agent(input_text):
-            final_answer += output
+        async def _run():
+            final_answer = ''
+            async for output in self._run_agent(input_text):
+                final_answer += output
+            return final_answer
 
-        return final_answer
+        return asyncio.run(_run())
