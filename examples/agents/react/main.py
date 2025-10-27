@@ -3,6 +3,7 @@ from pathlib import Path
 from pydantic import Field
 
 from tinygent.agents.react_agent import ActionPromptTemplate
+from tinygent.agents.react_agent import FallbackPromptTemplate
 from tinygent.agents.react_agent import ReActPromptTemplate
 from tinygent.agents.react_agent import ReasonPromptTemplate
 from tinygent.agents.react_agent import TinyReActAgent
@@ -51,6 +52,9 @@ def main():
                 update=react_agent_prompt['reason']['update'],
             ),
             action=ActionPromptTemplate(action=react_agent_prompt['action']['action']),
+            fallback=FallbackPromptTemplate(
+                fallback_answer=react_agent_prompt['fallback']['fallback_answer']
+            ),
         ),
         tools=[get_weather, get_best_destination],
     )
