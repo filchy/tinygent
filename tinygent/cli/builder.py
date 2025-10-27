@@ -24,6 +24,7 @@ T = TypeVar('T', bound=HasDiscriminatorField)
 
 
 def make_union(getter: Callable[[], Mapping[str, tuple[type[T], Any]]]):
+    """Create a discriminated union type from registered config classes."""
     mapping = getter()
     config_classes = [cfg for cfg, _ in mapping.values()]
 
@@ -41,9 +42,7 @@ def _parse_config(
     config: dict | TinyModel,
     getter: Callable[[], Mapping[str, tuple[type[T], Any]]],
 ) -> T:
-    """
-    Generic parser: returns the validated config model instance.
-    """
+    """Generic parser: returns the validated config model instance."""
     if isinstance(config, TinyModel):
         config = config.model_dump()
 

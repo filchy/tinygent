@@ -9,9 +9,11 @@ from typing import Literal
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
 from tinygent.cli.builder import build_llm
+from tinygent.cli.builder import build_memory
 from tinygent.cli.builder import build_tool
 from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 from tinygent.datamodels.llm_io_input import TinyLLMInput
+from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyChatMessageChunk
 from tinygent.datamodels.messages import TinyHumanMessage
@@ -75,6 +77,7 @@ class TinyReActAgentConfig(TinyBaseAgentConfig['TinyReActAgent']):
             llm=build_llm(self.llm),
             prompt_template=self.prompt_template,
             tools=[build_tool(tool) for tool in self.tools],
+            memory=build_memory(self.memory),
             max_iterations=self.max_iterations,
         )
 
@@ -87,10 +90,11 @@ class TinyReActAgent(TinyBaseAgent):
         llm: AbstractLLM,
         prompt_template: ReActPromptTemplate,
         tools: list[AbstractTool] = [],
+        memory: AbstractMemory = BufferChatMemory(),
         max_iterations: int = 10,
         **kwargs,
     ) -> None:
-        super().__init__(llm=llm, tools=tools, **kwargs)
+        super().__init__(llm=llm, tools=tools, memory=memory, **kwargs)
 
         class TinyReactIteration(TinyModel):
             iteration_number: int
@@ -113,7 +117,7 @@ class TinyReActAgent(TinyBaseAgent):
         self.prompt_template = prompt_template
         self.max_iterations = max_iterations
 
-        self.memory = BufferChatMemory()
+        self.memory = memory
 
     def _stream_reasoning(self, task: str) -> TinyChatMessage | TinyReasoningMessage:
         class TinyReasoningOutcome(TinyModel):

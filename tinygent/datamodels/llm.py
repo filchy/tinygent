@@ -4,8 +4,6 @@ from abc import ABC
 from abc import abstractmethod
 from collections.abc import AsyncGenerator
 import typing
-from typing import Any
-from typing import ClassVar
 from typing import Generic
 from typing import TypeVar
 
@@ -26,20 +24,11 @@ LLMStructuredT = TypeVar('LLMStructuredT', bound=TinyModel)
 class AbstractLLMConfig(TinyModelBuildable[T], Generic[T]):
     """Abstract base class for LLM configurations."""
 
-    type: Any  # used as discriminator
-
-    _discriminator_field: ClassVar[str] = 'type'
-
     model: str
 
     api_key: str | None = None
 
     timeout: float = 60.0
-
-    @classmethod
-    def get_discriminator_field(cls) -> str:
-        """Get the name of the discriminator field."""
-        return cls._discriminator_field
 
     def build(self) -> T:
         """Build the LLM instance from the configuration."""

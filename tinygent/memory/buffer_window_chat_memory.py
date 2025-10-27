@@ -17,7 +17,10 @@ class BufferWindowChatMemoryConfig(AbstractMemoryConfig['BufferWindowChatMemory'
 
 class BufferWindowChatMemory(BaseChatMemory):
     k: int = 5
-    _memory_key: str = f'last_{k}_messages_window'
+
+    @property
+    def _memory_key(self) -> str:
+        return f'last_{self.k}_messages_window'
 
     @property
     def chat_buffer_window(self) -> list[AllTinyMessages]:
@@ -28,7 +31,7 @@ class BufferWindowChatMemory(BaseChatMemory):
         return [self._memory_key]
 
     def load_variables(self) -> dict[str, str]:
-        return {self._memory_key: str(self.chat_buffer_window)}
+        return {self._memory_key: str([msg.tiny_str for msg in self.chat_buffer_window])}
 
     def __str__(self) -> str:
         base = super().__str__()

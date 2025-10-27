@@ -84,6 +84,7 @@ Before you begin using tinygent, ensure that you meet the following software pre
 
 1. [Chat Buffer Memory](examples/memory/basic-chat-memory)
 2. [Window Buffer Memory](examples/memory/buffer-window-chat-memory)
+3. [Combined Memory](examples/memory/combined-memory)
 
 ### Agents
 

@@ -11,9 +11,11 @@ from typing import Literal
 from tinygent.agents import TinyBaseAgent
 from tinygent.agents import TinyBaseAgentConfig
 from tinygent.cli.builder import build_llm
+from tinygent.cli.builder import build_memory
 from tinygent.cli.builder import build_tool
 from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 from tinygent.datamodels.llm_io_input import TinyLLMInput
+from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyChatMessageChunk
 from tinygent.datamodels.messages import TinyHumanMessage
@@ -91,6 +93,7 @@ class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
             llm=build_llm(self.llm),
             prompt_template=self.prompt_template,
             tools=[build_tool(tool) for tool in self.tools],
+            memory=build_memory(self.memory),
             max_iterations=self.max_iterations,
             plan_interval=self.plan_interval,
         )
@@ -103,13 +106,13 @@ class TinyMultiStepAgent(TinyBaseAgent):
         self,
         llm: AbstractLLM,
         prompt_template: MultiStepPromptTemplate,
+        memory: AbstractMemory = BufferChatMemory(),
         tools: list[AbstractTool] = [],
         max_iterations: int = 15,
         plan_interval: int = 5,
         **kwargs,
     ) -> None:
-        self.memory = BufferChatMemory()
-        super().__init__(llm=llm, tools=tools, memory_list=[self.memory], **kwargs)
+        super().__init__(llm=llm, tools=tools, memory=memory, **kwargs)
 
         self._iteration_number: int = 1
         self._planned_steps: list[TinyPlanMessage] = []

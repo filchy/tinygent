@@ -1,10 +1,26 @@
 import asyncio
+from io import StringIO
+import textwrap
+from typing import Literal
 
+from tinygent.cli.builder import build_memory
 from tinygent.datamodels.memory import AbstractMemory
+from tinygent.datamodels.memory import AbstractMemoryConfig
 from tinygent.datamodels.messages import AllTinyMessages
+from tinygent.memory.base_chat_memory import BaseChatMemory
 
 
-class MemoryGroup(AbstractMemory):
+class CombinedMemoryConfig(AbstractMemoryConfig['CombinedMemory']):
+    type: Literal['combined'] = 'combined'
+
+    memory_list: list[AbstractMemoryConfig]
+
+    def build(self) -> 'CombinedMemory':
+        memories = [build_memory(cfg) for cfg in self.memory_list]
+        return CombinedMemory(memory_list=memories)
+
+
+class CombinedMemory(BaseChatMemory):
     memory_list: list[AbstractMemory]
 
     @property
@@ -21,6 +37,8 @@ class MemoryGroup(AbstractMemory):
         return memory_vars
 
     def save_context(self, message: AllTinyMessages) -> None:
+        self._chat_history.add_message(message)
+
         for memory in self.memory_list:
             memory.save_context(message)
 
@@ -44,3 +62,13 @@ class MemoryGroup(AbstractMemory):
 
     async def aclear(self) -> None:
         await asyncio.gather(*[memory.aclear() for memory in self.memory_list])
+
+    def __str__(self) -> str:
+        buff = StringIO()
+
+        buff.write('type: Memories\n')
+        buff.write(f'Combined Memories ({len(self.memory_list)}):\n')
+        for memory in self.memory_list:
+            buff.write(f'{textwrap.indent(str(memory), "\t")}\n')
+
+        return buff.getvalue()

@@ -1,6 +1,5 @@
 from abc import ABC
 from abc import abstractmethod
-from typing import Any
 from typing import Generic
 from typing import TypeVar
 
@@ -15,15 +14,6 @@ T = TypeVar('T', bound='AbstractMemory')
 class AbstractMemoryConfig(TinyModelBuildable[T], Generic[T]):
     """Abstract base class for memory configurations."""
 
-    type: Any  # used as discriminator
-
-    _discriminator_field: str = 'type'
-
-    @classmethod
-    def get_discriminator_field(cls) -> str:
-        """Get the name of the discriminator field."""
-        return cls._discriminator_field
-
     def build(self) -> T:
         """Build the memory instance from the configuration."""
         raise NotImplementedError('Subclasses must implement this method.')
@@ -31,6 +21,12 @@ class AbstractMemoryConfig(TinyModelBuildable[T], Generic[T]):
 
 class AbstractMemory(TinyModel, ABC):
     """Abstract base class for memory modules."""
+
+    @property
+    @abstractmethod
+    def chat_messages(self) -> list[AllTinyMessages]:
+        """Get the chat messages stored in memory."""
+        raise NotImplementedError('Subclasses must implement this method.')
 
     @property
     @abstractmethod
