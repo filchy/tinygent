@@ -2,7 +2,13 @@
 
 This example demonstrates how to use **hooks** in TinyGent agents. Hooks are callbacks that let you monitor, customize, or intervene in the agent’s lifecycle: LLM calls, tool calls, reasoning steps, final answers, and error handling.
 
----
+## Quick Start
+
+```bash
+uv sync --extra openai
+
+uv run examples/agents/hooks/main.py
+```
 
 ## Concept
 

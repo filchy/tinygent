@@ -1,5 +1,5 @@
-from tinygent.llms.openai import OpenAIConfig
-from tinygent.llms.openai import OpenAILLM
+from tiny_openai.openai import OpenAIConfig
+from tiny_openai.openai import OpenAILLM
 from tinygent.runtime.global_registry import GlobalRegistry
 
 

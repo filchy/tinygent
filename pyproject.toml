@@ -11,7 +11,6 @@ dependencies = [
     "async-lru>=2.0.5",
     "jinja2>=3.1.6",
     "langchain-core>=0.3.74",
-    "openai>=1.101.0",
     "pydantic>=2.11.7",
     "pyyaml>=6.0.2",
     "typer>=0.19.2",
@@ -28,6 +27,7 @@ dev = [
     "ruff>=0.12.11",
 ]
 brave = ["tiny-brave"]
+openai = ["tiny-openai"]
 
 [project.scripts]
 tiny = "tinygent.cli.main:run_cli"
@@ -36,7 +36,6 @@ fmt = "scripts.fmt:main"
 
 [project.entry-points.components]
 tiny_agents = "tinygent.agents.register"
-tiny_llms = "tinygent.llms.register"
 tiny_tools = "tinygent.tools.register"
 tiny_memory = "tinygent.memory.register"
 
@@ -51,6 +50,7 @@ members = ["packages/*", "."]
 
 [tool.uv.sources]
 tiny-brave = { workspace = true }
+tiny-openai = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["tinygent"]

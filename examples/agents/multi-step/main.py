@@ -7,7 +7,7 @@ from tinygent.agents.multi_step_agent import FallbackAnswerPromptTemplate
 from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
 from tinygent.agents.multi_step_agent import PlanPromptTemplate
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
-from tinygent.llms import OpenAILLM
+from tinygent.llms.base import init_llm
 from tinygent.logging import setup_general_loggers
 from tinygent.logging import setup_logger
 from tinygent.tools.reasoning_tool import reasoning_tool
@@ -47,7 +47,7 @@ def main():
     multi_step_agent_prompt = tiny_yaml_load(str(Path(__file__).parent / 'prompts.yaml'))
 
     multi_step_agent = TinyMultiStepAgent(
-        llm=OpenAILLM(),
+        llm=init_llm('openai:gpt-4o', temperature=0.1),
         prompt_template=MultiStepPromptTemplate(
             acter=ActionPromptTemplate(
                 system=multi_step_agent_prompt['acter']['system'],

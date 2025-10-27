@@ -7,6 +7,14 @@ This example demonstrates how to use a custom LLM implementation (`OpenAILLM`) t
 * Tool-enhanced function calling
 * Asynchronous generation
 
+## Quick Start
+
+```bash
+uv sync --extra openai
+
+uv run examples/llm-usage/main.py
+```
+
 ---
 
 ## Requirements

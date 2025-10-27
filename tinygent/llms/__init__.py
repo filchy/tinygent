@@ -1,3 +1,3 @@
-from .openai import OpenAILLM
+from .base import init_llm
 
-__all__ = ['OpenAILLM']
+__all__ = ['init_llm']
