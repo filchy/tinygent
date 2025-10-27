@@ -29,6 +29,14 @@ envId -.->|Tool results| memoryId
 memoryId -.->|History of toolcalls & reasonings| actionGeneratorId
 ```
 
+## Quick Start
+
+```bash
+uv sync --extra openai
+
+uv run examples/agents/react/main.py
+```
+
 ---
 
 ## Concept

@@ -29,6 +29,14 @@ memoryId -.->|Every `plan_interval` turns| stepsGeneratorId
 memoryId -.->|Every non-`plan_interval` turns| actionGeneratorId
 ```
 
+## Quick Start
+
+```bash
+uv sync --extra openai
+
+uv run examples/agents/multi-step/main.py
+```
+
 ---
 
 ## Concept

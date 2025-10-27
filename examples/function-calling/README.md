@@ -9,6 +9,14 @@ This example shows how to:
 
 This is an example, not formal API documentation.
 
+## Quick Start
+
+```bash
+uv sync --extra openai
+
+uv run examples/function-calling/main.py
+```
+
 ---
 
 ## 1) Define a couple of tools
