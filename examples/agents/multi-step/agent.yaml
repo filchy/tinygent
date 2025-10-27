@@ -1,11 +1,22 @@
 type: multistep
 max_iterations: 10
 plan_interval: 2
+
+prompt_template: !include prompts.yaml
+
 llm:
   type: openai
   model: gpt-4o-mini
   temperature: 0.4
-prompt_template: !include prompts.yaml
+
+memory:
+  type: combined
+  memory_list:
+    - type: buffer
+
+    - type: buffer_window
+      k: 2
+
 tools:
   - type: reasoning
     name: get_weather_mock

@@ -30,6 +30,7 @@ class AgentHooks(ABC):
         on_reasoning: Callable[[str], None] | None = None,
         on_tool_reasoning: Callable[[str], None] | None = None,
         on_answer: Callable[[str], None] | None = None,
+        on_answer_chunk: Callable[[str], None] | None = None,
         on_error: Callable[[Exception], None] | None = None,
     ) -> None:
         self.on_before_llm_call: Callable[[TinyLLMInput], None] = on_before_llm_call or (
@@ -77,6 +78,10 @@ class AgentHooks(ABC):
 
         self.on_answer: Callable[[str], None] = on_answer or (
             lambda answer: _log_hook(f'Final Answer: {answer}')
+        )
+
+        self.on_answer_chunk: Callable[[str], None] = on_answer_chunk or (
+            lambda chunk: _log_hook(f'Answer Chunk: {chunk}')
         )
 
         self.on_error: Callable[[Exception], None] = on_error or (

@@ -5,11 +5,8 @@ from abc import abstractmethod
 import typing
 from typing import Any
 from typing import Callable
-from typing import ClassVar
 from typing import Generic
 from typing import TypeVar
-
-from pydantic import ConfigDict
 
 from tinygent.types.builder import TinyModelBuildable
 
@@ -22,18 +19,7 @@ T = TypeVar('T', bound='AbstractTool')
 class AbstractToolConfig(TinyModelBuildable[T], Generic[T]):
     """Abstract base class for tool configurations."""
 
-    model_config = ConfigDict(arbitrary_types_allowed=True, extra='allow')
-
-    type: Any  # used as discriminator
-
     name: str
-
-    _discriminator_field: ClassVar[str] = 'type'
-
-    @classmethod
-    def get_discriminator_field(cls) -> str:
-        """Get the name of the discriminator field."""
-        return cls._discriminator_field
 
     def build(self) -> T:
         """Build the Tool instance from the configuration."""

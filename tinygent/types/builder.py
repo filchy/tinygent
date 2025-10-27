@@ -1,8 +1,11 @@
 from abc import ABC
 from abc import abstractmethod
 from typing import Any
+from typing import ClassVar
 from typing import Generic
 from typing import TypeVar
+
+from pydantic import ConfigDict
 
 from tinygent.types.base import TinyModel
 
@@ -10,13 +13,22 @@ T = TypeVar('T')
 
 
 class TinyModelBuildable(TinyModel, Generic[T], ABC):
+    """Abstract base class for buildable TinyModel configurations."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra='allow')
+
+    type: Any  # used as discriminator
+
+    _discriminator_field: ClassVar[str] = 'type'
+
     @classmethod
-    @abstractmethod
     def get_discriminator_field(cls) -> str:
-        pass
+        """Get the name of the discriminator field."""
+        return cls._discriminator_field
 
     @abstractmethod
     def build(self) -> Any:
+        """Build the instance from the configuration."""
         pass
 
     @classmethod

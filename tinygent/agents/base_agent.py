@@ -20,10 +20,12 @@ from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
+from tinygent.datamodels.memory import AbstractMemoryConfig
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.messages import TinyToolResult
 from tinygent.datamodels.tool import AbstractTool
 from tinygent.datamodels.tool import AbstractToolConfig
+from tinygent.memory.buffer_chat_memory import BufferChatMemoryConfig
 
 T = TypeVar('T', bound='AbstractAgent')
 
@@ -35,7 +37,7 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
 
     llm: AbstractLLMConfig
     tools: Sequence[AbstractToolConfig] = Field(default_factory=list)
-    memory_list: Sequence[AbstractMemory] = Field(default_factory=list)
+    memory: AbstractMemoryConfig = Field(default_factory=BufferChatMemoryConfig)
 
     def build(self) -> T:
         """Build the BaseAgent instance from the configuration."""
@@ -46,14 +48,14 @@ class TinyBaseAgent(AbstractAgent, AgentHooks):
     def __init__(
         self,
         llm: AbstractLLM,
+        memory: AbstractMemory,
         tools: Sequence[AbstractTool] = (),
-        memory_list: Sequence[AbstractMemory] = (),
         **hooks_kwargs: Any,
     ) -> None:
         AgentHooks.__init__(self, **hooks_kwargs)
 
         self.llm = llm
-        self.memory_list = memory_list
+        self.memory = memory
 
         self._tools = tools
         self._final_answer: str | None = None
@@ -129,16 +131,12 @@ class TinyBaseAgent(AbstractAgent, AgentHooks):
         buf.write('Agent Summary:\n')
         buf.write(f'{textwrap.indent(str(self.llm), "\t")}\n')
 
-        buf.write(f'\tNumber of tools: {len(self.tools)}\n')
+        buf.write('\tMemory:\n')
+        buf.write(f'{textwrap.indent(str(self.memory), "\t\t")}\n')
+
+        buf.write(f'\tTools ({len(self.tools)}):\n')
         if len(self.tools) > 0:
-            buf.write('\tTools:\n')
             for tool in self.tools:
                 buf.write(f'{textwrap.indent(str(tool), "\t\t")}\n')
-
-        buf.write(f'\tNumber of memories: {len(self.memory_list)}\n')
-        if len(self.memory_list) > 0:
-            buf.write('\tMemories:\n')
-            for memory in self.memory_list:
-                buf.write(f'{textwrap.indent(str(memory), "\t\t")}\n')
 
         return buf.getvalue()
