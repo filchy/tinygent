@@ -78,8 +78,6 @@ def generation_with_tools():
         tools=tools_list,
     )
 
-    print(f'[GENERATION WITH TOOLS] {result}')
-
     for message in result.tiny_iter():
         if message.type == 'chat':
             print(f'[LLM RESPONSE] {message.content}')
