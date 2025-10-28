@@ -8,7 +8,7 @@ from tinygent.datamodels.messages import TinyToolCall
 
 
 def accumulate_llm_chunks(
-    tiny_chunks: AsyncIterator[TinyLLMResultChunk]
+    tiny_chunks: AsyncIterator[TinyLLMResultChunk],
 ) -> AsyncIterator[TinyLLMResultChunk]:
     """Generic accumulator that merges partial tool call chunks into complete TinyToolCall objects."""
     pending_tool_calls: dict[int, dict[str, Any]] = defaultdict(

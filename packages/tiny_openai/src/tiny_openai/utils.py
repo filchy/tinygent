@@ -117,7 +117,8 @@ def tiny_prompt_to_openai_params(
         elif isinstance(msg, TinyReasoningMessage):
             params.append(
                 ChatCompletionAssistantMessageParam(
-                    role='assistant', content=f'<REASONING>\n{msg.content}\n</REASONING>'
+                    role='assistant',
+                    content=f'<REASONING>\n{msg.content}\n</REASONING>',
                 )
             )
 

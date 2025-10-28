@@ -38,49 +38,30 @@ def _normalize_content(content: Content) -> str:
     if isinstance(content, str):
         return content
     elif isinstance(content, list):
-        return ''.join(
-            chunk.text for chunk in content
-            if isinstance(chunk, TextChunk)
-        )
+        return ''.join(chunk.text for chunk in content if isinstance(chunk, TextChunk))
     else:
         return ''
 
 
 def tiny_prompt_to_mistralai_params(
-    prompt: 'TinyLLMInput'
+    prompt: 'TinyLLMInput',
 ) -> list[ChatCompletionMessageParams]:
     params: list[ChatCompletionMessageParams] = []
 
     for msg in prompt.messages:
         if isinstance(msg, TinyHumanMessage):
-            params.append(
-                UserMessage(
-                    role='user',
-                    content=str(msg.content)
-                )
-            )
+            params.append(UserMessage(role='user', content=str(msg.content)))
 
         elif isinstance(msg, TinySystemMessage):
-            params.append(
-                SystemMessage(
-                    role='system',
-                    content=str(msg.content)
-                )
-            )
+            params.append(SystemMessage(role='system', content=str(msg.content)))
 
         elif isinstance(msg, TinyChatMessage):
-            params.append(
-                AssistantMessage(
-                    role='assistant',
-                    content=msg.content
-                )
-            )
+            params.append(AssistantMessage(role='assistant', content=msg.content))
 
         elif isinstance(msg, TinyPlanMessage):
             params.append(
                 AssistantMessage(
-                    role='assistant',
-                    content=f'<PLAN>\n{msg.content}\n</PLAN>'
+                    role='assistant', content=f'<PLAN>\n{msg.content}\n</PLAN>'
                 )
             )
 
@@ -88,7 +69,7 @@ def tiny_prompt_to_mistralai_params(
             params.append(
                 AssistantMessage(
                     role='assistant',
-                    content=f'<REASONING>\n{msg.content}\n</REASONING>'
+                    content=f'<REASONING>\n{msg.content}\n</REASONING>',
                 )
             )
 
@@ -102,11 +83,10 @@ def tiny_prompt_to_mistralai_params(
                             id=msg.call_id or 'tool_call_1',
                             type='function',
                             function=FunctionCall(
-                                name=msg.tool_name,
-                                arguments=str(msg.arguments)
-                            )
+                                name=msg.tool_name, arguments=str(msg.arguments)
+                            ),
                         )
-                    ]
+                    ],
                 )
             )
 
@@ -145,7 +125,7 @@ def mistralai_result_to_tiny_result(resp: ChatCompletionResponse) -> TinyLLMResu
                         'function': {
                             'name': tc.function.name,
                             'arguments': tc.function.arguments,
-                        }
+                        },
                     }
                 )
             additional_kwargs['tool_calls'] = tool_calls
@@ -180,8 +160,8 @@ def mistralai_chunk_to_tiny_chunk(chunk: CompletionChunk) -> TinyLLMResultChunk:
                         arguments=str(tc.function.arguments) or '',
                         call_id=tc.id,
                         index=tc.index or 0,
-                        metadata={'raw': tc.model_dump()}
-                    )
+                        metadata={'raw': tc.model_dump()},
+                    ),
                 )
 
     # text chunk
@@ -190,7 +170,7 @@ def mistralai_chunk_to_tiny_chunk(chunk: CompletionChunk) -> TinyLLMResultChunk:
             type='message',
             message=TinyChatMessageChunk(
                 content=_normalize_content(delta.content),
-                metadata={'raw': delta.model_dump()}
+                metadata={'raw': delta.model_dump()},
             ),
             metadata={'finish_reason': choice.finish_reason},
         )
@@ -224,7 +204,7 @@ def mistralai_chunk_to_tiny_chunks(chunk: CompletionChunk) -> list[TinyLLMResult
                             call_id=tc.id,
                             index=tc.index or 0,
                             metadata={'raw': tc.model_dump()},
-                        )
+                        ),
                     )
                 )
 
@@ -249,6 +229,8 @@ def mistralai_chunk_to_tiny_chunks(chunk: CompletionChunk) -> list[TinyLLMResult
         )
 
     if not results:
-        results.append(TinyLLMResultChunk(type='none', metadata={'raw': delta.model_dump()}))
+        results.append(
+            TinyLLMResultChunk(type='none', metadata={'raw': delta.model_dump()})
+        )
 
     return results
