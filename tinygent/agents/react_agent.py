@@ -121,7 +121,7 @@ class TinyReActAgent(TinyBaseAgent):
 
     def _stream_reasoning(self, task: str) -> TinyChatMessage | TinyReasoningMessage:
         class TinyReasoningOutcome(TinyModel):
-            type: Literal['reasoning', 'final_answer']
+            type: Literal['reasoning'] = 'reasoning'
             content: str
 
         if self._iteration_number == 1:
@@ -149,11 +149,9 @@ class TinyReActAgent(TinyBaseAgent):
             output_schema=TinyReasoningOutcome,
         )
 
-        if result.type == 'final_answer':
-            return TinyChatMessage(content=result.content)
         return TinyReasoningMessage(content=result.content)
 
-    async def _stream_action(self, reasoning: str) -> AsyncGenerator[TinyToolCall]:
+    async def _stream_action(self, reasoning: str) -> AsyncGenerator[TinyLLMResultChunk]:
         messages = TinyLLMInput(
             messages=[
                 *self.memory.chat_messages,
@@ -171,8 +169,7 @@ class TinyReActAgent(TinyBaseAgent):
             llm_input=messages,
             tools=self._tools,
         ):
-            if chunk.is_tool_call and chunk.full_tool_call:
-                yield chunk.full_tool_call
+            yield chunk
 
     async def _stream_fallback(self, task: str) -> AsyncGenerator[str]:
         messages = TinyLLMInput(
@@ -203,6 +200,7 @@ class TinyReActAgent(TinyBaseAgent):
     async def _run_agent(self, input_text: str) -> AsyncGenerator[str]:
         self._iteration_number = 1
         returned_final_answer: bool = False
+        yielded_final_answer: str = ''
 
         self.memory.save_context(TinyHumanMessage(content=input_text))
 
@@ -241,35 +239,48 @@ class TinyReActAgent(TinyBaseAgent):
                     async for msg in self._stream_action(
                         reasoning=reasoning_result.content
                     ):
-                        called_tool = self.get_tool(msg.tool_name)
-                        if called_tool:
-                            tool_result = self.run_tool(called_tool, msg)
+                        if msg.is_message and isinstance(
+                            msg.message, TinyChatMessageChunk
+                        ):
+                            returned_final_answer = True
+                            yielded_final_answer += msg.message.content
 
-                            self.memory.save_context(msg)
-                            self.memory.save_context(tool_result)
+                            yield msg.message.content
 
-                            tool_calls.append(msg)
+                        elif msg.is_tool_call and isinstance(
+                            msg.full_tool_call, TinyToolCall
+                        ):
+                            full_tc = msg.full_tool_call
+                            called_tool = self.get_tool(full_tc.tool_name)
+                            if called_tool:
+                                tool_result = self.run_tool(called_tool, full_tc)
 
-                            if isinstance(called_tool, ReasoningTool):
-                                reasoning = msg.arguments.get('reasoning', '')
-                                logger.debug(
-                                    '[%d. ITERATION - Tool Reasoning]: %s',
-                                    self._iteration_number,
-                                    reasoning,
+                                self.memory.save_context(full_tc)
+                                self.memory.save_context(tool_result)
+
+                                tool_calls.append(full_tc)
+
+                                if isinstance(called_tool, ReasoningTool):
+                                    reasoning = full_tc.arguments.get('reasoning', '')
+                                    logger.debug(
+                                        '[%d. ITERATION - Tool Reasoning]: %s',
+                                        self._iteration_number,
+                                        reasoning,
+                                    )
+                                    self.on_tool_reasoning(reasoning)
+                            else:
+                                logger.error(
+                                    'Tool %s not found. Skipping tool call.',
+                                    full_tc.tool_name,
                                 )
-                                self.on_tool_reasoning(reasoning)
-                        else:
-                            logger.error(
-                                'Tool %s not found. Skipping tool call.', msg.tool_name
-                            )
 
-                        logger.debug(
-                            '[%s. ITERATION - Tool Call]: %s(%s) = %s',
-                            self._iteration_number,
-                            msg.tool_name,
-                            msg.arguments,
-                            msg.result,
-                        )
+                            logger.debug(
+                                '[%s. ITERATION - Tool Call]: %s(%s) = %s',
+                                self._iteration_number,
+                                full_tc.tool_name,
+                                full_tc.arguments,
+                                full_tc.result,
+                            )
 
                     self._react_iterations.append(
                         self.TinyReactIteration(
@@ -290,21 +301,28 @@ class TinyReActAgent(TinyBaseAgent):
                 'Returning fallback answer.'
             )
 
-            yielded_final_answer = False
+            yielded_fallback = False
             final_yielded_answer = ''
 
             async for fallback_chunk in self._stream_fallback(task=input_text):
-                yielded_final_answer = True
+                yielded_fallback = True
                 final_yielded_answer += fallback_chunk
 
                 yield fallback_chunk
 
-            if not yielded_final_answer:
+            if not yielded_fallback:
                 final_yielded_answer = 'I have completed my reasoning and tool usage but did not arrive at a final answer.'
                 yield final_yielded_answer
 
             self.memory.save_context(TinyChatMessage(content=final_yielded_answer))
             self.on_answer(final_yielded_answer)
+
+    def _reset(self) -> None:
+        logger.debug('[AGENT RESET]')
+
+        self._iteration_number = 1
+        self._react_iterations = []
+        self.memory.clear()
 
     def run(
         self,
@@ -314,11 +332,7 @@ class TinyReActAgent(TinyBaseAgent):
         logger.debug('[USER INPUT] %s', input_text)
 
         if reset:
-            logger.debug('[AGENT RESET]')
-
-            self._iteration_number = 1
-            self._react_iterations = []
-            self.memory.clear()
+            self._reset()
 
         async def _run() -> str:
             final_answer = ''
@@ -327,3 +341,16 @@ class TinyReActAgent(TinyBaseAgent):
             return final_answer
 
         return asyncio.run(_run())
+
+    async def run_stream(  # type: ignore[override]
+        self,
+        input_text: str,
+        reset: bool = True,
+    ) -> AsyncGenerator[str]:
+        logger.debug('[USER INPUT] %s', input_text)
+
+        if reset:
+            self._reset()
+
+        async for res in self._run_agent(input_text):
+            yield res

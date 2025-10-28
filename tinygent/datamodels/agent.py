@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
+from collections.abc import AsyncGenerator
 from typing import ClassVar
 from typing import Generic
 from typing import TypeVar
@@ -27,4 +28,9 @@ class AbstractAgent(ABC):
     @abstractmethod
     def run(self, input_text: str) -> str:
         """Run the agent with the given input text."""
+        raise NotImplementedError('Subclasses must implement this method.')
+
+    @abstractmethod
+    async def run_stream(self, input_text: str) -> AsyncGenerator[str, None]:
+        """Run the agent in streaming mode with the given input text."""
         raise NotImplementedError('Subclasses must implement this method.')

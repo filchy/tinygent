@@ -63,3 +63,16 @@ Hooks provide a **transparent window** into what your agent is doing at each ste
 * Trace tool usage
 * Capture structured logs
 * Or add monitoring without touching the agent’s core logic
+
+---
+
+## Streaming + Hooks
+
+Hooks work seamlessly with the streaming API:
+
+```python
+async for chunk in agent.run_stream("Analyze the data and summarize it."):
+	print("[STREAM]", chunk)
+```
+
+Each hook still fires; `run_stream` just yields intermediate textual chunks you can forward to a UI/log.
