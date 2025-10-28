@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tiny-mistralai"
+version = "0.1.0"
+dependencies = [
+    "mistral-common>=1.8.5",
+    "mistralai>=1.9.11",
+    "tinygent",
+]
+
+[project.entry-points.components]
+tiny_mistralai_llm = "tiny_mistralai.register"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tiny_mistralai"]
+
+[tool.uv.sources]
+tinygent = { workspace = true }

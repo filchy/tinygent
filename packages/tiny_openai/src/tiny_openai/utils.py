@@ -28,10 +28,20 @@ from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.messages import TinyToolCallChunk
 from tinygent.datamodels.messages import TinyToolResult
-from tinygent.utils import normalize_content
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm_io_input import TinyLLMInput
+
+
+def _normalize_content(content: str | list[str | dict]) -> str:
+    """Normalize OpenAI ChatCompletion content to a string."""
+    if isinstance(content, str):
+        return content
+
+    return ''.join(
+        part if isinstance(part, str) else f'[{part.get("type", "object")}]'
+        for part in content
+    )
 
 
 def _to_text_parts(
@@ -100,14 +110,14 @@ def tiny_prompt_to_openai_params(
         elif isinstance(msg, TinyPlanMessage):
             params.append(
                 ChatCompletionAssistantMessageParam(
-                    role='assistant', content=f'[PLAN] {msg.content}'
+                    role='assistant', content=f'<PLAN>\n{msg.content}\n</PLAN>'
                 )
             )
 
         elif isinstance(msg, TinyReasoningMessage):
             params.append(
                 ChatCompletionAssistantMessageParam(
-                    role='assistant', content=f'[REASONING] {msg.content}'
+                    role='assistant', content=f'<REASONING>\n{msg.content}\n</REASONING>'
                 )
             )
 
@@ -211,7 +221,7 @@ def openai_chunk_to_tiny_chunk(resp_chunk: ChatCompletionChunk) -> TinyLLMResult
         return TinyLLMResultChunk(
             type='message',
             message=TinyChatMessageChunk(
-                content=normalize_content(delta.content),
+                content=_normalize_content(delta.content),
                 metadata={'raw': delta.model_dump()},
             ),
             metadata={'finish_reason': choice.finish_reason},
@@ -224,4 +234,4 @@ def openai_chunk_to_tiny_chunk(resp_chunk: ChatCompletionChunk) -> TinyLLMResult
             metadata={'finish_reason': choice.finish_reason},
         )
 
-    return TinyLLMResultChunk(type='end', metadata={'raw': delta.model_dump()})
+    return TinyLLMResultChunk(type='none', metadata={'raw': delta.model_dump()})

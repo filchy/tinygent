@@ -28,6 +28,7 @@ dev = [
 ]
 brave = ["tiny-brave"]
 openai = ["tiny-openai"]
+mistralai = ["tiny-mistralai"]
 
 [project.scripts]
 tiny = "tinygent.cli.main:run_cli"
@@ -51,6 +52,7 @@ members = ["packages/*", "."]
 [tool.uv.sources]
 tiny-brave = { workspace = true }
 tiny-openai = { workspace = true }
+tiny-mistralai = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["tinygent"]

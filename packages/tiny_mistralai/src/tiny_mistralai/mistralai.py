@@ -2,20 +2,20 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from io import StringIO
+import json
 import os
 import textwrap
 import typing
 from typing import Literal
 from typing import override
 
-from openai import AsyncOpenAI
-from openai import OpenAI
-from openai.lib.streaming.chat import ChunkEvent
-from openai.types.chat import ChatCompletionFunctionToolParam
+from mistralai import Function
+from mistralai import Mistral
+from mistralai import Tool
 
-from tiny_openai.utils import openai_chunk_to_tiny_chunk
-from tiny_openai.utils import openai_result_to_tiny_result
-from tiny_openai.utils import tiny_prompt_to_openai_params
+from tiny_mistralai.utils import mistralai_chunk_to_tiny_chunks
+from tiny_mistralai.utils import mistralai_result_to_tiny_result
+from tiny_mistralai.utils import tiny_prompt_to_mistralai_params
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
@@ -28,59 +28,58 @@ if typing.TYPE_CHECKING:
     from tinygent.datamodels.tool import AbstractTool
 
 
-class OpenAIConfig(AbstractLLMConfig['OpenAILLM']):
-    type: Literal['openai'] = 'openai'
+class MistralAIConfig(AbstractLLMConfig['MistralAILLM']):
+    type: Literal['mistralai'] = 'mistralai'
 
-    model: str = 'gpt-4o'
+    model: str = 'mistral-medium-latest'
 
-    api_key: str | None = os.getenv('OPENAI_API_KEY', None)
+    api_key: str | None = os.getenv('MISTRALAI_API_KEY', None)
 
-    base_url: str | None = None
+    safe_prompt: bool = True
 
     temperature: float = 0.6
 
     timeout: float = 60.0
 
-    def build(self) -> OpenAILLM:
-        return OpenAILLM(
+    def build(self) -> MistralAILLM:
+        return MistralAILLM(
             model_name=self.model,
             api_key=self.api_key,
-            base_url=self.base_url,
+            safe_prompt=self.safe_prompt,
             temperature=self.temperature,
             timeout=self.timeout,
         )
 
 
-class OpenAILLM(AbstractLLM[OpenAIConfig]):
+class MistralAILLM(AbstractLLM[MistralAIConfig]):
     def __init__(
         self,
-        model_name: str = 'gpt-4o',
+        model_name: str,
         api_key: str | None = None,
-        base_url: str | None = None,
+        safe_prompt: bool = True,
         temperature: float = 0.6,
         timeout: float = 60.0,
     ) -> None:
-        if not api_key and not (api_key := os.getenv('OPENAI_API_KEY', None)):
+        if not api_key and not (api_key := os.getenv('MISTRALAI_API_KEY', None)):
             raise ValueError(
-                'OpenAI API key must be provided either via config',
-                " or 'OPENAI_API_KEY' env variable.",
+                'MistralAI API key must be provided either via config'
+                "or 'MISTRALAI_API_KEY' env variable."
             )
 
-        self._sync_client = OpenAI(api_key=api_key, base_url=base_url)
-
-        self._async_client = AsyncOpenAI(api_key=api_key, base_url=base_url)
+        self._client = Mistral(api_key=api_key)
 
         self.model_name = model_name
-        self.base_url = base_url
+        self.api_key = api_key
+        self.safe_prompt = safe_prompt
         self.temperature = temperature
         self.timeout = timeout
 
     @property
     def supports_tool_calls(self) -> bool:
-        return True
+        return True  # INFO: Not all models may support tool calls, but mistralai api error if not.
 
     @override
-    def _tool_convertor(self, tool: AbstractTool) -> ChatCompletionFunctionToolParam:
+    def _tool_convertor(self, tool: AbstractTool) -> Tool:
         info = tool.info
         schema = info.input_schema
 
@@ -109,163 +108,172 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
                     'description': field.description,
                 }
 
-        return ChatCompletionFunctionToolParam(
+        return Tool(
             type='function',
-            function={
-                'name': info.name,
-                'description': info.description,
-                'parameters': {
+            function=Function(
+                name=info.name,
+                description=info.description,
+                parameters={
                     'type': 'object',
                     'properties': properties,
-                    'required': list(properties.keys()),
-                    'additionalProperties': False,
+                    'required': info.required_fields,
                 },
-                'strict': True,
-            },
+            ),
         )
 
     def generate_text(
         self,
         llm_input: TinyLLMInput,
     ) -> TinyLLMResult:
-        messages = tiny_prompt_to_openai_params(llm_input)
+        messages = tiny_prompt_to_mistralai_params(llm_input)
 
-        res = self._sync_client.chat.completions.create(
+        res = self._client.chat.complete(
             model=self.model_name,
             messages=messages,
+            safe_prompt=self.safe_prompt,
             temperature=self.temperature,
-            timeout=self.timeout,
+            timeout_ms=int(self.timeout * 1000),
         )
 
-        return openai_result_to_tiny_result(res)
+        return mistralai_result_to_tiny_result(res)
 
-    async def agenerate_text(self, llm_input: TinyLLMInput) -> TinyLLMResult:
-        messages = tiny_prompt_to_openai_params(llm_input)
+    async def agenerate_text(
+        self,
+        llm_input: TinyLLMInput,
+    ) -> TinyLLMResult:
+        messages = tiny_prompt_to_mistralai_params(llm_input)
 
-        res = await self._async_client.chat.completions.create(
+        res = await self._client.chat.complete_async(
             model=self.model_name,
             messages=messages,
+            safe_prompt=self.safe_prompt,
             temperature=self.temperature,
-            timeout=self.timeout,
+            timeout_ms=int(self.timeout * 1000),
         )
 
-        return openai_result_to_tiny_result(res)
+        return mistralai_result_to_tiny_result(res)
 
     async def stream_text(
         self, llm_input: TinyLLMInput
     ) -> AsyncIterator[TinyLLMResultChunk]:
-        messages = tiny_prompt_to_openai_params(llm_input)
+        messages = tiny_prompt_to_mistralai_params(llm_input)
 
-        async with self._async_client.chat.completions.stream(
+        res = await self._client.chat.stream_async(
             model=self.model_name,
             messages=messages,
+            safe_prompt=self.safe_prompt,
             temperature=self.temperature,
-            timeout=self.timeout,
-        ) as stream:
-            async for event in stream:
-                if isinstance(event, ChunkEvent):
-                    yield openai_chunk_to_tiny_chunk(event.chunk)
+            timeout_ms=int(self.timeout * 1000),
+        )
+
+        async for chunk in res:
+            for tiny_chunk in mistralai_chunk_to_tiny_chunks(chunk.data):
+                yield tiny_chunk
 
     def generate_structured(
         self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
-        messages = tiny_prompt_to_openai_params(llm_input)
+        messages = tiny_prompt_to_mistralai_params(llm_input)
 
-        res = self._sync_client.chat.completions.parse(
+        res = self._client.chat.parse(
             model=self.model_name,
             messages=messages,
+            safe_prompt=self.safe_prompt,
             temperature=self.temperature,
-            timeout=self.timeout,
-            response_format=output_schema,
+            timeout_ms=int(self.timeout * 1000),
+            response_format=output_schema
         )
 
-        if not (message := res.choices[0].message):
-            raise ValueError('No message returned from OpenAI.')
+        if not res.choices or not (message := res.choices[0].message):
+            raise ValueError('No message in MistralAI response.')
 
-        assert message.parsed is not None, 'Parsed response is None.'
-        return message.parsed
+        return output_schema.model_validate(json.loads(str(message.content) or '{}'))
 
     async def agenerate_structured(
         self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
-        messages = tiny_prompt_to_openai_params(llm_input)
+        messages = tiny_prompt_to_mistralai_params(llm_input)
 
-        res = await self._async_client.chat.completions.parse(
+        res = await self._client.chat.parse_async(
             model=self.model_name,
             messages=messages,
+            safe_prompt=self.safe_prompt,
             temperature=self.temperature,
-            timeout=self.timeout,
-            response_format=output_schema,
+            timeout_ms=int(self.timeout * 1000),
+            response_format=output_schema
         )
 
-        if not (message := res.choices[0].message):
-            raise ValueError('No message returned from OpenAI.')
+        if not res.choices or not (message := res.choices[0].message):
+            raise ValueError('No message in MistralAI response.')
 
-        assert message.parsed is not None, 'Parsed response is None.'
-        return message.parsed
+        return output_schema.model_validate(json.loads(str(message.content) or '{}'))
 
     def generate_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult:
         functions = [self._tool_convertor(tool) for tool in tools]
-        messages = tiny_prompt_to_openai_params(llm_input)
+        messages = tiny_prompt_to_mistralai_params(llm_input)
 
-        res = self._sync_client.chat.completions.create(
+        res = self._client.chat.complete(
             model=self.model_name,
             messages=messages,
             tools=functions,
             tool_choice='auto',
+            safe_prompt=self.safe_prompt,
             temperature=self.temperature,
-            timeout=self.timeout,
+            timeout_ms=int(self.timeout * 1000),
         )
 
-        return openai_result_to_tiny_result(res)
+        return mistralai_result_to_tiny_result(res)
 
     async def agenerate_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult:
         functions = [self._tool_convertor(tool) for tool in tools]
-        messages = tiny_prompt_to_openai_params(llm_input)
+        messages = tiny_prompt_to_mistralai_params(llm_input)
 
-        res = await self._async_client.chat.completions.create(
+        res = await self._client.chat.complete_async(
             model=self.model_name,
             messages=messages,
             tools=functions,
             tool_choice='auto',
+            safe_prompt=self.safe_prompt,
             temperature=self.temperature,
-            timeout=self.timeout,
+            timeout_ms=int(self.timeout * 1000),
         )
 
-        return openai_result_to_tiny_result(res)
+        return mistralai_result_to_tiny_result(res)
 
     async def stream_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> AsyncIterator[TinyLLMResultChunk]:
         functions = [self._tool_convertor(tool) for tool in tools]
-        messages = tiny_prompt_to_openai_params(llm_input)
+        messages = tiny_prompt_to_mistralai_params(llm_input)
 
-        async with self._async_client.chat.completions.stream(
+        res = await self._client.chat.stream_async(
             model=self.model_name,
             messages=messages,
             tools=functions,
             tool_choice='auto',
+            safe_prompt=self.safe_prompt,
             temperature=self.temperature,
-            timeout=self.timeout,
-        ) as stream:
-            async def tiny_chunks() -> AsyncIterator[TinyLLMResultChunk]:
-                async for event in stream:
-                    if isinstance(event, ChunkEvent):
-                        yield openai_chunk_to_tiny_chunk(event.chunk)
+            timeout_ms=int(self.timeout * 1000),
+        )
 
-            async for acc_chunk in accumulate_llm_chunks(tiny_chunks()):
-                yield acc_chunk
+        async def raw_chunks() -> AsyncIterator[TinyLLMResultChunk]:
+            async for chunk in res:
+                for tiny_chunk in mistralai_chunk_to_tiny_chunks(chunk.data):
+                    yield tiny_chunk
+
+        async for acc_chunk in accumulate_llm_chunks(raw_chunks()):
+            yield acc_chunk
 
     def __str__(self) -> str:
         buf = StringIO()
 
         buf.write('OpenAI LLM Summary:\n')
         buf.write(textwrap.indent(f'Model: {self.model_name}\n', '\t'))
-        buf.write(textwrap.indent(f'Base URL: {self.base_url}\n', '\t'))
+        buf.write(textwrap.indent(f'Safe Prompt: {self.safe_prompt}\n', '\t'))
         buf.write(textwrap.indent(f'Temperature: {self.temperature}\n', '\t'))
         buf.write(textwrap.indent(f'Timeout: {self.timeout}\n', '\t'))
 

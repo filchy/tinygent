@@ -9,11 +9,21 @@ from langchain_core.outputs import LLMResult
 from tinygent.datamodels.messages import TinyAIMessage
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyToolCall
-from tinygent.utils import normalize_content
 
 
 class TinyLLMResult(LLMResult):
     """Result from an LLM, consisting of generations and optional metadata."""
+
+    @staticmethod
+    def normalize_content(content: str | list[str | dict]) -> str:
+        """Normalize content to a string."""
+        if isinstance(content, str):
+            return content
+
+        return ''.join(
+            part if isinstance(part, str) else f'[{part.get("type", "object")}]'
+            for part in content
+        )
 
     def tiny_iter(self) -> Iterator[TinyAIMessage]:
         """Iterate over the messages and tool calls in the LLM result."""
@@ -34,5 +44,5 @@ class TinyLLMResult(LLMResult):
                     )
             elif content := message.content:
                 yield TinyChatMessage(
-                    content=normalize_content(content), metadata={'raw': message}
+                    content=self.normalize_content(content), metadata={'raw': message}
                 )
