@@ -252,6 +252,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
             temperature=self.temperature,
             timeout=self.timeout,
         ) as stream:
+
             async def tiny_chunks() -> AsyncIterator[TinyLLMResultChunk]:
                 async for event in stream:
                     if isinstance(event, ChunkEvent):

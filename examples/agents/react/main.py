@@ -40,7 +40,7 @@ def get_best_destination(data: GetBestDestinationInput) -> list[str]:
     return list(destinations)[: data.top_k]
 
 
-def main():
+async def main():
     react_agent_prompt = tiny_yaml_load(str(Path(__file__).parent / 'prompts.yaml'))
 
     react_agent = TinyReActAgent(
@@ -59,14 +59,16 @@ def main():
         tools=[get_weather, get_best_destination],
     )
 
-    result = react_agent.run(
+    async for chunk in react_agent.run_stream(
         'What is the best travel destination and what is the weather like there?'
-    )
+    ):
+        logger.info(f'[STREAM CHUNK] {chunk}')
 
-    logger.info(f'[RESULT] {result}')
     logger.info(f'[MEMORY] {react_agent.memory.load_variables()}')
     logger.info(f'[AGENT SUMMARY] {str(react_agent)}')
 
 
 if __name__ == '__main__':
-    main()
+    import asyncio
+
+    asyncio.run(main())

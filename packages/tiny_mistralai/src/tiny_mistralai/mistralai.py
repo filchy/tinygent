@@ -181,7 +181,7 @@ class MistralAILLM(AbstractLLM[MistralAIConfig]):
             safe_prompt=self.safe_prompt,
             temperature=self.temperature,
             timeout_ms=int(self.timeout * 1000),
-            response_format=output_schema
+            response_format=output_schema,
         )
 
         if not res.choices or not (message := res.choices[0].message):
@@ -200,7 +200,7 @@ class MistralAILLM(AbstractLLM[MistralAIConfig]):
             safe_prompt=self.safe_prompt,
             temperature=self.temperature,
             timeout_ms=int(self.timeout * 1000),
-            response_format=output_schema
+            response_format=output_schema,
         )
 
         if not res.choices or not (message := res.choices[0].message):

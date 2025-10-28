@@ -140,12 +140,30 @@ react_agent = TinyReActAgent(
 
 ## Running the Agent
 
+### Blocking Mode
+
 ```python
 result = react_agent.run(
     "Find the best travel destination and tell me the weather there."
 )
 print("[RESULT]", result)
 print("[MEMORY]", react_agent.memory.load_variables())
+```
+
+### Streaming Mode
+
+Use `run_stream` for incremental reasoning/tool updates suitable for live UIs or logs:
+
+```python
+import asyncio
+
+async def stream_demo():
+    async for chunk in react_agent.run_stream(
+        "Find the best travel destination and tell me the weather there."
+    ):
+        print("[STREAM CHUNK]", chunk)
+
+asyncio.run(stream_demo())
 ```
 
 ---

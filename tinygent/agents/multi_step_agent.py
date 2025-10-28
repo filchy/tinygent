@@ -25,10 +25,8 @@ from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.prompt import TinyPromptTemplate
 from tinygent.memory import BufferChatMemory
-from tinygent.tools.default_tools import provide_final_answer
 from tinygent.tools.reasoning_tool import ReasoningTool
 from tinygent.types.base import TinyModel
-from tinygent.utils import is_final_answer
 from tinygent.utils import render_template
 
 if typing.TYPE_CHECKING:
@@ -117,9 +115,6 @@ class TinyMultiStepAgent(TinyBaseAgent):
         self._iteration_number: int = 1
         self._planned_steps: list[TinyPlanMessage] = []
         self._tool_calls: list[TinyToolCall] = []
-
-        __all_tools = list(tools) + [provide_final_answer]
-        self._tools: list[AbstractTool] = [tool for tool in __all_tools]
 
         self.max_iterations = max_iterations
         self.plan_interval = plan_interval
@@ -249,6 +244,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                         )
                         self.on_plan(planner_msg.content)
                         self._planned_steps.append(planner_msg)
+
                     if isinstance(planner_msg, TinyReasoningMessage):
                         logger.debug(
                             '[%d. ITERATION - Reasoning]: %s',
@@ -264,14 +260,16 @@ class TinyMultiStepAgent(TinyBaseAgent):
                     if msg.is_message and isinstance(msg.message, TinyChatMessageChunk):
                         returned_final_answer = True
                         yielded_final_answer += msg.message.content
+
                         yield msg.message.content
 
                     elif msg.is_tool_call and isinstance(
                         msg.full_tool_call, TinyToolCall
                     ):
                         tool_call: TinyToolCall = msg.full_tool_call
-                        self.memory.save_context(tool_call)
                         called_tool = self.get_tool(tool_call.tool_name)
+
+                        self.memory.save_context(tool_call)
                         if called_tool:
                             self.memory.save_context(
                                 self.run_tool(called_tool, tool_call)
@@ -300,22 +298,13 @@ class TinyMultiStepAgent(TinyBaseAgent):
                             tool_call.result,
                         )
 
-                        if isinstance(
-                            tool_call.result, TinyChatMessage
-                        ) and is_final_answer(tool_call.result):
-                            returned_final_answer = True
-
-                            self.memory.save_context(tool_call.result)
-                            self.on_answer(tool_call.result.content)
-                            yield tool_call.result.content
-
-                    if returned_final_answer:
-                        if yielded_final_answer:
-                            self.memory.save_context(
-                                TinyChatMessage(content=yielded_final_answer)
-                            )
-                            self.on_answer(yielded_final_answer)
-                        break
+                if returned_final_answer:
+                    if yielded_final_answer:
+                        self.memory.save_context(
+                            TinyChatMessage(content=yielded_final_answer)
+                        )
+                        self.on_answer(yielded_final_answer)
+                    break
             except Exception as e:
                 self.on_error(e)
                 raise e
@@ -347,6 +336,14 @@ class TinyMultiStepAgent(TinyBaseAgent):
             self.memory.save_context(TinyChatMessage(content=final_yielded_answer))
             self.on_answer(final_yielded_answer)
 
+    def _reset(self) -> None:
+        logger.debug('[AGENT RESET]')
+
+        self._iteration_number = 1
+        self._planned_steps = []
+        self._tool_calls = []
+        self.memory.clear()
+
     def run(
         self,
         input_text: str,
@@ -355,12 +352,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
         logger.debug('[USER INPUT] %s', input_text)
 
         if reset:
-            logger.debug('[AGENT RESET]')
-
-            self._iteration_number = 1
-            self._planned_steps = []
-            self._tool_calls = []
-            self.memory.clear()
+            self._reset()
 
         async def _run() -> str:
             final_answer: str = ''
@@ -369,3 +361,14 @@ class TinyMultiStepAgent(TinyBaseAgent):
             return final_answer
 
         return asyncio.run(_run())
+
+    async def run_stream(  # type: ignore[override]
+        self, input_text: str, reset: bool = True
+    ) -> AsyncGenerator[str, None]:
+        logger.debug('[USER INPUT] %s', input_text)
+
+        if reset:
+            self._reset()
+
+        async for res in self._run_agent(input_text):
+            yield res

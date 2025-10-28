@@ -32,7 +32,7 @@ reason:
 action:
   action: |-
     You are now at the action stage.  
-    Based on your latest reasoning, choose the best Action from the available tools.
+    Based on your latest reasoning, choose the best Action from the available tools. Or answer if you have enough informations.
 
     --- Latest reasoning ---
     {{ reasoning }}

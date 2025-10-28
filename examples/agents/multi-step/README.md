@@ -147,12 +147,30 @@ multi_step_agent = TinyMultiStepAgent(
 
 ## Running the Agent
 
+### Blocking Mode
+
 ```python
 result = multi_step_agent.run(
     "What is the best travel destination and what is the weather like there?"
 )
 print("[RESULT]", result)
 print("[MEMORY]", multi_step_agent.memory.load_variables())
+```
+
+### Streaming Mode
+
+Use `run_stream` to get incremental plan, reasoning and tool call updates:
+
+```python
+import asyncio
+
+async def stream_runs():
+    async for chunk in multi_step_agent.run_stream(
+        "What is the best travel destination and what is the weather like there?"
+    ):
+        print("[STREAM CHUNK]", chunk)
+
+asyncio.run(stream_runs())
 ```
 
 ---
