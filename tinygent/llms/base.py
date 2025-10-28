@@ -21,5 +21,9 @@ def init_llm(model: str, *, model_provider: str | None = None, **kwargs) -> Abst
         from tiny_openai import OpenAIConfig
 
         return OpenAIConfig(model=model, **kwargs).build()
+    elif model_provider == 'mistralai':
+        from tiny_mistralai import MistralAIConfig
+
+        return MistralAIConfig(model=model, **kwargs).build()
     else:
         raise ValueError(f'Unsupported model provider: {model_provider}')

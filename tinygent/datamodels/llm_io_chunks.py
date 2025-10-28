@@ -9,7 +9,7 @@ from tinygent.types.base import TinyModel
 class TinyLLMResultChunk(TinyModel):
     """A chunk of an LLM result, consisting of a single message."""
 
-    type: Literal['message', 'tool_call', 'end']
+    type: Literal['message', 'tool_call', 'end', 'none']
 
     message: TinyChatMessageChunk | None = None
     tool_call: TinyToolCallChunk | None = None
