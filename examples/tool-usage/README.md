@@ -119,7 +119,7 @@ def count(data: CountInput):
     for i in range(1, data.n + 1):
         yield i
 
-print(list(count(n=3)))  # -> [1, 2, 3, {'instruction': 'Count from 1 to n, yielding each number.'}]
+print(list(count(CountInput(n=3))))  # -> [1, 2, 3, {'instruction': 'Count from 1 to n, yielding each number.'}]
 ```
 
 Use `@register_jit_tool` when you also want to publish the wrapped tool into the global catalog.
