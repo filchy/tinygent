@@ -23,6 +23,8 @@ R = TypeVar('R')
 
 
 class ToolConfig(AbstractToolConfig['Tool[T, R]'], Generic[T, R]):
+    """Configuration for simple tools."""
+
     type: Literal['simple'] = 'simple'
 
     def build(self) -> 'Tool[T, R]':
@@ -36,6 +38,8 @@ class ToolConfig(AbstractToolConfig['Tool[T, R]'], Generic[T, R]):
 
 
 class Tool(AbstractTool, Generic[T, R]):
+    """A simple tool wrapping a callable function."""
+
     def __init__(
         self,
         fn: Callable[[T], R],

@@ -42,6 +42,8 @@ TinyGent supports several kinds of tools:
 | **Registered Tool**         | `@register_tool`                        | ✅                  | Auto-added to `GlobalToolCatalog`, accessible by name |
 | **Reasoning Tool (local)**  | `@reasoning_tool`                       | ❌                  | Adds a `reasoning: str` field to the tool input, so the agent must state *why* it’s calling the tool |
 | **Reasoning Tool (global)** | `@register_reasoning_tool`              | ✅                  | Same as above, but also auto-registered in the global catalog |
+| **JIT Instruction Tool (local)**  | `@jit_tool`                     | ❌                  | Appends an `instruction` field to outputs so agents see on-the-fly guidance |
+| **JIT Instruction Tool (global)** | `@register_jit_tool`            | ✅                  | Same as above, but also auto-registered in the global catalog |
 
 ---
 
@@ -102,6 +104,25 @@ from tinygent.runtime.tool_catalog import GlobalToolCatalog
 registry = GlobalToolCatalog().get_active_catalog()
 add_tool = registry.get_tool('add')
 print(add_tool(a=1, b=2))
+
+```
+
+### `@jit_tool`
+
+Wraps an existing tool and augments every result with a lightweight instruction payload. This is useful when you want the LLM to receive inline guidance about how to interpret or execute the tool outcome.
+
+```python
+from tinygent.tools.jit_tool import jit_tool
+
+@jit_tool(jit_instruction='Count from 1 to n, yielding each number.')
+def count(data: CountInput):
+    for i in range(1, data.n + 1):
+        yield i
+
+print(list(count(n=3)))  # -> [1, 2, 3, {'instruction': 'Count from 1 to n, yielding each number.'}]
+```
+
+Use `@register_jit_tool` when you also want to publish the wrapped tool into the global catalog.
 ```
 
 ---

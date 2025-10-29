@@ -1,6 +1,7 @@
 from pydantic import Field
 
 from tinygent.runtime.tool_catalog import GlobalToolCatalog
+from tinygent.tools.jit_tool import jit_tool
 from tinygent.tools.reasoning_tool import register_reasoning_tool
 from tinygent.tools.tool import register_tool
 from tinygent.tools.tool import tool
@@ -34,7 +35,7 @@ class CountInput(TinyModel):
     n: int = Field(..., description='The number to count to.')
 
 
-@tool
+@jit_tool(jit_instruction='Count from 1 to n, yielding each number.')
 def count(data: CountInput):
     """Counts from 1 to n, yielding each number."""
 
