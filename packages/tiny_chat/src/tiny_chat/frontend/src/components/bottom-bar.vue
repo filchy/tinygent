@@ -30,6 +30,7 @@ const currentAvatar = computed(() =>
       <a
         class='font-weight-bold'
         href='https://github.com/filchy/tinygent'
+        target='_blank'
         style='text-decoration: none; color: inherit;'
       >
         tinygent
