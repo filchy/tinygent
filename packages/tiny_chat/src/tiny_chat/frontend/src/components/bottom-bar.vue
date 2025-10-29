@@ -14,10 +14,10 @@ const currentAvatar = computed(() =>
   <v-footer
     app
     height='40'
-    class='d-flex align-center justify-center text-caption'
+    class='d-flex align-center justify-center text-caption font-weight-thin'
     color='transparent'
   >
-    <span class='d-flex align-center' style='font-size: 11px;'>
+    <span class='d-flex align-center text-caption'>
       Build with
       <v-img
         :src='currentAvatar'
@@ -27,7 +27,13 @@ const currentAvatar = computed(() =>
         class='mx-1'
         contain
       />
-      tinygent
+      <a
+        class='font-weight-bold'
+        href='https://github.com/filchy/tinygent'
+        style='text-decoration: none; color: inherit;'
+      >
+        tinygent
+      </a>
     </span>
   </v-footer>
 </template>
