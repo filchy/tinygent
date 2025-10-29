@@ -16,10 +16,17 @@ const conversations = ref(['Conversation 1', 'Conversation 2', 'Conversation 3']
 
     <TopBar @toggle-drawer="drawer = !drawer" />
 
-    <v-app>
-      <ChatWindow />
-    </v-app>
+    <v-main class='app-main d-flex flex-column flex-grow-1'>
+      <ChatWindow class='flex-grow-1'/>
+    </v-main>
 
     <BottomBar />
   </v-app>
 </template>
+
+<style scoped>
+.app-main {
+  min-height: 0;
+  overflow: hidden;
+}
+</style>
