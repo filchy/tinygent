@@ -21,6 +21,8 @@ T = TypeVar('T', bound=TinyModel)
 
 
 class ReasoningToolConfig(AbstractToolConfig['ReasoningTool'], Generic[T]):
+    """Configuration for reasoning tools."""
+
     type: Literal['reasoning'] = 'reasoning'
 
     prompt: str
@@ -34,12 +36,15 @@ class ReasoningToolConfig(AbstractToolConfig['ReasoningTool'], Generic[T]):
 
 
 class ReasoningTool(AbstractTool):
+    """A tool that captures reasoning behind its invocation."""
+
     def __init__(
         self, inner_tool: AbstractTool, reasoning_prompt: str | None = None
     ) -> None:
         self._inner = inner_tool
         self._reasoning: str | None = None
         self._reasoning_prompt = reasoning_prompt or 'Why this tool is being called'
+
         self.__reasoning_field_name = 'reasoning'
 
         # Dynamically create a new input schema with `reasoning: str`

@@ -86,6 +86,16 @@ Before you begin using tinygent, ensure that you meet the following software pre
 2. [Window Buffer Memory](examples/memory/buffer-window-chat-memory)
 3. [Combined Memory](examples/memory/combined-memory)
 
+### Tools
+1. [Basic Tools](examples/tool-usage/main.py)
+2. [Reasoning Tools](examples/tool-usage/main.py)
+3. [JIT Tools](examples/tool-usage/main.py)
+4. [Brave Tools](packages/tiny_brave/)
+
+### LLMs
+1. [OpenAI](packages/tiny_openai/)
+2. [MistralAI](packages/tiny_mistralai/)
+
 ### Agents
 
 1. [Hooks in Agents](examples/agents/hooks/)
