@@ -15,8 +15,9 @@ const currentAvatar = computed(() =>
     app
     height='40'
     class='d-flex align-center justify-center text-caption'
+    color='transparent'
   >
-    <span class='d-flex align-center' style='font-size: 10px;'>
+    <span class='d-flex align-center' style='font-size: 11px;'>
       Build with
       <v-img
         :src='currentAvatar'
