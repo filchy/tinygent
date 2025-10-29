@@ -1,7 +1,7 @@
 <script setup lang='ts'>
-import { ref, watch } from 'vue'
-import { useDisplay } from 'vuetify'
+import { useDisplay, useTheme } from 'vuetify'
 import darkAvatar from '@/assets/dark-avatar.png'
+import lightAvatar from '@/assets/light-avatar.png'
 
 const props = defineProps<{
   drawer: boolean
@@ -26,6 +26,15 @@ watch(smAndDown, (val) => {
     localDrawer.value = true
   }
 }, { immediate: true })
+
+const theme = useTheme()
+const isDark = ref(theme.global.current.value.dark)
+
+watch(isDark, (val) => {
+  theme.global.name.value = val ? 'dark' : 'light'
+})
+
+const currentAvatar = computed(() => (isDark.value ? lightAvatar : darkAvatar))
 </script>
 
 <template>
@@ -36,9 +45,10 @@ watch(smAndDown, (val) => {
     :permanent='!smAndDown'
     app
   >
+    <!-- Header -->
     <div class='d-flex align-center justify-space-between px-1 py-2' style='height: 64px;'>
       <v-img
-        :src='darkAvatar'
+        :src='currentAvatar'
         max-width='56'
         max-height='56'
         class='rounded transition-fast-in-fast-out'
@@ -56,10 +66,11 @@ watch(smAndDown, (val) => {
       </v-btn>
     </div>
 
+    <!-- Conversation list -->
     <v-list
       nav
       dense
-      class='transition-fast-in-fast-out'
+      class='transition-fast-in-fast-out flex-grow-1'
       :style='{ opacity: (!smAndDown && rail) ? 0 : 1, visibility: (!smAndDown && rail) ? "hidden" : "visible" }'
     >
       <v-list-subheader>Conversations</v-list-subheader>
@@ -70,5 +81,22 @@ watch(smAndDown, (val) => {
         prepend-icon='mdi-message-text'
       />
     </v-list>
+
+    <!-- Footer with theme switch (only if not rail) -->
+    <template #append>
+      <div v-if='!rail'>
+        <v-divider />
+        <div class='d-flex align-center justify-space-between px-3 py-2'>
+          <span>Theme</span>
+          <v-switch
+            v-model='isDark'
+            hide-details
+            inset
+            true-icon='mdi-weather-night'
+            false-icon='mdi-white-balance-sunny'
+          />
+        </div>
+      </div>
+    </template>
   </v-navigation-drawer>
 </template>
