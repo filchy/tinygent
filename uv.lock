@@ -4,6 +4,7 @@ requires-python = "==3.12.*"
 [manifest]
 members = [
     "tiny-brave",
+    "tiny-chat",
     "tiny-mistralai",
     "tiny-openai",
     "tinygent",
@@ -825,6 +826,17 @@ requires-dist = [
 ]
 
 [[package]]
+name = "tiny-chat"
+version = "0.1.0"
+source = { editable = "packages/tiny_chat" }
+dependencies = [
+    { name = "tinygent" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "tinygent", editable = "." }]
+
+[[package]]
 name = "tiny-mistralai"
 version = "0.1.0"
 source = { editable = "packages/tiny_mistralai" }
@@ -875,6 +887,9 @@ dependencies = [
 brave = [
     { name = "tiny-brave" },
 ]
+chat = [
+    { name = "tiny-chat" },
+]
 dev = [
     { name = "black" },
     { name = "mypy" },
@@ -898,6 +913,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12.11" },
     { name = "tiny-brave", marker = "extra == 'brave'", editable = "packages/tiny_brave" },
+    { name = "tiny-chat", marker = "extra == 'chat'", editable = "packages/tiny_chat" },
     { name = "tiny-mistralai", marker = "extra == 'mistralai'", editable = "packages/tiny_mistralai" },
     { name = "tiny-openai", marker = "extra == 'openai'", editable = "packages/tiny_openai" },
     { name = "typer", specifier = ">=0.19.2" },
