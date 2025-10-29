@@ -1,4 +1,6 @@
 <script setup lang='ts'>
+import { ref, watch } from 'vue'
+import { useDisplay } from 'vuetify'
 import darkAvatar from '@/assets/dark-avatar.png'
 
 const props = defineProps<{
@@ -10,14 +12,28 @@ const emit = defineEmits<{
   (e: 'update:drawer', value: boolean): void
 }>()
 
+const localDrawer = ref(props.drawer)
+watch(() => props.drawer, (val) => (localDrawer.value = val))
+watch(localDrawer, (val) => emit('update:drawer', val))
+
 const rail = ref(false)
+const { smAndDown } = useDisplay()
+
+watch(smAndDown, (val) => {
+  if (val) {
+    localDrawer.value = false
+  } else {
+    localDrawer.value = true
+  }
+}, { immediate: true })
 </script>
 
 <template>
   <v-navigation-drawer
-    v-model='props.drawer'
-    :rail='rail'
-    permanent
+    v-model='localDrawer'
+    :rail='!smAndDown && rail'
+    :temporary='smAndDown'
+    :permanent='!smAndDown'
     app
   >
     <div class='d-flex align-center justify-space-between px-1 py-2' style='height: 64px;'>
@@ -27,16 +43,16 @@ const rail = ref(false)
         max-height='56'
         class='rounded transition-fast-in-fast-out'
         contain
-        :style='{ opacity: rail ? 0 : 1, visibility: rail ? "hidden" : "visible" }'
+        :style='{ opacity: (!smAndDown && rail) ? 0 : 1, visibility: (!smAndDown && rail) ? "hidden" : "visible" }'
       />
 
       <v-btn
         icon
         variant='text'
         size='small'
-        @click.stop='rail = !rail'
+        @click.stop='smAndDown ? (localDrawer = false) : (rail = !rail)'
       >
-        <v-icon>{{ rail ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
+        <v-icon>{{ smAndDown ? 'mdi-close' : (rail ? 'mdi-chevron-right' : 'mdi-chevron-left') }}</v-icon>
       </v-btn>
     </div>
 
@@ -44,7 +60,7 @@ const rail = ref(false)
       nav
       dense
       class='transition-fast-in-fast-out'
-      :style='{ opacity: rail ? 0 : 1, visibility: rail ? "hidden" : "visible" }'
+      :style='{ opacity: (!smAndDown && rail) ? 0 : 1, visibility: (!smAndDown && rail) ? "hidden" : "visible" }'
     >
       <v-list-subheader>Conversations</v-list-subheader>
       <v-list-item
