@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang='ts'>
 import { useTheme } from 'vuetify'
 import darkAvatar from '@/assets/dark-avatar.png'
 import lightAvatar from '@/assets/light-avatar.png'
@@ -30,7 +30,7 @@ const currentAvatar = computed(() => (theme.global.current.value.dark ? lightAva
     >
       <template #append-inner>
         <v-tooltip bottom>
-          <template #activator="{ props }">
+          <template #activator='{ props }'>
             <v-btn
               icon
               variant='text'
