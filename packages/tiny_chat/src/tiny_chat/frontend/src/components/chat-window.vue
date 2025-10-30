@@ -1,8 +1,7 @@
 <script setup lang="ts">
 type Message =
   | { type: 'text'; sender: 'user' | 'bot'; text: string }
-  | { type: 'image'; sender: 'bot'; url: string; caption?: string }
-  | { type: 'error'; text: string }
+  | { type: 'error'; text: string, sender: 'bot' }
 
 const baseMessages: Message[] = [
   { type: 'text', sender: 'bot', text: 'Hello! How can I help you?' },

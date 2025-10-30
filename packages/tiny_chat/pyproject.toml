@@ -6,7 +6,14 @@ build-backend = "hatchling.build"
 name = "tiny-chat"
 version = "0.1.0"
 dependencies = [
+    "fastapi>=0.120.2",
     "tinygent",
+    "uvicorn[standard]>=0.38.0",
+]
+
+[tool.hatch.build]
+include = [
+    "src/tiny_chat/frontend/dist/**/*"
 ]
 
 [tool.hatch.build.targets.wheel]
