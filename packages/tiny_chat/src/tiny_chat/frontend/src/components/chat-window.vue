@@ -1,6 +1,4 @@
-<script setup lang='ts'>
-import { ref, nextTick } from 'vue'
-
+<script setup lang="ts">
 type Message =
   | { type: 'text'; sender: 'user' | 'bot'; text: string }
   | { type: 'image'; sender: 'bot'; url: string; caption?: string }
@@ -14,19 +12,10 @@ const baseMessages: Message[] = [
 const messages = ref<Message[]>([])
 
 for (let i = 0; i < 10; i++) {
-    messages.value.push(...baseMessages)
+  messages.value.push(...baseMessages)
 }
 
-const newMessage = ref('')
 const chatRef = ref<HTMLDivElement>()
-
-function scrollToBottom() {
-  nextTick(() => {
-    if (chatRef.value) {
-      chatRef.value.scrollTop = chatRef.value.scrollHeight
-    }
-  })
-}
 </script>
 
 <template>
