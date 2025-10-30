@@ -36,10 +36,7 @@ const currentAvatar = computed(() => (theme.global.current.value.dark ? lightAva
               variant="text"
               v-bind="props"
               :disabled="!message.trim()"
-              @click="
-                emit('send-message', message)
-                message = ''
-              "
+              @click='emit("send-message", message); message = ""'
             >
               <v-icon>mdi-send</v-icon>
             </v-btn>
