@@ -11,13 +11,13 @@ const conversations = ref(['Conversation 1', 'Conversation 2', 'Conversation 3']
 </script>
 
 <template>
-  <v-app>
+  <v-app class='app-root'>
     <NavigationDrawer v-model:drawer="drawer" :conversations="conversations" />
 
     <TopBar @toggle-drawer="drawer = !drawer" />
 
     <v-main class='app-main d-flex flex-column flex-grow-1'>
-      <ChatWindow class='flex-grow-1'/>
+      <ChatWindow />
     </v-main>
 
     <BottomBar />
@@ -25,8 +25,16 @@ const conversations = ref(['Conversation 1', 'Conversation 2', 'Conversation 3']
 </template>
 
 <style scoped>
+.app-root {
+  height: 100vh;          /* full viewport height */
+  overflow: hidden;       /* never let v-app scroll */
+}
+
 .app-main {
-  min-height: 0;
-  overflow: hidden;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;          /* CRUCIAL: allow children to shrink */
+  overflow: hidden;       /* stop v-main scroll */
+  flex-direction: column;
 }
 </style>
