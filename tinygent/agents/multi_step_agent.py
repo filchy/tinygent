@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from collections.abc import AsyncGenerator
 from collections.abc import Generator
 import logging
@@ -25,6 +24,7 @@ from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.prompt import TinyPromptTemplate
 from tinygent.memory import BufferChatMemory
+from tinygent.runtime.executors import run_async_in_executor
 from tinygent.tools.reasoning_tool import ReasoningTool
 from tinygent.types.base import TinyModel
 from tinygent.utils import render_template
@@ -360,7 +360,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                 final_answer += res
             return final_answer
 
-        return asyncio.run(_run())
+        return run_async_in_executor(_run)
 
     async def run_stream(  # type: ignore[override]
         self, input_text: str, reset: bool = True

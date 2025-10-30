@@ -1,26 +1,45 @@
-<script setup lang="ts">
-import { ref } from 'vue'
+<script setup lang='ts'>
 import ChatWindow from './components/chat-window.vue'
 import NavigationDrawer from './components/nav-drawer.vue'
 import TopBar from './components/top-bar.vue'
 import BottomBar from './components/bottom-bar.vue'
 
+import { wsClient } from './services/ws-client'
+
+onMounted(() => {
+  console.log('Connecting to WebSocket server...')
+  wsClient.connect()
+
+  wsClient.onMessage((msg) => {
+    console.log('Received message from server:', msg)
+  })
+})
+
 const drawer = ref(true)
 
 const conversations = ref(['Conversation 1', 'Conversation 2', 'Conversation 3'])
+
+const sendMessage = (message: string) => {
+  wsClient.send({
+    id: crypto.randomUUID(),
+    type: 'text',
+    sender: 'user',
+    content: message,
+  } as UserMessage)
+}
 </script>
 
 <template>
-  <v-app class="app-root">
-    <NavigationDrawer v-model:drawer="drawer" :conversations="conversations" />
+  <v-app class='app-root'>
+    <NavigationDrawer v-model:drawer='drawer' :conversations='conversations' />
 
-    <TopBar @toggle-drawer="drawer = !drawer" />
+    <TopBar @toggle-drawer='drawer = !drawer' />
 
-    <v-main class="app-main d-flex flex-column flex-grow-1">
+    <v-main class='app-main d-flex flex-column flex-grow-1'>
       <ChatWindow />
     </v-main>
 
-    <BottomBar />
+    <BottomBar @send-message='sendMessage'/>
   </v-app>
 </template>
 

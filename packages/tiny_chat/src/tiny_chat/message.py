@@ -1,30 +1,16 @@
 from pydantic import BaseModel
-from typing import Generic
-from typing import TypeVar
 from typing import Literal
 from typing import Optional
 
-TType = TypeVar('TType', bound=str)
-TSender = TypeVar('TSender', bound=str)
+from tiny_chat.emitter import emitter
 
 
-class BaseMessage(BaseModel, Generic[TType, TSender]):
+class BaseMessage(BaseModel):
     id: str
-    type: TType
-    sender: TSender
+    type: Literal['text', 'reasoning', 'debug', 'delta']
+    sender: Literal['user', 'agent']
+    content: str
     streaming: Optional[bool] = False
 
-
-class UserMessage(BaseMessage[Literal['text'], Literal['user']]):
-    content: str
-
-
-class AgentTextMessage(BaseMessage[Literal['text'], Literal['agent']]):
-    content: str
-
-
-class AgentReasoningMessage(BaseMessage[Literal['reasoning'], Literal['agent']]):
-    thought: str
-
-
-Message = UserMessage | AgentTextMessage | AgentReasoningMessage
+    async def send(self):
+        await emitter.send(self)

@@ -7,6 +7,7 @@ from typing import ClassVar
 from typing import Generic
 from typing import TypeVar
 
+from tinygent.datamodels.agent_hooks import AgentHooks
 from tinygent.types.builder import TinyModelBuildable
 
 AgentType = TypeVar('AgentType', bound='AbstractAgent')
@@ -22,7 +23,7 @@ class AbstractAgentConfig(TinyModelBuildable[AgentType], Generic[AgentType]):
         raise NotImplementedError('Subclasses must implement this method.')
 
 
-class AbstractAgent(ABC):
+class AbstractAgent(AgentHooks, ABC):
     """Abstract base class for agents."""
 
     @abstractmethod

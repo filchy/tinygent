@@ -45,7 +45,7 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
         raise NotImplementedError('Subclasses must implement this method.')
 
 
-class TinyBaseAgent(AbstractAgent, AgentHooks):
+class TinyBaseAgent(AbstractAgent):
     def __init__(
         self,
         llm: AbstractLLM,

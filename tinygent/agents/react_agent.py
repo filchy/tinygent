@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from collections.abc import AsyncGenerator
 import logging
 import typing
@@ -20,6 +19,7 @@ from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.runtime.executors import run_async_in_executor
 from tinygent.tools.reasoning_tool import ReasoningTool
 from tinygent.types.base import TinyModel
 from tinygent.utils import render_template
@@ -282,6 +282,12 @@ class TinyReActAgent(TinyBaseAgent):
                                 full_tc.result,
                             )
 
+                    if yielded_final_answer:
+                        self.memory.save_context(
+                            TinyChatMessage(content=yielded_final_answer)
+                        )
+                        self.on_answer(yielded_final_answer)
+
                     self._react_iterations.append(
                         self.TinyReactIteration(
                             iteration_number=self._iteration_number,
@@ -340,7 +346,7 @@ class TinyReActAgent(TinyBaseAgent):
                 final_answer += output
             return final_answer
 
-        return asyncio.run(_run())
+        return run_async_in_executor(_run)
 
     async def run_stream(  # type: ignore[override]
         self,

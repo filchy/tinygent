@@ -11,6 +11,13 @@ const theme = useTheme()
 const message = ref('')
 
 const currentAvatar = computed(() => (theme.global.current.value.dark ? lightAvatar : darkAvatar))
+
+const sendMessage = () => {
+  if (message.value.trim()) {
+    emit('send-message', message.value)
+    message.value = ''
+  }
+}
 </script>
 
 <template>
@@ -27,6 +34,7 @@ const currentAvatar = computed(() => (theme.global.current.value.dark ? lightAva
       variant='solo'
       color='grey'
       rounded
+      @keyup.enter='sendMessage'
     >
       <template #append-inner>
         <v-tooltip bottom>
@@ -36,7 +44,7 @@ const currentAvatar = computed(() => (theme.global.current.value.dark ? lightAva
               variant='text'
               v-bind='props'
               :disabled='!message.trim()'
-              @click='emit("send-message", message); message = ""'
+              @click='sendMessage'
             >
               <v-icon>mdi-send</v-icon>
             </v-btn>

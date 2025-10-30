@@ -1,11 +1,14 @@
+import logging
 import uuid
 from fastapi import APIRouter
+from fastapi import WebSocketDisconnect
 from fastapi import WebSocket
 
-from tiny_chat.message import UserMessage
+from tiny_chat.message import BaseMessage
 from tiny_chat.runtime import call_message
 from tiny_chat.session import WebsocketSession
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -21,12 +24,15 @@ async def websocket_handler(ws: WebSocket):
     try:
         while True:
             data = await ws.receive_json()
-            msg = UserMessage.model_validate(data)
+            logger.debug('Received data on WebSocket session %s: %s', session_id, data)
+
+            msg = BaseMessage.model_validate(data)
+            logger.debug('Validated message on WebSocket session %s: %s', session_id, msg)
             session.history.append(msg)
 
             result = await call_message(msg)
-
-            if result is not None:
-                await session.emit(result)
-    except Exception:
-        await ws.close()
+            logger.debug('Processed message on WebSocket session %s: %s', session_id, result)
+    except WebSocketDisconnect:
+        logger.info('WebSocket disconnected for session %s', session_id)
+    except Exception as e:
+        logger.exception('Unexpected WebSocket error for session %s: %s', session_id, e)
