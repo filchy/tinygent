@@ -16,16 +16,16 @@ const currentAvatar = computed(() => (theme.global.current.value.dark ? lightAva
 <template>
   <v-footer
     app
-    class="d-flex flex-column align-center justify-center text-caption font-weight-thin"
-    color="transparent"
+    class='d-flex flex-column align-center justify-center text-caption font-weight-thin'
+    color='transparent'
   >
     <v-text-field
-      v-model="message"
-      label="Type your tiny message here..."
-      width="100%"
-      max-width="min(48rem, 100vw)"
-      variant="solo"
-      color="grey"
+      v-model='message'
+      label='Type your tiny message here...'
+      width='100%'
+      max-width='min(48rem, 100vw)'
+      variant='solo'
+      color='grey'
       rounded
     >
       <template #append-inner>
@@ -33,9 +33,9 @@ const currentAvatar = computed(() => (theme.global.current.value.dark ? lightAva
           <template #activator="{ props }">
             <v-btn
               icon
-              variant="text"
-              v-bind="props"
-              :disabled="!message.trim()"
+              variant='text'
+              v-bind='props'
+              :disabled='!message.trim()'
               @click='emit("send-message", message); message = ""'
             >
               <v-icon>mdi-send</v-icon>
@@ -46,14 +46,14 @@ const currentAvatar = computed(() => (theme.global.current.value.dark ? lightAva
       </template>
     </v-text-field>
 
-    <span class="d-flex align-center text-caption">
+    <span class='d-flex align-center text-caption'>
       Build with
-      <v-img :src="currentAvatar" alt="tinygent logo" width="32" height="32" class="mx-1" contain />
+      <v-img :src='currentAvatar' alt='tinygent logo' width='32' height='32' class='mx-1' contain />
       <a
-        class="font-weight-bold"
-        href="https://github.com/filchy/tinygent"
-        target="_blank"
-        style="text-decoration: none; color: inherit"
+        class='font-weight-bold'
+        href='https://github.com/filchy/tinygent'
+        target='_blank'
+        style='text-decoration: none; color: inherit'
       >
         tinygent
       </a>
