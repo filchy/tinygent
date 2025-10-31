@@ -47,6 +47,7 @@ const sendMessage = () => {
       max-width="min(48rem, 100vw)"
       variant="solo"
       color="grey"
+      autocomplete="off"
       rounded
       @keyup.enter="sendMessage"
     >
