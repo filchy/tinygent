@@ -1,4 +1,4 @@
-<script setup lang='ts'>
+<script setup lang="ts">
 import { useDisplay, useTheme } from 'vuetify'
 import darkAvatar from '@/assets/dark-avatar.png'
 import lightAvatar from '@/assets/light-avatar.png'
@@ -17,16 +17,16 @@ const emit = defineEmits<{
 const localDrawer = ref(props.drawer)
 watch(
   () => props.drawer,
-  val => (localDrawer.value = val),
+  (val) => (localDrawer.value = val),
 )
-watch(localDrawer, val => emit('update:drawer', val))
+watch(localDrawer, (val) => emit('update:drawer', val))
 
 const rail = ref(false)
 const { smAndDown } = useDisplay()
 
 watch(
   smAndDown,
-  val => {
+  (val) => {
     if (val) {
       localDrawer.value = false
     } else {
@@ -39,7 +39,7 @@ watch(
 const theme = useTheme()
 const isDark = ref(theme.global.current.value.dark)
 
-watch(isDark, val => {
+watch(isDark, (val) => {
   theme.global.name.value = val ? 'dark' : 'light'
 })
 
@@ -49,38 +49,38 @@ const currentLogo = computed(() => (isDark.value ? lightLogo : darkLogo))
 
 <template>
   <v-navigation-drawer
-    v-model='localDrawer'
-    :rail='!smAndDown && rail'
-    :temporary='smAndDown'
-    :permanent='!smAndDown'
+    v-model="localDrawer"
+    :rail="!smAndDown && rail"
+    :temporary="smAndDown"
+    :permanent="!smAndDown"
     app
   >
-    <div class='d-flex align-center justify-space-between px-1 py-2' style='height: 64px'>
-      <div class='d-flex align-center'>
+    <div class="d-flex align-center justify-space-between px-1 py-2" style="height: 64px">
+      <div class="d-flex align-center">
         <v-img
-          v-show='!(!smAndDown && rail)'
-          :src='currentAvatar'
-          width='56'
-          height='56'
-          class='rounded transition-fast-in-fast-out'
+          v-show="!(!smAndDown && rail)"
+          :src="currentAvatar"
+          width="56"
+          height="56"
+          class="rounded transition-fast-in-fast-out"
           contain
         />
         <v-img
-          v-show='!(!smAndDown && rail)'
-          :src='currentLogo'
-          width='56'
-          height='56'
-          class='rounded transition-fast-in-fast-out'
+          v-show="!(!smAndDown && rail)"
+          :src="currentLogo"
+          width="56"
+          height="56"
+          class="rounded transition-fast-in-fast-out"
           contain
-          style='margin-left:-8px;'
+          style="margin-left: -8px"
         />
       </div>
 
       <v-btn
         icon
-        variant='text'
-        size='small'
-        @click.stop='smAndDown ? (localDrawer = false) : (rail = !rail)'
+        variant="text"
+        size="small"
+        @click.stop="smAndDown ? (localDrawer = false) : (rail = !rail)"
       >
         <v-icon>{{
           smAndDown ? 'mdi-close' : rail ? 'mdi-chevron-right' : 'mdi-chevron-left'
@@ -91,32 +91,32 @@ const currentLogo = computed(() => (isDark.value ? lightLogo : darkLogo))
     <v-list
       nav
       dense
-      class='transition-fast-in-fast-out flex-grow-1'
-      :style='{
+      class="transition-fast-in-fast-out flex-grow-1"
+      :style="{
         opacity: !smAndDown && rail ? 0 : 1,
-        visibility: !smAndDown && rail ? "hidden" : "visible",
-      }'
+        visibility: !smAndDown && rail ? 'hidden' : 'visible',
+      }"
     >
       <v-list-subheader>Conversations</v-list-subheader>
       <v-list-item
-        v-for='(conv, i) in props.conversations || []'
-        :key='i'
-        :title='conv'
-        prepend-icon='mdi-message-text'
+        v-for="(conv, i) in props.conversations || []"
+        :key="i"
+        :title="conv"
+        prepend-icon="mdi-message-text"
       />
     </v-list>
 
     <template #append>
-      <div v-if='!rail'>
+      <div v-if="!rail">
         <v-divider />
-        <div class='d-flex align-center justify-space-between px-3 py-2'>
+        <div class="d-flex align-center justify-space-between px-3 py-2">
           <span>Theme</span>
           <v-switch
-            v-model='isDark'
+            v-model="isDark"
             hide-details
             inset
-            true-icon='mdi-weather-night'
-            false-icon='mdi-white-balance-sunny'
+            true-icon="mdi-weather-night"
+            false-icon="mdi-white-balance-sunny"
           />
         </div>
       </div>

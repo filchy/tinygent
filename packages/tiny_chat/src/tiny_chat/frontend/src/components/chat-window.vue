@@ -1,20 +1,21 @@
 <script setup lang="ts">
-type Message =
-  | { type: 'text'; sender: 'user' | 'bot'; text: string }
-  | { type: 'error'; text: string, sender: 'bot' }
+import { wsClient } from '@/services/ws-client'
+import { useChatStore } from '@/stores/chat-store'
 
-const baseMessages: Message[] = [
-  { type: 'text', sender: 'bot', text: 'Hello! How can I help you?' },
-  { type: 'text', sender: 'user', text: 'Show me a picture' },
-]
+const { messages } = useChatStore()
+const chatRef = ref<HTMLDivElement>()
 
-const messages = ref<Message[]>([])
-
-for (let i = 0; i < 10; i++) {
-  messages.value.push(...baseMessages)
+const scrollToBottom = () => {
+  if (chatRef.value) {
+    chatRef.value.scrollTop = chatRef.value.scrollHeight
+  }
 }
 
-const chatRef = ref<HTMLDivElement>()
+onMounted(() => {
+  wsClient.onMessage(() => {
+    scrollToBottom()
+  })
+})
 </script>
 
 <template>
@@ -33,7 +34,7 @@ const chatRef = ref<HTMLDivElement>()
           max-width="70%"
         >
           <span :class="msg.sender === 'user' ? 'text-white' : ''">
-            {{ msg.text }}
+            {{ msg.content }}
           </span>
         </v-sheet>
       </div>
