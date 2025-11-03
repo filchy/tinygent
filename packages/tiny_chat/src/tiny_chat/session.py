@@ -1,3 +1,5 @@
+from asyncio import Task
+
 from fastapi import WebSocket
 
 from tiny_chat.emitter import emitter
@@ -16,6 +18,7 @@ class WebsocketSession(BaseSession):
         super().__init__(id)
         self.socket_id = socket_id
         self.ws = ws
+        self.active_task: Task | None = None
 
         emitter.configure(self._send_json)
 

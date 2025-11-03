@@ -1,5 +1,4 @@
 from pathlib import Path
-import uuid
 
 import tiny_chat as tc
 from tinygent.cli.builder import build_agent
@@ -15,7 +14,6 @@ discover_and_register_components()
 
 async def answer_hook(ans: str):
     await tc.BaseMessage(
-        id=str(uuid.uuid4()),
         type='text',
         sender='agent',
         content=ans,

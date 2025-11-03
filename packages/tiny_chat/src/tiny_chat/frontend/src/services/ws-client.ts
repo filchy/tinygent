@@ -87,6 +87,17 @@ export class WSClient {
     this.ws.send(JSON.stringify(msg))
   }
 
+  stop() {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      console.warn('Cannot stop, WebSocket is not connected')
+      return
+    }
+    this.ws.send(JSON.stringify({ event: 'stop' }))
+
+    const { setLoadingOwner } = useStateStore()
+    setLoadingOwner(null)
+  }
+
   onMessage(callback: (msg: Message) => void) {
     this.listeners.push(callback)
   }

@@ -3,6 +3,7 @@ import { useTheme } from 'vuetify'
 import darkAvatar from '@/assets/dark-avatar.png'
 import lightAvatar from '@/assets/light-avatar.png'
 
+import { wsClient } from '@/services/ws-client'
 import { useChatStore } from '@/stores/chat-store'
 import { useStateStore } from '@/stores/state-store'
 
@@ -20,8 +21,7 @@ let typingWatchEnabled = true
 const currentAvatar = computed(() => (theme.global.current.value.dark ? lightAvatar : darkAvatar))
 
 const sendMessageEnabled = computed(
-  () => message.value.trim().length > 0 && loadingOwner.value !== 'agent' &&  connectionStatus.value
-  !== 'disconnected'
+  () => message.value.trim().length > 0 && connectionStatus.value !== 'disconnected'
 )
 
 const addUserMessage = (msg: string) => {
@@ -50,6 +50,10 @@ const sendMessage = () => {
     typingWatchEnabled = true
   })
 }
+
+const stopMessage = () => {
+  wsClient.stop()
+}
 </script>
 
 <template>
@@ -70,7 +74,7 @@ const sendMessage = () => {
       @keyup.enter='sendMessage'
     >
       <template #append-inner>
-        <v-tooltip bottom>
+        <v-tooltip bottom v-if='!loadingOwner'>
           <template #activator='{ props }'>
             <v-btn
               icon
@@ -83,6 +87,19 @@ const sendMessage = () => {
             </v-btn>
           </template>
           Send Message
+        </v-tooltip>
+        <v-tooltip bottom v-else>
+          <template #activator='{ props }'>
+            <v-btn
+              icon
+              variant='text'
+              v-bind='props'
+              @click='stopMessage'
+            >
+              <v-icon>mdi-square</v-icon>
+            </v-btn>
+          </template>
+          Stop Generating
         </v-tooltip>
       </template>
     </v-text-field>
