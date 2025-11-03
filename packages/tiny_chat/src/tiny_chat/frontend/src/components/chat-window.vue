@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { useTheme } from 'vuetify'
+
+import Message from './message.vue'
+
 import { wsClient } from '@/services/ws-client'
 import { useChatStore } from '@/stores/chat-store'
 import darkAvatar from '@/assets/dark-avatar.png'
 import lightAvatar from '@/assets/light-avatar.png'
-import { useTheme } from 'vuetify'
 
-const { messages } = useChatStore()
+const { messages, addMessage } = useChatStore()
 const chatRef = ref<HTMLDivElement>()
 const theme = useTheme()
 
@@ -18,6 +21,13 @@ const scrollToBottom = () => {
 }
 
 onMounted(() => {
+  addMessage({
+    id: crypto.randomUUID(),
+    type: 'loading',
+    sender: 'agent',
+    content: 'Loading...',
+  } as LoadingMessage)
+
   wsClient.onMessage(() => scrollToBottom())
 })
 </script>
@@ -25,36 +35,11 @@ onMounted(() => {
 <template>
   <div class="chat-container">
     <div ref="chatRef" class="chat-scroll">
-      <div
+      <Message
         v-for="(msg, i) in messages"
         :key="i"
-        class="d-flex chat-message"
-        :class="msg.sender === 'user' ? 'justify-end' : 'justify-start'"
-      >
-        <template v-if="msg.sender === 'user'">
-          <v-sheet
-            class="pa-3 rounded-xl"
-            color="primary"
-            max-width="70%"
-          >
-            <span class="text-white">{{ msg.content }}</span>
-          </v-sheet>
-        </template>
-
-        <template v-else>
-          <v-avatar size="36" class="mr-2 flex-shrink-0">
-            <v-img :src="currentAvatar" />
-          </v-avatar>
-
-          <v-sheet
-            class="pa-3 rounded-xl"
-            color="grey-lighten-2"
-            max-width="70%"
-          >
-            <span>{{ msg.content }}</span>
-          </v-sheet>
-        </template>
-      </div>
+        :msg="msg"
+      />
     </div>
   </div>
 </template>

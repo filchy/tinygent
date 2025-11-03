@@ -1,9 +1,13 @@
 declare interface BaseMessage {
   id: string
-  type: 'text' | 'reasoning' | 'debug' | 'delta'
+  type: 'text' | 'reasoning' | 'loading',
   sender: 'user' | 'agent'
   content: string
   streaming?: boolean // true if partial / still incoming
+}
+
+declare interface LoadingMessage extends BaseMessage {
+  type: 'loading'
 }
 
 declare interface UserMessage extends BaseMessage {
@@ -21,4 +25,4 @@ declare interface AgentReasoningMessage extends BaseMessage {
   sender: 'agent'
 }
 
-declare type Message = UserMessage | AgentTextMessage | AgentReasoningMessage
+declare type Message = LoadingMessage | UserMessage | AgentTextMessage | AgentReasoningMessage
