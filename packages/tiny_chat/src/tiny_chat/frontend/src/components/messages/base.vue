@@ -27,3 +27,13 @@ const currentAvatar = computed(() =>
     </v-sheet>
   </div>
 </template>
+
+<style scoped>
+.chat-message {
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  max-width: min(48rem, 100vw);
+  width: 100%;
+}
+</style>

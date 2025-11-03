@@ -13,7 +13,7 @@ const emit = defineEmits<{
 const theme = useTheme()
 const message = ref('')
 const { addMessage } = useChatStore()
-const { loadingOwner, setLoadingOwner } = useStateStore()
+const { loadingOwner, connectionStatus, setLoadingOwner } = useStateStore()
 
 let typingWatchEnabled = true
 
@@ -30,7 +30,8 @@ watch(message, (val) => {
 const currentAvatar = computed(() => (theme.global.current.value.dark ? lightAvatar : darkAvatar))
 
 const sendMessageEnabled = computed(
-  () => message.value.trim().length > 0 && loadingOwner.value !== 'agent'
+  () => message.value.trim().length > 0 && loadingOwner.value !== 'agent' &&  connectionStatus.value
+  !== 'disconnected'
 )
 
 const addUserMessage = (msg: string) => {

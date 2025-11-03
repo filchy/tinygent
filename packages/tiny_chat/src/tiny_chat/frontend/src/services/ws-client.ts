@@ -5,6 +5,11 @@ export class WSClient {
   private listeners: ((msg: Message) => void)[] = []
   private serverUrl?: string
 
+  private reconnectTimer: number | null = null
+  private heartbeatTimer: number | null = null
+  private readonly RECONNECT_DELAY = 5000
+  private readonly HEARTBEAT_INTERVAL = 25000
+
   constructor(serverUrl?: string) {
     this.serverUrl = serverUrl || import.meta.env.VITE_SERVER_URL
   }
@@ -22,22 +27,71 @@ export class WSClient {
     return `${protocol}://${window.location.host}/ws`
   }
 
+  private startHeartbeat() {
+    this.stopHeartbeat()
+    this.heartbeatTimer = window.setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        try {
+          this.ws.send(JSON.stringify({ type: 'ping' }))
+        } catch {}
+      }
+    }, this.HEARTBEAT_INTERVAL)
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeatTimer !== null) {
+      clearInterval(this.heartbeatTimer)
+      this.heartbeatTimer = null
+    }
+  }
+
+  private scheduleReconnect() {
+    if (this.reconnectTimer !== null) return
+    this.reconnectTimer = window.setInterval(() => {
+      if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
+        this.connect()
+      }
+    }, this.RECONNECT_DELAY)
+  }
+
+  private clearReconnect() {
+    if (this.reconnectTimer !== null) {
+      clearInterval(this.reconnectTimer)
+      this.reconnectTimer = null
+    }
+  }
+
   connect() {
+    this.clearReconnect()
+    this.stopHeartbeat()
+
     this.ws = new WebSocket(this.resolveUrl())
+
+    const { setConnectionStatus } = useStateStore()
 
     this.ws.onopen = () => {
       console.log('WebSocket connection established')
 
-      const { setConnectionStatus } = useStateStore()
       setConnectionStatus('connected')
+      this.clearReconnect()
+      this.startHeartbeat()
     }
+
     this.ws.onclose = () => {
       console.log('WebSocket connection closed')
 
-      const { setConnectionStatus } = useStateStore()
       setConnectionStatus('disconnected')
+      this.scheduleReconnect()
+      this.stopHeartbeat()
     }
-    this.ws.onerror = (error) => console.error('WebSocket error:', error)
+
+    this.ws.onerror = (error) => {
+      console.error('WebSocket error:', error)
+
+      setConnectionStatus('disconnected')
+      this.scheduleReconnect()
+      this.stopHeartbeat()
+    }
 
     this.ws.onmessage = (event) => {
       try {
