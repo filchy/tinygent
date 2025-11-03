@@ -1,6 +1,7 @@
-from pydantic import BaseModel
 from typing import Literal
 from typing import Optional
+
+from pydantic import BaseModel
 
 from tiny_chat.emitter import emitter
 

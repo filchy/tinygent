@@ -1,7 +1,7 @@
 declare interface BaseMessage {
   id: string
-  type: 'text' | 'reasoning' | 'loading',
-  sender: 'user' | 'agent'
+  type: 'text' | 'reasoning' | 'loading'
+  sender: Role
   content: string
   streaming?: boolean // true if partial / still incoming
 }

@@ -1,11 +1,12 @@
 import logging
 import os
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from tiny_chat.ws import router as ws_router
-from tiny_chat.http import router as http_router
 from tiny_chat.config import PACKAGE_ROOT
+from tiny_chat.http import router as http_router
+from tiny_chat.ws import router as ws_router
 
 logger = logging.getLogger(__name__)
 
@@ -36,4 +37,11 @@ def run(host: str = '127.0.0.1', port: int = 8000, reload: bool = False, **kwarg
     import uvicorn
 
     logger.info('Starting FastAPI server...')
-    uvicorn.run('tiny_chat.server:app', host=host, port=port, reload=reload, log_config=None, **kwargs)
+    uvicorn.run(
+        'tiny_chat.server:app',
+        host=host,
+        port=port,
+        reload=reload,
+        log_config=None,
+        **kwargs,
+    )

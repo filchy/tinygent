@@ -1,9 +1,10 @@
 from pathlib import Path
-import tiny_chat as tc
 
+import tiny_chat as tc
 from tinygent.cli.builder import build_agent
 from tinygent.cli.utils import discover_and_register_components
-from tinygent.logging import setup_general_loggers, setup_logger
+from tinygent.logging import setup_general_loggers
+from tinygent.logging import setup_logger
 from tinygent.utils.yaml import tiny_yaml_load
 
 logger = setup_logger('debug')
@@ -11,13 +12,8 @@ setup_general_loggers('warning')
 discover_and_register_components()
 
 
+# TODO: finish all the hooks (error, tool call, streaming chunks, etc.)
 async def answer_hook(ans: str):
-    print(f'[HOOK ANSWER] {ans}')
-    print(f'[HOOK ANSWER] {ans}')
-    print(f'[HOOK ANSWER] {ans}')
-    print(f'[HOOK ANSWER] {ans}')
-    print(f'[HOOK ANSWER] {ans}')
-    print(f'[HOOK ANSWER] {ans}')
     await tc.BaseMessage(
         id='answer-hook-msg',
         type='text',
@@ -35,11 +31,7 @@ agent.on_answer = answer_hook
 
 @tc.on_message
 def handle_message(msg: tc.BaseMessage):
-    result = agent.run(msg.content)
-    print(f'[RESULT] {result}')
-    print(f'[RESULT] {result}')
-    print(f'[RESULT] {result}')
-    print(f'[RESULT] {result}')
+    agent.run(msg.content)
 
 
 if __name__ == '__main__':

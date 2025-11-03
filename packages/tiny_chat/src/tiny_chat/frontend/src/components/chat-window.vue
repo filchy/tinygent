@@ -21,13 +21,6 @@ const scrollToBottom = () => {
 }
 
 onMounted(() => {
-  addMessage({
-    id: crypto.randomUUID(),
-    type: 'loading',
-    sender: 'agent',
-    content: 'Loading...',
-  } as LoadingMessage)
-
   wsClient.onMessage(() => scrollToBottom())
 })
 </script>

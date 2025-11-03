@@ -1,3 +1,5 @@
+import { useStateStore } from '@/stores/state-store'
+
 export class WSClient {
   private ws: WebSocket | null = null
   private listeners: ((msg: Message) => void)[] = []
@@ -23,8 +25,18 @@ export class WSClient {
   connect() {
     this.ws = new WebSocket(this.resolveUrl())
 
-    this.ws.onopen = () => console.log('WebSocket connection established')
-    this.ws.onclose = () => console.log('WebSocket connection closed')
+    this.ws.onopen = () => {
+      console.log('WebSocket connection established')
+
+      const { setConnectionStatus } = useStateStore()
+      setConnectionStatus('connected')
+    }
+    this.ws.onclose = () => {
+      console.log('WebSocket connection closed')
+
+      const { setConnectionStatus } = useStateStore()
+      setConnectionStatus('disconnected')
+    }
     this.ws.onerror = (error) => console.error('WebSocket error:', error)
 
     this.ws.onmessage = (event) => {

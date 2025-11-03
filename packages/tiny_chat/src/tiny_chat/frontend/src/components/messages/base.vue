@@ -22,7 +22,7 @@ const currentAvatar = computed(() =>
       <v-img :src="currentAvatar" />
     </v-avatar>
 
-    <v-sheet max-width='70%'>
+    <v-sheet max-width='70%' color='transparent'>
       <slot />
     </v-sheet>
   </div>

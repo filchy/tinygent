@@ -6,7 +6,7 @@ const props = defineProps<{ msg: LoadingMessage }>()
   <v-sheet
     class='pa-0 rounded-xl'
   >
-    <div class="d-flex align-center justify-center px-4 py-1 text-medium-emphasis">
+    <div class="d-flex align-center justify-center px-4 py-1">
       <span class="wave-dots">
         <span>.</span><span>.</span><span>.</span>
       </span>

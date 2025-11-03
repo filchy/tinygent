@@ -2,7 +2,6 @@ import inspect
 
 from tiny_chat.message import BaseMessage
 
-
 _message_fn = None
 
 
