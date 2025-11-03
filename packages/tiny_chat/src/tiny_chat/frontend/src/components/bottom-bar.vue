@@ -17,16 +17,6 @@ const { loadingOwner, connectionStatus, setLoadingOwner } = useStateStore()
 
 let typingWatchEnabled = true
 
-watch(message, (val) => {
-  if (!typingWatchEnabled) return
-
-  if (val.trim().length > 0) {
-    setLoadingOwner('user')
-  } else {
-    setLoadingOwner(null)
-  }
-})
-
 const currentAvatar = computed(() => (theme.global.current.value.dark ? lightAvatar : darkAvatar))
 
 const sendMessageEnabled = computed(
@@ -44,6 +34,8 @@ const addUserMessage = (msg: string) => {
 }
 
 const sendMessage = () => {
+  if (!sendMessageEnabled.value) return
+
   const messageValue = message.value.trim()
   if (!messageValue) return
 

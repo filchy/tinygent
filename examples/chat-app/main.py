@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 
 import tiny_chat as tc
@@ -12,26 +13,34 @@ setup_general_loggers('warning')
 discover_and_register_components()
 
 
-# TODO: finish all the hooks (error, tool call, streaming chunks, etc.)
 async def answer_hook(ans: str):
     await tc.BaseMessage(
-        id='answer-hook-msg',
+        id=str(uuid.uuid4()),
         type='text',
         sender='agent',
         content=ans,
-        streaming=False,
     ).send()
 
+
+async def answer_chunk_hook(ans_chunk: str, id: str):
+    await tc.BaseMessage(
+        id=id,
+        type='text',
+        sender='agent',
+        content=ans_chunk,
+    ).send()
 
 agent = build_agent(
     tiny_yaml_load(str(Path(__file__).parent.parent / 'agents' / 'react' / 'agent.yaml'))
 )
 agent.on_answer = answer_hook
+agent.on_answer_chunk = answer_chunk_hook
 
 
 @tc.on_message
-def handle_message(msg: tc.BaseMessage):
-    agent.run(msg.content)
+async def handle_message(msg: tc.BaseMessage):
+    async for _ in agent.run_stream(msg.content):
+        pass
 
 
 if __name__ == '__main__':

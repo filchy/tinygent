@@ -25,12 +25,10 @@ export function useChatStore() {
     }
 
     // Handle streaming updates
-    if (msg.streaming) {
-      const existing = messages.value.find(m => m.id === msg.id)
-      if (existing) {
-        existing.content += msg.content
-        return
-      }
+    const existing = messages.value.find(m => m.id === msg.id)
+    if (existing) {
+      existing.content += msg.content
+      return
     }
 
     messages.value.push(msg)
@@ -44,7 +42,7 @@ export function useChatStore() {
     const last = messages.value[messages.value.length - 1]
     const hasLoading = last?.type === 'loading'
 
-    if (owner && !hasLoading) {
+    if (owner && owner === 'agent' && !hasLoading) {
       messages.value.push({
         id: `loading-agent-${crypto.randomUUID()}`,
         type: 'loading',

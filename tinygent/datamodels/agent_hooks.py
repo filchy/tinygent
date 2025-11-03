@@ -88,7 +88,7 @@ class AgentHooks(ABC):
         on_reasoning: Optional[Callable[[str], Any]] = None,
         on_tool_reasoning: Optional[Callable[[str], Any]] = None,
         on_answer: Optional[Callable[[str], Any]] = None,
-        on_answer_chunk: Optional[Callable[[str], Any]] = None,
+        on_answer_chunk: Optional[Callable[[str, str], Any]] = None,
         on_error: Optional[Callable[[Exception], Any]] = None,
     ) -> None:
         # default values
@@ -133,7 +133,7 @@ class AgentHooks(ABC):
             on_answer or (lambda a: _log_hook(f'final answer: {a}'))
         )
         self._on_answer_chunk = _wrap_hook_sync(
-            on_answer_chunk or (lambda c: _log_hook(f'answer chunk: {c}'))
+            on_answer_chunk or (lambda c, i: _log_hook(f'answer chunk [{i}]: {c}'))
         )
         self._on_error = _wrap_hook_sync(
             on_error
@@ -146,7 +146,7 @@ class AgentHooks(ABC):
         return self._on_before_llm_call
 
     @on_before_llm_call.setter
-    def on_before_llm_call(self, fn):
+    def on_before_llm_call(self, fn: Callable[[TinyLLMInput], Any]):
         self._on_before_llm_call = _wrap_hook_sync(fn)
 
     @property
@@ -154,7 +154,7 @@ class AgentHooks(ABC):
         return self._on_after_llm_call
 
     @on_after_llm_call.setter
-    def on_after_llm_call(self, fn):
+    def on_after_llm_call(self, fn: Callable[[TinyLLMInput, Any], Any]):
         self._on_after_llm_call = _wrap_hook_sync(fn)
 
     @property
@@ -162,7 +162,7 @@ class AgentHooks(ABC):
         return self._on_before_tool_call
 
     @on_before_tool_call.setter
-    def on_before_tool_call(self, fn):
+    def on_before_tool_call(self, fn: Callable[[AbstractTool, dict[str, Any]], Any]):
         self._on_before_tool_call = _wrap_hook_sync(fn)
 
     @property
@@ -170,7 +170,7 @@ class AgentHooks(ABC):
         return self._on_after_tool_call
 
     @on_after_tool_call.setter
-    def on_after_tool_call(self, fn):
+    def on_after_tool_call(self, fn: Callable[[AbstractTool, dict[str, Any], Any], Any]):
         self._on_after_tool_call = _wrap_hook_sync(fn)
 
     @property
@@ -178,7 +178,7 @@ class AgentHooks(ABC):
         return self._on_plan
 
     @on_plan.setter
-    def on_plan(self, fn):
+    def on_plan(self, fn: Callable[[str], Any]):
         self._on_plan = _wrap_hook_sync(fn)
 
     @property
@@ -186,7 +186,7 @@ class AgentHooks(ABC):
         return self._on_reasoning
 
     @on_reasoning.setter
-    def on_reasoning(self, fn):
+    def on_reasoning(self, fn: Callable[[str], Any]):
         self._on_reasoning = _wrap_hook_sync(fn)
 
     @property
@@ -194,7 +194,7 @@ class AgentHooks(ABC):
         return self._on_tool_reasoning
 
     @on_tool_reasoning.setter
-    def on_tool_reasoning(self, fn):
+    def on_tool_reasoning(self, fn: Callable[[str], Any]):
         self._on_tool_reasoning = _wrap_hook_sync(fn)
 
     @property
@@ -202,7 +202,7 @@ class AgentHooks(ABC):
         return self._on_answer
 
     @on_answer.setter
-    def on_answer(self, fn):
+    def on_answer(self, fn: Callable[[str], Any]):
         self._on_answer = _wrap_hook_sync(fn)
 
     @property
@@ -210,7 +210,7 @@ class AgentHooks(ABC):
         return self._on_answer_chunk
 
     @on_answer_chunk.setter
-    def on_answer_chunk(self, fn):
+    def on_answer_chunk(self, fn: Callable[[str, str], Any]):
         self._on_answer_chunk = _wrap_hook_sync(fn)
 
     @property
@@ -218,7 +218,7 @@ class AgentHooks(ABC):
         return self._on_error
 
     @on_error.setter
-    def on_error(self, fn):
+    def on_error(self, fn: Callable[[Exception], Any]):
         self._on_error = _wrap_hook_sync(fn)
 
     # endregion

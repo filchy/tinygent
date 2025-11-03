@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator
+import uuid
 import logging
 import typing
+from typing import AsyncGenerator
 from typing import Literal
 
 from tinygent.agents.base_agent import TinyBaseAgent
@@ -151,7 +152,7 @@ class TinyReActAgent(TinyBaseAgent):
 
         return TinyReasoningMessage(content=result.content)
 
-    async def _stream_action(self, reasoning: str) -> AsyncGenerator[TinyLLMResultChunk]:
+    async def _stream_action(self, reasoning: str) -> AsyncGenerator[TinyLLMResultChunk, None]:
         messages = TinyLLMInput(
             messages=[
                 *self.memory.chat_messages,
@@ -171,7 +172,7 @@ class TinyReActAgent(TinyBaseAgent):
         ):
             yield chunk
 
-    async def _stream_fallback(self, task: str) -> AsyncGenerator[str]:
+    async def _stream_fallback(self, task: str) -> AsyncGenerator[str, None]:
         messages = TinyLLMInput(
             messages=[
                 *self.memory.chat_messages,
@@ -197,7 +198,7 @@ class TinyReActAgent(TinyBaseAgent):
                 assert isinstance(chunk.message, TinyChatMessageChunk)
                 yield chunk.message.content
 
-    async def _run_agent(self, input_text: str) -> AsyncGenerator[str]:
+    async def _run_agent(self, input_text: str) -> AsyncGenerator[str, None]:
         self._iteration_number = 1
         returned_final_answer: bool = False
         yielded_final_answer: str = ''
@@ -226,7 +227,6 @@ class TinyReActAgent(TinyBaseAgent):
                     returned_final_answer = True
 
                     self.memory.save_context(reasoning_result)
-                    self.on_answer(reasoning_result.content)
 
                     yield reasoning_result.content
 
@@ -286,7 +286,6 @@ class TinyReActAgent(TinyBaseAgent):
                         self.memory.save_context(
                             TinyChatMessage(content=yielded_final_answer)
                         )
-                        self.on_answer(yielded_final_answer)
 
                     self._react_iterations.append(
                         self.TinyReactIteration(
@@ -321,7 +320,6 @@ class TinyReActAgent(TinyBaseAgent):
                 yield final_yielded_answer
 
             self.memory.save_context(TinyChatMessage(content=final_yielded_answer))
-            self.on_answer(final_yielded_answer)
 
     def _reset(self) -> None:
         logger.debug('[AGENT RESET]')
@@ -344,19 +342,27 @@ class TinyReActAgent(TinyBaseAgent):
             final_answer = ''
             async for output in self._run_agent(input_text):
                 final_answer += output
+
+            self.on_answer(final_answer)
             return final_answer
 
         return run_async_in_executor(_run)
 
-    async def run_stream(  # type: ignore[override]
+    def run_stream(
         self,
         input_text: str,
         reset: bool = True,
-    ) -> AsyncGenerator[str]:
+    ) -> AsyncGenerator[str, None]:
         logger.debug('[USER INPUT] %s', input_text)
 
         if reset:
             self._reset()
 
-        async for res in self._run_agent(input_text):
-            yield res
+        async def _generator():
+            msg_id = str(uuid.uuid4())
+
+            async for res in self._run_agent(input_text):
+                self.on_answer_chunk(res, msg_id)
+                yield res
+
+        return _generator()

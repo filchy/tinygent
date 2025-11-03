@@ -6,9 +6,7 @@ export class WSClient {
   private serverUrl?: string
 
   private reconnectTimer: number | null = null
-  private heartbeatTimer: number | null = null
   private readonly RECONNECT_DELAY = 5000
-  private readonly HEARTBEAT_INTERVAL = 25000
 
   constructor(serverUrl?: string) {
     this.serverUrl = serverUrl || import.meta.env.VITE_SERVER_URL
@@ -25,24 +23,6 @@ export class WSClient {
     // Default to current window location
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
     return `${protocol}://${window.location.host}/ws`
-  }
-
-  private startHeartbeat() {
-    this.stopHeartbeat()
-    this.heartbeatTimer = window.setInterval(() => {
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        try {
-          this.ws.send(JSON.stringify({ type: 'ping' }))
-        } catch {}
-      }
-    }, this.HEARTBEAT_INTERVAL)
-  }
-
-  private stopHeartbeat() {
-    if (this.heartbeatTimer !== null) {
-      clearInterval(this.heartbeatTimer)
-      this.heartbeatTimer = null
-    }
   }
 
   private scheduleReconnect() {
@@ -63,7 +43,6 @@ export class WSClient {
 
   connect() {
     this.clearReconnect()
-    this.stopHeartbeat()
 
     this.ws = new WebSocket(this.resolveUrl())
 
@@ -74,7 +53,6 @@ export class WSClient {
 
       setConnectionStatus('connected')
       this.clearReconnect()
-      this.startHeartbeat()
     }
 
     this.ws.onclose = () => {
@@ -82,7 +60,6 @@ export class WSClient {
 
       setConnectionStatus('disconnected')
       this.scheduleReconnect()
-      this.stopHeartbeat()
     }
 
     this.ws.onerror = (error) => {
@@ -90,7 +67,6 @@ export class WSClient {
 
       setConnectionStatus('disconnected')
       this.scheduleReconnect()
-      this.stopHeartbeat()
     }
 
     this.ws.onmessage = (event) => {

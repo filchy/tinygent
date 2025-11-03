@@ -32,6 +32,6 @@ class AbstractAgent(AgentHooks, ABC):
         raise NotImplementedError('Subclasses must implement this method.')
 
     @abstractmethod
-    async def run_stream(self, input_text: str) -> AsyncGenerator[str, None]:
+    def run_stream(self, input_text: str) -> AsyncGenerator[str, None]:
         """Run the agent in streaming mode with the given input text."""
         raise NotImplementedError('Subclasses must implement this method.')

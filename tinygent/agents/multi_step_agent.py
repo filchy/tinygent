@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator
+import uuid
 from collections.abc import Generator
 import logging
 import typing
+from typing import AsyncGenerator
 from typing import Any
 from typing import Literal
 
@@ -303,7 +304,6 @@ class TinyMultiStepAgent(TinyBaseAgent):
                         self.memory.save_context(
                             TinyChatMessage(content=yielded_final_answer)
                         )
-                        self.on_answer(yielded_final_answer)
                     break
             except Exception as e:
                 self.on_error(e)
@@ -334,7 +334,6 @@ class TinyMultiStepAgent(TinyBaseAgent):
                 yield final_yielded_answer
 
             self.memory.save_context(TinyChatMessage(content=final_yielded_answer))
-            self.on_answer(final_yielded_answer)
 
     def _reset(self) -> None:
         logger.debug('[AGENT RESET]')
@@ -358,11 +357,13 @@ class TinyMultiStepAgent(TinyBaseAgent):
             final_answer: str = ''
             async for res in self._run_agent(input_text):
                 final_answer += res
+
+            self.on_answer(final_answer)
             return final_answer
 
         return run_async_in_executor(_run)
 
-    async def run_stream(  # type: ignore[override]
+    def run_stream(
         self, input_text: str, reset: bool = True
     ) -> AsyncGenerator[str, None]:
         logger.debug('[USER INPUT] %s', input_text)
@@ -370,5 +371,11 @@ class TinyMultiStepAgent(TinyBaseAgent):
         if reset:
             self._reset()
 
-        async for res in self._run_agent(input_text):
-            yield res
+        async def _generator():
+            msg_id = str(uuid.uuid4())
+
+            async for res in self._run_agent(input_text):
+                self.on_answer_chunk(res, msg_id)
+                yield res
+
+        return _generator()

@@ -3,7 +3,6 @@ declare interface BaseMessage {
   type: 'text' | 'reasoning' | 'loading'
   sender: Role
   content: string
-  streaming?: boolean // true if partial / still incoming
 }
 
 declare interface LoadingMessage extends BaseMessage {
