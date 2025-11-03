@@ -1,5 +1,5 @@
-import uuid
 from pathlib import Path
+import uuid
 
 import tiny_chat as tc
 from tinygent.cli.builder import build_agent
@@ -29,6 +29,7 @@ async def answer_chunk_hook(ans_chunk: str, id: str):
         sender='agent',
         content=ans_chunk,
     ).send()
+
 
 agent = build_agent(
     tiny_yaml_load(str(Path(__file__).parent.parent / 'agents' / 'react' / 'agent.yaml'))

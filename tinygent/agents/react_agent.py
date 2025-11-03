@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import uuid
 import logging
 import typing
 from typing import AsyncGenerator
 from typing import Literal
+import uuid
 
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
@@ -152,7 +152,9 @@ class TinyReActAgent(TinyBaseAgent):
 
         return TinyReasoningMessage(content=result.content)
 
-    async def _stream_action(self, reasoning: str) -> AsyncGenerator[TinyLLMResultChunk, None]:
+    async def _stream_action(
+        self, reasoning: str
+    ) -> AsyncGenerator[TinyLLMResultChunk, None]:
         messages = TinyLLMInput(
             messages=[
                 *self.memory.chat_messages,
