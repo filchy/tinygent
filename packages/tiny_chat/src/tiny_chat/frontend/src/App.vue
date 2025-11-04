@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Alerts from '@/components/alerts.vue'
 import ChatWindow from '@/components/chat-window.vue'
 import NavigationDrawer from '@/components/nav-drawer.vue'
 import TopBar from '@/components/top-bar.vue'
@@ -38,8 +39,11 @@ const sendMessage = (message: string) => {
 
     <TopBar @toggle-drawer="drawer = !drawer" />
 
-    <v-main class="app-main d-flex flex-column flex-grow-1">
-      <ChatWindow />
+    <v-main class='app-main d-flex flex-column flex-grow-1'>
+      <div class='d-flex flex-column' style='position: relative; height: 100%;'>
+        <Alerts />
+        <ChatWindow />
+      </div>
     </v-main>
 
     <BottomBar @send-message="sendMessage" />

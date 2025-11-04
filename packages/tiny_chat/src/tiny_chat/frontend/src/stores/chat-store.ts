@@ -25,7 +25,8 @@ export function useChatStore() {
     }
 
     // Handle streaming updates
-    const existing = messages.value.find(m => m.id === msg.id)
+    const existing = messages.value.find((m: Message) => m.id === msg.id)
+
     if (existing) {
       existing.content += msg.content
       return

@@ -15,13 +15,9 @@ const currentAvatar = computed(() =>
 
 <template>
   <div
-    class='d-flex chat-message'
-    :class="props.msg.sender === 'user' ? 'justify-end' : 'justify-start'"
+    class='d-flex chat-message align-start'
+    :class='props.msg.sender === "user" ? "justify-end" : "justify-start"'
   >
-    <v-avatar size='36' class='mr-2 flex-shrink-0' v-if='props.msg.sender === "agent"'>
-      <v-img :src="currentAvatar" />
-    </v-avatar>
-
     <v-sheet max-width='70%' color='transparent'>
       <slot />
     </v-sheet>

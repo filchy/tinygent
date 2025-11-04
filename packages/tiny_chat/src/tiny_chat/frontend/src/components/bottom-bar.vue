@@ -21,7 +21,8 @@ let typingWatchEnabled = true
 const currentAvatar = computed(() => (theme.global.current.value.dark ? lightAvatar : darkAvatar))
 
 const sendMessageEnabled = computed(
-  () => message.value.trim().length > 0 && connectionStatus.value !== 'disconnected'
+  () => message.value.trim().length > 0 && connectionStatus.value !== 'disconnected' &&
+    !loadingOwner.value
 )
 
 const addUserMessage = (msg: string) => {
@@ -59,7 +60,7 @@ const stopMessage = () => {
 <template>
   <v-footer
     app
-    class='d-flex flex-column align-center justify-center text-caption font-weight-thin'
+    class='d-flex flex-column align-center justify-center text-caption font-weight-thin pt-0'
     color='transparent'
   >
     <v-text-field
