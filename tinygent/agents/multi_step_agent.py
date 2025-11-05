@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import uuid
 from collections.abc import Generator
 import logging
 import typing
 from typing import Any
 from typing import AsyncGenerator
 from typing import Literal
+import uuid
 
 from tinygent.agents import TinyBaseAgent
 from tinygent.agents import TinyBaseAgentConfig
@@ -170,7 +170,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
         for step in result.planned_steps:
             yield TinyPlanMessage(content=step)
 
-    async def _stream_action(self, run_id: str, task: str) -> AsyncGenerator[TinyLLMResultChunk]:
+    async def _stream_action(
+        self, run_id: str, task: str
+    ) -> AsyncGenerator[TinyLLMResultChunk]:
         messages = TinyLLMInput(
             messages=[
                 *self.memory.chat_messages,
@@ -191,7 +193,10 @@ class TinyMultiStepAgent(TinyBaseAgent):
         )
 
         async for chunk in self.run_llm_stream(
-            run_id=run_id, fn=self.llm.stream_with_tools, llm_input=messages, tools=self._tools
+            run_id=run_id,
+            fn=self.llm.stream_with_tools,
+            llm_input=messages,
+            tools=self._tools,
         ):
             yield chunk
 
@@ -214,7 +219,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
             ]
         )
 
-        async for chunk in self.run_llm_stream(run_id=run_id, fn=self.llm.stream_text, llm_input=messages):
+        async for chunk in self.run_llm_stream(
+            run_id=run_id, fn=self.llm.stream_text, llm_input=messages
+        ):
             if chunk.is_message and isinstance(chunk.message, TinyChatMessageChunk):
                 yield chunk.message
 
@@ -274,7 +281,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
                         self.memory.save_context(tool_call)
                         if called_tool:
                             self.memory.save_context(
-                                self.run_tool(run_id=run_id, tool=called_tool, call=tool_call)
+                                self.run_tool(
+                                    run_id=run_id, tool=called_tool, call=tool_call
+                                )
                             )
                             self._tool_calls.append(tool_call)
                         else:
@@ -322,7 +331,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
             final_yielded_answer = ''
 
             logger.debug('--- FALLBACK FINAL ANSWER ---')
-            async for chunk in self._stream_fallback_answer(run_id=run_id, task=input_text):
+            async for chunk in self._stream_fallback_answer(
+                run_id=run_id, task=input_text
+            ):
                 yield_fallback = True
                 final_yielded_answer += chunk.content
 

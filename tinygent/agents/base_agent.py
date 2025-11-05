@@ -73,7 +73,9 @@ class TinyBaseAgent(AbstractAgent):
     ) -> AbstractTool | None:
         return next((tool for tool in tools if tool.info.name == name), None)
 
-    def run_llm(self, run_id: str, fn: Callable, llm_input: TinyLLMInput, **kwargs) -> Any:
+    def run_llm(
+        self, run_id: str, fn: Callable, llm_input: TinyLLMInput, **kwargs
+    ) -> Any:
         self.on_before_llm_call(run_id=run_id, llm_input=llm_input)
         try:
             result = fn(llm_input=llm_input, **kwargs)
@@ -110,13 +112,17 @@ class TinyBaseAgent(AbstractAgent):
             self.on_error(run_id=run_id, e=e)
             raise
 
-    def run_tool(self, run_id: str, tool: AbstractTool, call: TinyToolCall) -> TinyToolResult:
+    def run_tool(
+        self, run_id: str, tool: AbstractTool, call: TinyToolCall
+    ) -> TinyToolResult:
         self.on_before_tool_call(run_id=run_id, tool=tool, args=call.arguments)
         try:
             result = tool(**call.arguments)
             call.metadata['executed'] = True
             call.result = result
-            self.on_after_tool_call(run_id=run_id, tool=tool, args=call.arguments, result=result)
+            self.on_after_tool_call(
+                run_id=run_id, tool=tool, args=call.arguments, result=result
+            )
 
             return TinyToolResult(
                 call_id=call.call_id or 'unknown',

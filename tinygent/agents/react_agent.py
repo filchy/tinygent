@@ -120,7 +120,9 @@ class TinyReActAgent(TinyBaseAgent):
 
         self.memory = memory
 
-    def _stream_reasoning(self, run_id: str, task: str) -> TinyChatMessage | TinyReasoningMessage:
+    def _stream_reasoning(
+        self, run_id: str, task: str
+    ) -> TinyChatMessage | TinyReasoningMessage:
         class TinyReasoningOutcome(TinyModel):
             type: Literal['reasoning'] = 'reasoning'
             content: str
@@ -176,7 +178,9 @@ class TinyReActAgent(TinyBaseAgent):
         ):
             yield chunk
 
-    async def _stream_fallback(self, run_id: str, task: str) -> AsyncGenerator[str, None]:
+    async def _stream_fallback(
+        self, run_id: str, task: str
+    ) -> AsyncGenerator[str, None]:
         messages = TinyLLMInput(
             messages=[
                 *self.memory.chat_messages,
@@ -203,7 +207,9 @@ class TinyReActAgent(TinyBaseAgent):
                 assert isinstance(chunk.message, TinyChatMessageChunk)
                 yield chunk.message.content
 
-    async def _run_agent(self, input_text: str, run_id: str) -> AsyncGenerator[str, None]:
+    async def _run_agent(
+        self, input_text: str, run_id: str
+    ) -> AsyncGenerator[str, None]:
         self._iteration_number = 1
         returned_final_answer: bool = False
         yielded_final_answer: str = ''
@@ -242,8 +248,7 @@ class TinyReActAgent(TinyBaseAgent):
 
                     tool_calls: list[TinyToolCall] = []
                     async for msg in self._stream_action(
-                        run_id=run_id,
-                        reasoning=reasoning_result.content
+                        run_id=run_id, reasoning=reasoning_result.content
                     ):
                         if msg.is_message and isinstance(
                             msg.message, TinyChatMessageChunk
@@ -259,7 +264,9 @@ class TinyReActAgent(TinyBaseAgent):
                             full_tc = msg.full_tool_call
                             called_tool = self.get_tool(full_tc.tool_name)
                             if called_tool:
-                                tool_result = self.run_tool(run_id=run_id, tool=called_tool, call=full_tc)
+                                tool_result = self.run_tool(
+                                    run_id=run_id, tool=called_tool, call=full_tc
+                                )
 
                                 self.memory.save_context(full_tc)
                                 self.memory.save_context(tool_result)
@@ -273,7 +280,9 @@ class TinyReActAgent(TinyBaseAgent):
                                         self._iteration_number,
                                         reasoning,
                                     )
-                                    self.on_tool_reasoning(run_id=run_id, reasoning=reasoning)
+                                    self.on_tool_reasoning(
+                                        run_id=run_id, reasoning=reasoning
+                                    )
                             else:
                                 logger.error(
                                     'Tool %s not found. Skipping tool call.',
@@ -315,7 +324,9 @@ class TinyReActAgent(TinyBaseAgent):
             yielded_fallback = False
             final_yielded_answer = ''
 
-            async for fallback_chunk in self._stream_fallback(run_id=run_id, task=input_text):
+            async for fallback_chunk in self._stream_fallback(
+                run_id=run_id, task=input_text
+            ):
                 yielded_fallback = True
                 final_yielded_answer += fallback_chunk
 

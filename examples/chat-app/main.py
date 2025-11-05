@@ -1,6 +1,6 @@
-import uuid
 from pathlib import Path
 from typing import Any
+import uuid
 
 import tiny_chat as tc
 from tinygent.cli.builder import build_agent
@@ -33,7 +33,9 @@ async def answer_chunk_hook(*, run_id: str, chunk: str, idx: str):
     ).send()
 
 
-async def tool_call_hook(*, run_id: str, tool: AbstractTool, args: dict[str, Any], result: Any):
+async def tool_call_hook(
+    *, run_id: str, tool: AbstractTool, args: dict[str, Any], result: Any
+):
     await tc.AgentToolCallMessage(
         id=str(uuid.uuid4()),
         parent_id=run_id,
