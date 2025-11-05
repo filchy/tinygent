@@ -43,10 +43,8 @@ declare interface SourcesMessage extends ChildMessage {
   sender: 'agent'
 }
 
-declare interface
-
 // Union type for all messages
-declare type Message = LoadingMessage | UserMessage | AgentTextMessage
+declare type Message = UserMessage | AgentTextMessage | LoadingMessage | ReasoningMessage | SourcesMessage | ToolMessage
 
 // Main messages union
 declare type MainMessage = UserMessage | AgentMessage | LoadingMessage
@@ -56,6 +54,8 @@ declare type ChildMessage = ReasoningMessage | SourcesMessage | ToolMessage
 
 // Message group with main message and optional child messages
 declare interface MessageGroup {
+  group_id: string
+
   main?: MainMessage
   children?: ChildMessage[]
 }

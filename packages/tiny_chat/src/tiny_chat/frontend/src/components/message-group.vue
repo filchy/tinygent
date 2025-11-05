@@ -16,7 +16,11 @@ const currentAvatar = computed(() =>
 )
 
 const main = props.messageGroup.main
-const children = props.messageGroup.children
+const children = props.messageGroup.children ?? []
+
+const isLoading = computed(() =>
+  main?.type === 'loading'
+)
 
 const toolCalls = computed(() => children.filter(c => c.type === 'tool'))
 </script>
@@ -99,11 +103,73 @@ const toolCalls = computed(() => children.filter(c => c.type === 'tool'))
             </div>
           </div>
 
-          <div style='min-height: 36px;' class='d-flex align-center text-body-1'>
+          <div style='min-height: 36px;' class='d-flex align-center text-body-1' v-if='!isLoading'>
             {{ main?.content }}
+          </div>
+
+          <div class='d-flex align-center' style='height: 36px;' v-else>
+            <div class="loading-wrapper">
+              <span class="loading-text">loading</span>
+              <span class="wave-dots">
+                <span>.</span><span>.</span><span>.</span>
+              </span>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </v-card>
 </template>
+
+<style scoped>
+.loading-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.loading-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+  background: linear-gradient(90deg, #d0d0d0, #a0a0a0, #d0d0d0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2s infinite linear;
+}
+
+.wave-dots {
+  display: inline-flex;
+  gap: 4px;
+  font-size: 1.4rem;
+  color: silver;
+}
+
+.wave-dots span {
+  display: inline-block;
+  animation: wave 1.2s infinite ease-in-out;
+}
+
+.wave-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.wave-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes wave {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  30% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -100px 0; }
+  100% { background-position: 100px 0; }
+}
+</style>

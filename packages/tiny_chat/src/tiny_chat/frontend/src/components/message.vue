@@ -4,7 +4,6 @@ import BaseMessage from './messages/base.vue'
 const props = defineProps<{ msg: BaseMessage }>()
 
 const componentMap: Record<string, any> = {
-  loading: defineAsyncComponent(() => import('./messages/loading-message.vue')),
   text: defineAsyncComponent(() => import('./messages/text-message.vue')),
 }
 </script>

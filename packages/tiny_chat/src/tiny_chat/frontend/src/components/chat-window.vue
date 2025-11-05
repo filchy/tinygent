@@ -50,7 +50,6 @@ const messageGroups = computed(() => {
 </script>
 
 <template>
-  {{ messageGroups }}
   <div class='chat-container' ref='chatRef'>
     <div class='chat-column' style='gap: 12px;'>
       <span
