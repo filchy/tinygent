@@ -59,49 +59,51 @@ const toolCalls = computed(() => children.filter(c => c.type === 'tool'))
             />
           </div>
 
-          <div
-            v-if='isOpenedToolCalls'
-            class='d-flex flex-column position-relative'
-            style='margin-left:-36px;'
-          >
+          <v-expand-transition>
             <div
-              v-for='(toolCall, i) in toolCalls'
-              :key='i'
-              class='d-flex align-center text-grey-darken-1'
-              style='width: 100%; height: 36px;'
+              v-if='isOpenedToolCalls'
+              class='d-flex flex-column position-relative'
+              style='margin-left:-36px;'
             >
               <div
-                class='d-flex align-center justify-center'
-                style='
-                  width: 36px;
-                  position: relative;
-                '
+                v-for='(toolCall, i) in toolCalls'
+                :key='i'
+                class='d-flex align-center text-grey-darken-1'
+                style='width: 100%; height: 36px;'
               >
-                <v-icon
-                  icon='mdi-web'
-                  :color='theme.global.current.value.dark ? "info-lighten-1" : "info-darken-1"'
-                  size='14'
-                />
-              </div>
+                <div
+                  class='d-flex align-center justify-center'
+                  style='
+                    width: 36px;
+                    position: relative;
+                  '
+                >
+                  <v-icon
+                    icon='mdi-web'
+                    :color='theme.global.current.value.dark ? "info-lighten-1" : "info-darken-1"'
+                    size='14'
+                  />
+                </div>
 
-              <div class='pl-2 text-body-2 text-grey-darken-1 d-flex align-center' style='width: 100%;'>
-                <span class='font-weight-bold'>{{ toolCall.tool_name }}</span>
-                <v-spacer />
-                <v-tooltip location='top' max-width='400'>
-                  <template #activator='{ props }'>
-                    <span v-bind='props'>
-                      {{
-                        (s => s.length > 30 ? s.slice(0, 30) + '…' : s)
-                        (JSON.stringify(toolCall.tool_args))
-                      }}
-                    </span>
-                  </template>
+                <div class='pl-2 text-body-2 text-grey-darken-1 d-flex align-center' style='width: 100%;'>
+                  <span class='font-weight-bold'>{{ toolCall.tool_name }}</span>
+                  <v-spacer />
+                  <v-tooltip location='top' max-width='400'>
+                    <template #activator='{ props }'>
+                      <span v-bind='props'>
+                        {{
+                          (s => s.length > 30 ? s.slice(0, 30) + '…' : s)
+                          (JSON.stringify(toolCall.tool_args))
+                        }}
+                      </span>
+                    </template>
 
-                  {{ JSON.stringify(toolCall.tool_args, null, 2) }}
-                </v-tooltip>
+                    {{ JSON.stringify(toolCall.tool_args, null, 2) }}
+                  </v-tooltip>
+                </div>
               </div>
             </div>
-          </div>
+          </v-expand-transition>
 
           <div style='min-height: 36px;' class='d-flex align-center text-body-1' v-if='!isLoading'>
             {{ main?.content }}
