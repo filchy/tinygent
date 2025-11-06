@@ -11,5 +11,5 @@ __all__ = [
     'call_message',
     'BaseMessage',
     'AgentToolCallMessage',
-    'AgentSourceMessage'
+    'AgentSourceMessage',
 ]

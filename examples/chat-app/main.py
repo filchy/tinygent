@@ -3,11 +3,11 @@ from typing import Any
 import uuid
 
 from pydantic import Field
-from tiny_brave import NewsSearchRequest
+
 from tiny_brave import NewsSearchApiResponse
+from tiny_brave import NewsSearchRequest
 from tiny_brave import brave_news_search
 import tiny_chat as tc
-
 from tinygent.cli.builder import build_agent
 from tinygent.cli.utils import discover_and_register_components
 from tinygent.datamodels.tool import AbstractTool
@@ -29,9 +29,7 @@ class BraveNewsConfig(TinyModel):
 
 @register_tool
 async def brave_news(data: BraveNewsConfig):
-    result = await brave_news_search(
-        NewsSearchRequest(q=data.query)
-    )
+    result = await brave_news_search(NewsSearchRequest(q=data.query))
 
     return result
 
