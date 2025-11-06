@@ -2,17 +2,38 @@ from pathlib import Path
 from typing import Any
 import uuid
 
+from pydantic import Field
+from tiny_brave import NewsSearchRequest
+from tiny_brave import NewsSearchApiResponse
+from tiny_brave import brave_news_search
 import tiny_chat as tc
+
 from tinygent.cli.builder import build_agent
 from tinygent.cli.utils import discover_and_register_components
 from tinygent.datamodels.tool import AbstractTool
 from tinygent.logging import setup_general_loggers
 from tinygent.logging import setup_logger
+from tinygent.tools.tool import register_tool
+from tinygent.types.base import TinyModel
 from tinygent.utils.yaml import tiny_yaml_load
 
 logger = setup_logger('debug')
 setup_general_loggers('warning')
+
 discover_and_register_components()
+
+
+class BraveNewsConfig(TinyModel):
+    query: str = Field(..., description='The search query string.')
+
+
+@register_tool
+async def brave_news(data: BraveNewsConfig):
+    result = await brave_news_search(
+        NewsSearchRequest(q=data.query)
+    )
+
+    return result
 
 
 async def answer_hook(*, run_id: str, answer: str):
@@ -42,6 +63,21 @@ async def tool_call_hook(
         tool_name=tool.info.name,
         tool_args=args,
     ).send()
+
+    try:
+        news_response = NewsSearchApiResponse.model_validate(result)
+        for article in news_response.results:
+            print(f'sending source: {article.title} - {article.url}')
+
+            await tc.AgentSourceMessage(
+                parent_id=run_id,
+                name=article.title,
+                url=article.url,
+                favicon=article.meta_url.favicon if article.meta_url else '',
+            ).send()
+
+    except Exception:
+        logger.exception('Failed to parse tool call.')
 
 
 agent = build_agent(

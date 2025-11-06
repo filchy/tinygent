@@ -33,7 +33,7 @@ class WebSearchRequest(BaseSearchRequest):
         default='moderate', description='Adult content filter level.'
     )
 
-    freshness: str | None = Field(
+    freshness: Literal['pd', 'pw', 'pm', 'py'] | None = Field(
         default=None,
         description=(
             'Time filter for results. '

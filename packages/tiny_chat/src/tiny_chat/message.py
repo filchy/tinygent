@@ -22,10 +22,24 @@ class AgentAnswerMessage(BaseMessage):
     sender: Literal['agent'] = 'agent'
 
 
-class AgentToolCallMessage(BaseMessage):
+class ChildBaseMessage(BaseMessage):
     parent_id: str
+
+
+class AgentToolCallMessage(ChildBaseMessage):
     type: Literal['tool'] = 'tool'
     sender: Literal['agent'] = 'agent'
+
     content: str = ''
     tool_name: str
     tool_args: dict[str, Any]
+
+
+class AgentSourceMessage(ChildBaseMessage):
+    type: Literal['source'] = 'source'
+    sender: Literal['agent'] = 'agent'
+
+    content: str = ''
+    name: str
+    url: str
+    favicon: str

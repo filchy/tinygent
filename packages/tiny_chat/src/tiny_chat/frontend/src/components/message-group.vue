@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useTheme } from 'vuetify'
 
+import { emitter } from '@/services/event-bus'
 import darkAvatar from '@/assets/dark-avatar.png'
 import lightAvatar from '@/assets/light-avatar.png'
 
@@ -23,15 +24,20 @@ const isLoading = computed(() =>
 )
 
 const toolCalls = computed(() => children.filter(c => c.type === 'tool'))
+const sources = computed(() => children.filter(c => c.type === 'source'))
+
+const openInfoDrawer = () => {
+  emitter.emit('displaySources', sources.value)
+}
 </script>
 
 <template>
-  <v-card variant='flat' density='default'>
+  <v-card variant='flat' density='default' style='background: transparent !important;'>
     <div class='d-flex flex-column'>
       <div class='d-flex flex-row'>
         <div
           class='d-flex flex-column justify-start'
-          style='width: 36px;'
+          style='width: 36px; user-select: none;'
         >
           <v-avatar size='36' class='mr-2 flex-shrink-0'>
             <v-img :src="currentAvatar" />
@@ -45,7 +51,7 @@ const toolCalls = computed(() => children.filter(c => c.type === 'tool'))
           <div
             v-if='toolCalls.length > 0'
             class='d-flex align-center text-body-1 text-grey-darken-1'
-            style='height: 36px; cursor: pointer;'
+            style='height: 36px; cursor: pointer; user-select: none;'
             @click.stop='isOpenedToolCalls = !isOpenedToolCalls'
           >
             {{ toolCalls.length }} tool call{{ toolCalls.length > 1 ? 's' : '' }} made
@@ -105,17 +111,23 @@ const toolCalls = computed(() => children.filter(c => c.type === 'tool'))
             </div>
           </v-expand-transition>
 
-          <div style='min-height: 36px;' class='d-flex align-center text-body-1' v-if='!isLoading'>
+          <div style='min-height: 36px;' class='d-flex align-center text-body-1 py-3' v-if='!isLoading'>
             {{ main?.content }}
           </div>
 
           <div class='d-flex align-center' style='height: 36px;' v-else>
             <div class="loading-wrapper">
-              <span class="loading-text">loading</span>
+              <span class="loading-text">thinking</span>
               <span class="wave-dots">
                 <span>.</span><span>.</span><span>.</span>
               </span>
             </div>
+          </div>
+
+          <div class='d-flex align-center justify-start' v-if='sources.length > 0'>
+            <v-chip label variant='outlined' @click.stop='openInfoDrawer'>
+              {{ sources.length <= 3 ? sources.length : '3+'}} source{{ sources.length > 1 ? 's' : '' }}
+            </v-chip>
           </div>
         </div>
       </div>

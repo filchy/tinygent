@@ -1,3 +1,4 @@
+from .message import AgentSourceMessage
 from .message import AgentToolCallMessage
 from .message import BaseMessage
 from .runtime import call_message
@@ -10,4 +11,5 @@ __all__ = [
     'call_message',
     'BaseMessage',
     'AgentToolCallMessage',
+    'AgentSourceMessage'
 ]

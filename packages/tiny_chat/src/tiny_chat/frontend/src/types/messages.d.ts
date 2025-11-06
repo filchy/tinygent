@@ -1,6 +1,6 @@
 declare interface BaseMessage {
   id: string
-  type: 'text' | 'reasoning' | 'loading' | 'sources' | 'tool'
+  type: 'text' | 'reasoning' | 'loading' | 'source' | 'tool'
   sender: Role
   content: string
 }
@@ -38,19 +38,22 @@ declare interface ToolMessage extends ChildMessage {
   tool_args: Record<string, any>
 }
 
-declare interface SourcesMessage extends ChildMessage {
-  type: 'sources',
+declare interface SourceMessage extends ChildMessage {
+  type: 'source'
   sender: 'agent'
+  url: string
+  name: string
+  favicon: string
 }
 
 // Union type for all messages
-declare type Message = UserMessage | AgentTextMessage | LoadingMessage | ReasoningMessage | SourcesMessage | ToolMessage
+declare type Message = UserMessage | AgentTextMessage | LoadingMessage | ReasoningMessage | SourceMessage | ToolMessage
 
 // Main messages union
 declare type MainMessage = UserMessage | AgentMessage | LoadingMessage
 
 // Child messages union
-declare type ChildMessage = ReasoningMessage | SourcesMessage | ToolMessage
+declare type ChildMessage = ReasoningMessage | SourceMessage | ToolMessage
 
 // Message group with main message and optional child messages
 declare interface MessageGroup {

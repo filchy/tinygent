@@ -2,6 +2,7 @@
 import Alerts from '@/components/alerts.vue'
 import ChatWindow from '@/components/chat-window.vue'
 import NavigationDrawer from '@/components/nav-drawer.vue'
+import InfoDrawer from '@/components/info-drawer.vue'
 import TopBar from '@/components/top-bar.vue'
 import BottomBar from '@/components/bottom-bar.vue'
 
@@ -36,6 +37,7 @@ const sendMessage = (message: string) => {
 <template>
   <v-app class="app-root">
     <NavigationDrawer v-model:drawer="drawer" :conversations="conversations" />
+    <InfoDrawer />
 
     <TopBar @toggle-drawer="drawer = !drawer" />
 
