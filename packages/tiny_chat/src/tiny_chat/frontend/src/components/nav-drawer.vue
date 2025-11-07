@@ -15,6 +15,8 @@ const emit = defineEmits<{
 }>()
 
 const localDrawer = ref(props.drawer)
+const isChatHistory = ref<boolean>(false)
+
 watch(
   () => props.drawer,
   (val) => (localDrawer.value = val),
@@ -89,23 +91,34 @@ const currentLogo = computed(() => (isDark.value ? lightLogo : darkLogo))
       </v-btn>
     </div>
 
-    <v-list
-      nav
-      dense
-      class='transition-fast-in-fast-out flex-grow-1'
-      :style='{
-        opacity: !smAndDown && rail ? 0 : 1,
-        visibility: !smAndDown && rail ? "hidden" : "visible",
-      }'
+    <v-alert
+      v-if='!isChatHistory && !rail'
+      type='warning'
+      class='mx-3 my-2 text-caption'
+      density='compact'
+      text
     >
-      <v-list-subheader>Conversations</v-list-subheader>
-      <v-list-item
-        v-for='(conv, i) in props.conversations || []'
-        :key='i'
-        :title='conv'
-        prepend-icon='mdi-message-text'
-      />
-    </v-list>
+      Chat history is disabled.
+    </v-alert>
+
+    <!-- TODO: Implement conversation history do display conversations -->
+    <!-- <v-list -->
+    <!--   nav -->
+    <!--   dense -->
+    <!--   class='transition-fast-in-fast-out flex-grow-1' -->
+    <!--   :style='{ -->
+    <!--     opacity: !smAndDown && rail ? 0 : 1, -->
+    <!--     visibility: !smAndDown && rail ? "hidden" : "visible", -->
+    <!--   }' -->
+    <!-- > -->
+    <!--   <v-list-subheader>Conversations</v-list-subheader> -->
+    <!--   <v-list-item -->
+    <!--     v-for='(conv, i) in props.conversations || []' -->
+    <!--     :key='i' -->
+    <!--     :title='conv' -->
+    <!--     prepend-icon='mdi-message-text' -->
+    <!--   /> -->
+    <!-- </v-list> -->
 
     <template #append>
       <div v-if='!rail'>
