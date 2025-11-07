@@ -1,6 +1,6 @@
-type ConnectionStatus = 'connected' | 'disconnected'
+type ConnectionStatus = 'connected' | 'disconnected' | 'init'
 
-const connectionStatus = ref<ConnectionStatus>('disconnected')
+const connectionStatus = ref<ConnectionStatus>('init')
 const loadingOwner = ref<Role | null>(null)
 
 export function useStateStore() {
