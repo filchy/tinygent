@@ -71,7 +71,8 @@ async def tool_call_hook(
                 parent_id=run_id,
                 name=article.title,
                 url=article.url,
-                favicon=article.meta_url.favicon if article.meta_url else '',
+                favicon=article.meta_url.favicon if article.meta_url else None,
+                description=article.description,
             ).send()
 
     except Exception:

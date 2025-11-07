@@ -54,9 +54,9 @@ const sourceTitle = (url: string) => {
           />
         </template>
       </v-list-item>
-    </template>
 
-    <v-divider />
+      <v-divider />
+    </template>
 
     <div class='d-flex flex-column px-2 pt-2' style='width: 100%;'>
       <v-card
@@ -71,12 +71,22 @@ const sourceTitle = (url: string) => {
           {{ sourceTitle(source.url) }}
           <div style='width: 16px;'>
             <v-img
-              :src='source.favicon'
+              v-if='source.favicon'
+              :src='source.favicon!'
             ></v-img>
+            <v-icon
+              v-else
+              icon='mdi-web'
+              size='14'
+            />
           </div>
         </div>
-        <div class='text-caption font-weight-bold'>
+        <div class='text-caption font-weight-bold' style='white-space: nowrap; overflow: hidden;
+        text-overflow: ellipsis;'>
           {{ source.name }}
+        </div>
+        <div class='text-caption text-grey-darken-1'>
+          {{ source.description ?? 'No description provided' }}
         </div>
       </v-card>
     </div>

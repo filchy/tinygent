@@ -43,7 +43,8 @@ declare interface SourceMessage extends ChildMessage {
   sender: 'agent'
   url: string
   name: string
-  favicon: string
+  favicon?: string
+  description?: string
 }
 
 // Union type for all messages

@@ -42,4 +42,5 @@ class AgentSourceMessage(ChildBaseMessage):
     content: str = ''
     name: str
     url: str
-    favicon: str
+    favicon: str | None = None
+    description: str | None = None
