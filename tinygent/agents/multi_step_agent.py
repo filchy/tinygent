@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import asyncio
-from collections.abc import AsyncGenerator
 from collections.abc import Generator
 import logging
 import typing
 from typing import Any
+from typing import AsyncGenerator
 from typing import Literal
+import uuid
 
 from tinygent.agents import TinyBaseAgent
 from tinygent.agents import TinyBaseAgentConfig
@@ -25,6 +25,7 @@ from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.prompt import TinyPromptTemplate
 from tinygent.memory import BufferChatMemory
+from tinygent.runtime.executors import run_async_in_executor
 from tinygent.tools.reasoning_tool import ReasoningTool
 from tinygent.types.base import TinyModel
 from tinygent.utils import render_template
@@ -124,7 +125,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
         self.fallback_prompt = prompt_template.fallback
 
     def _stream_steps(
-        self, task: str
+        self, run_id: str, task: str
     ) -> Generator[TinyPlanMessage | TinyReasoningMessage]:
         class TinyReasonedSteps(TinyModel):
             planned_steps: list[str]
@@ -159,7 +160,8 @@ class TinyMultiStepAgent(TinyBaseAgent):
         )
 
         result = self.run_llm(
-            self.llm.generate_structured,
+            run_id=run_id,
+            fn=self.llm.generate_structured,
             llm_input=messages,
             output_schema=TinyReasonedSteps,
         )
@@ -168,7 +170,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
         for step in result.planned_steps:
             yield TinyPlanMessage(content=step)
 
-    async def _stream_action(self, task: str) -> AsyncGenerator[TinyLLMResultChunk]:
+    async def _stream_action(
+        self, run_id: str, task: str
+    ) -> AsyncGenerator[TinyLLMResultChunk]:
         messages = TinyLLMInput(
             messages=[
                 *self.memory.chat_messages,
@@ -189,12 +193,15 @@ class TinyMultiStepAgent(TinyBaseAgent):
         )
 
         async for chunk in self.run_llm_stream(
-            self.llm.stream_with_tools, llm_input=messages, tools=self._tools
+            run_id=run_id,
+            fn=self.llm.stream_with_tools,
+            llm_input=messages,
+            tools=self._tools,
         ):
             yield chunk
 
     async def _stream_fallback_answer(
-        self, task: str
+        self, run_id: str, task: str
     ) -> AsyncGenerator[TinyChatMessageChunk]:
         messages = TinyLLMInput(
             messages=[
@@ -212,11 +219,13 @@ class TinyMultiStepAgent(TinyBaseAgent):
             ]
         )
 
-        async for chunk in self.run_llm_stream(self.llm.stream_text, llm_input=messages):
+        async for chunk in self.run_llm_stream(
+            run_id=run_id, fn=self.llm.stream_text, llm_input=messages
+        ):
             if chunk.is_message and isinstance(chunk.message, TinyChatMessageChunk):
                 yield chunk.message
 
-    async def _run_agent(self, input_text: str) -> AsyncGenerator[str]:
+    async def _run_agent(self, input_text: str, run_id: str) -> AsyncGenerator[str]:
         self._iteration_number = 1
         returned_final_answer: bool = False
         yielded_final_answer: str = ''
@@ -232,7 +241,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                 (self._iteration_number - 1) % self.plan_interval == 0
             ):
                 # Create new plan
-                plan_generator = self._stream_steps(input_text)
+                plan_generator = self._stream_steps(run_id=run_id, task=input_text)
                 self._planned_steps = []
 
                 for planner_msg in plan_generator:
@@ -242,7 +251,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                             self._iteration_number,
                             planner_msg.content,
                         )
-                        self.on_plan(planner_msg.content)
+                        self.on_plan(run_id=run_id, plan=planner_msg.content)
                         self._planned_steps.append(planner_msg)
 
                     if isinstance(planner_msg, TinyReasoningMessage):
@@ -251,12 +260,12 @@ class TinyMultiStepAgent(TinyBaseAgent):
                             self._iteration_number,
                             planner_msg.content,
                         )
-                        self.on_reasoning(planner_msg.content)
+                        self.on_reasoning(run_id=run_id, reasoning=planner_msg.content)
                     self.memory.save_context(planner_msg)
 
             try:
                 # Execute action
-                async for msg in self._stream_action(input_text):
+                async for msg in self._stream_action(run_id=run_id, task=input_text):
                     if msg.is_message and isinstance(msg.message, TinyChatMessageChunk):
                         returned_final_answer = True
                         yielded_final_answer += msg.message.content
@@ -272,7 +281,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
                         self.memory.save_context(tool_call)
                         if called_tool:
                             self.memory.save_context(
-                                self.run_tool(called_tool, tool_call)
+                                self.run_tool(
+                                    run_id=run_id, tool=called_tool, call=tool_call
+                                )
                             )
                             self._tool_calls.append(tool_call)
                         else:
@@ -288,7 +299,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                                 self._iteration_number,
                                 reasoning,
                             )
-                            self.on_tool_reasoning(reasoning)
+                            self.on_tool_reasoning(run_id=run_id, reasoning=reasoning)
 
                         logger.debug(
                             '[%s. ITERATION - Tool Call]: %s(%s) = %s',
@@ -303,10 +314,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
                         self.memory.save_context(
                             TinyChatMessage(content=yielded_final_answer)
                         )
-                        self.on_answer(yielded_final_answer)
                     break
             except Exception as e:
-                self.on_error(e)
+                self.on_error(run_id=run_id, e=e)
                 raise e
             finally:
                 self._iteration_number += 1
@@ -321,7 +331,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
             final_yielded_answer = ''
 
             logger.debug('--- FALLBACK FINAL ANSWER ---')
-            async for chunk in self._stream_fallback_answer(input_text):
+            async for chunk in self._stream_fallback_answer(
+                run_id=run_id, task=input_text
+            ):
                 yield_fallback = True
                 final_yielded_answer += chunk.content
 
@@ -334,7 +346,6 @@ class TinyMultiStepAgent(TinyBaseAgent):
                 yield final_yielded_answer
 
             self.memory.save_context(TinyChatMessage(content=final_yielded_answer))
-            self.on_answer(final_yielded_answer)
 
     def _reset(self) -> None:
         logger.debug('[AGENT RESET]')
@@ -347,28 +358,40 @@ class TinyMultiStepAgent(TinyBaseAgent):
     def run(
         self,
         input_text: str,
+        *,
+        run_id: str | None = None,
         reset: bool = True,
     ) -> str:
         logger.debug('[USER INPUT] %s', input_text)
 
+        run_id = run_id or str(uuid.uuid4())
         if reset:
             self._reset()
 
         async def _run() -> str:
             final_answer: str = ''
-            async for res in self._run_agent(input_text):
+            async for res in self._run_agent(input_text, run_id):
                 final_answer += res
+
+            self.on_answer(run_id=run_id, answer=final_answer)
             return final_answer
 
-        return asyncio.run(_run())
+        return run_async_in_executor(_run)
 
-    async def run_stream(  # type: ignore[override]
-        self, input_text: str, reset: bool = True
+    def run_stream(
+        self, input_text: str, *, run_id: str | None = None, reset: bool = True
     ) -> AsyncGenerator[str, None]:
         logger.debug('[USER INPUT] %s', input_text)
 
+        run_id = run_id or str(uuid.uuid4())
         if reset:
             self._reset()
 
-        async for res in self._run_agent(input_text):
-            yield res
+        async def _generator():
+            idx = 0
+            async for res in self._run_agent(run_id=run_id, input_text=input_text):
+                self.on_answer_chunk(run_id=run_id, chunk=res, idx=str(idx))
+                idx += 1
+                yield res
+
+        return _generator()

@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-from collections.abc import AsyncGenerator
+from typing import AsyncGenerator
 from typing import ClassVar
 from typing import Generic
 from typing import TypeVar
 
+from tinygent.datamodels.agent_hooks import AgentHooks
 from tinygent.types.builder import TinyModelBuildable
 
 AgentType = TypeVar('AgentType', bound='AbstractAgent')
@@ -22,15 +23,17 @@ class AbstractAgentConfig(TinyModelBuildable[AgentType], Generic[AgentType]):
         raise NotImplementedError('Subclasses must implement this method.')
 
 
-class AbstractAgent(ABC):
+class AbstractAgent(AgentHooks, ABC):
     """Abstract base class for agents."""
 
     @abstractmethod
-    def run(self, input_text: str) -> str:
+    def run(self, input_text: str, *, run_id: str | None = None) -> str:
         """Run the agent with the given input text."""
         raise NotImplementedError('Subclasses must implement this method.')
 
     @abstractmethod
-    async def run_stream(self, input_text: str) -> AsyncGenerator[str, None]:
+    def run_stream(
+        self, input_text: str, *, run_id: str | None = None
+    ) -> AsyncGenerator[str, None]:
         """Run the agent in streaming mode with the given input text."""
         raise NotImplementedError('Subclasses must implement this method.')

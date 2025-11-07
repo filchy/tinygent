@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import asyncio
-from collections.abc import AsyncGenerator
 import logging
 import typing
+from typing import AsyncGenerator
 from typing import Literal
+import uuid
 
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
@@ -20,6 +20,7 @@ from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.runtime.executors import run_async_in_executor
 from tinygent.tools.reasoning_tool import ReasoningTool
 from tinygent.types.base import TinyModel
 from tinygent.utils import render_template
@@ -119,7 +120,9 @@ class TinyReActAgent(TinyBaseAgent):
 
         self.memory = memory
 
-    def _stream_reasoning(self, task: str) -> TinyChatMessage | TinyReasoningMessage:
+    def _stream_reasoning(
+        self, run_id: str, task: str
+    ) -> TinyChatMessage | TinyReasoningMessage:
         class TinyReasoningOutcome(TinyModel):
             type: Literal['reasoning'] = 'reasoning'
             content: str
@@ -144,6 +147,7 @@ class TinyReActAgent(TinyBaseAgent):
         )
 
         result = self.run_llm(
+            run_id=run_id,
             fn=self.llm.generate_structured,
             llm_input=messages,
             output_schema=TinyReasoningOutcome,
@@ -151,7 +155,9 @@ class TinyReActAgent(TinyBaseAgent):
 
         return TinyReasoningMessage(content=result.content)
 
-    async def _stream_action(self, reasoning: str) -> AsyncGenerator[TinyLLMResultChunk]:
+    async def _stream_action(
+        self, run_id: str, reasoning: str
+    ) -> AsyncGenerator[TinyLLMResultChunk, None]:
         messages = TinyLLMInput(
             messages=[
                 *self.memory.chat_messages,
@@ -165,13 +171,16 @@ class TinyReActAgent(TinyBaseAgent):
         )
 
         async for chunk in self.run_llm_stream(
+            run_id=run_id,
             fn=self.llm.stream_with_tools,
             llm_input=messages,
             tools=self._tools,
         ):
             yield chunk
 
-    async def _stream_fallback(self, task: str) -> AsyncGenerator[str]:
+    async def _stream_fallback(
+        self, run_id: str, task: str
+    ) -> AsyncGenerator[str, None]:
         messages = TinyLLMInput(
             messages=[
                 *self.memory.chat_messages,
@@ -190,6 +199,7 @@ class TinyReActAgent(TinyBaseAgent):
         )
 
         async for chunk in self.run_llm_stream(
+            run_id=run_id,
             fn=self.llm.stream_text,
             llm_input=messages,
         ):
@@ -197,7 +207,9 @@ class TinyReActAgent(TinyBaseAgent):
                 assert isinstance(chunk.message, TinyChatMessageChunk)
                 yield chunk.message.content
 
-    async def _run_agent(self, input_text: str) -> AsyncGenerator[str]:
+    async def _run_agent(
+        self, input_text: str, run_id: str
+    ) -> AsyncGenerator[str, None]:
         self._iteration_number = 1
         returned_final_answer: bool = False
         yielded_final_answer: str = ''
@@ -210,7 +222,7 @@ class TinyReActAgent(TinyBaseAgent):
             logger.debug('--- ITERATION %d ---', self._iteration_number)
 
             try:
-                reasoning_result = self._stream_reasoning(task=input_text)
+                reasoning_result = self._stream_reasoning(run_id=run_id, task=input_text)
                 logger.debug(
                     '[%d. ITERATION - Reasoning Result]: %s',
                     self._iteration_number,
@@ -226,7 +238,6 @@ class TinyReActAgent(TinyBaseAgent):
                     returned_final_answer = True
 
                     self.memory.save_context(reasoning_result)
-                    self.on_answer(reasoning_result.content)
 
                     yield reasoning_result.content
 
@@ -237,7 +248,7 @@ class TinyReActAgent(TinyBaseAgent):
 
                     tool_calls: list[TinyToolCall] = []
                     async for msg in self._stream_action(
-                        reasoning=reasoning_result.content
+                        run_id=run_id, reasoning=reasoning_result.content
                     ):
                         if msg.is_message and isinstance(
                             msg.message, TinyChatMessageChunk
@@ -253,7 +264,9 @@ class TinyReActAgent(TinyBaseAgent):
                             full_tc = msg.full_tool_call
                             called_tool = self.get_tool(full_tc.tool_name)
                             if called_tool:
-                                tool_result = self.run_tool(called_tool, full_tc)
+                                tool_result = self.run_tool(
+                                    run_id=run_id, tool=called_tool, call=full_tc
+                                )
 
                                 self.memory.save_context(full_tc)
                                 self.memory.save_context(tool_result)
@@ -267,7 +280,9 @@ class TinyReActAgent(TinyBaseAgent):
                                         self._iteration_number,
                                         reasoning,
                                     )
-                                    self.on_tool_reasoning(reasoning)
+                                    self.on_tool_reasoning(
+                                        run_id=run_id, reasoning=reasoning
+                                    )
                             else:
                                 logger.error(
                                     'Tool %s not found. Skipping tool call.',
@@ -282,6 +297,11 @@ class TinyReActAgent(TinyBaseAgent):
                                 full_tc.result,
                             )
 
+                    if yielded_final_answer:
+                        self.memory.save_context(
+                            TinyChatMessage(content=yielded_final_answer)
+                        )
+
                     self._react_iterations.append(
                         self.TinyReactIteration(
                             iteration_number=self._iteration_number,
@@ -290,7 +310,7 @@ class TinyReActAgent(TinyBaseAgent):
                         )
                     )
             except Exception as e:
-                self.on_error(e)
+                self.on_error(run_id=run_id, e=e)
                 raise e
             finally:
                 self._iteration_number += 1
@@ -304,7 +324,9 @@ class TinyReActAgent(TinyBaseAgent):
             yielded_fallback = False
             final_yielded_answer = ''
 
-            async for fallback_chunk in self._stream_fallback(task=input_text):
+            async for fallback_chunk in self._stream_fallback(
+                run_id=run_id, task=input_text
+            ):
                 yielded_fallback = True
                 final_yielded_answer += fallback_chunk
 
@@ -315,7 +337,6 @@ class TinyReActAgent(TinyBaseAgent):
                 yield final_yielded_answer
 
             self.memory.save_context(TinyChatMessage(content=final_yielded_answer))
-            self.on_answer(final_yielded_answer)
 
     def _reset(self) -> None:
         logger.debug('[AGENT RESET]')
@@ -327,30 +348,44 @@ class TinyReActAgent(TinyBaseAgent):
     def run(
         self,
         input_text: str,
+        *,
+        run_id: str | None = None,
         reset: bool = True,
     ) -> str:
         logger.debug('[USER INPUT] %s', input_text)
 
+        run_id = run_id or str(uuid.uuid4())
         if reset:
             self._reset()
 
         async def _run() -> str:
             final_answer = ''
-            async for output in self._run_agent(input_text):
+            async for output in self._run_agent(run_id=run_id, input_text=input_text):
                 final_answer += output
+
+            self.on_answer(run_id=run_id, answer=final_answer)
             return final_answer
 
-        return asyncio.run(_run())
+        return run_async_in_executor(_run)
 
-    async def run_stream(  # type: ignore[override]
+    def run_stream(
         self,
         input_text: str,
+        *,
+        run_id: str | None = None,
         reset: bool = True,
-    ) -> AsyncGenerator[str]:
+    ) -> AsyncGenerator[str, None]:
         logger.debug('[USER INPUT] %s', input_text)
 
+        run_id = run_id or str(uuid.uuid4())
         if reset:
             self._reset()
 
-        async for res in self._run_agent(input_text):
-            yield res
+        async def _generator():
+            idx = 0
+            async for res in self._run_agent(run_id=run_id, input_text=input_text):
+                self.on_answer_chunk(run_id=run_id, chunk=res, idx=str(idx))
+                idx += 1
+                yield res
+
+        return _generator()

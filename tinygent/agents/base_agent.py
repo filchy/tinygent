@@ -45,7 +45,7 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
         raise NotImplementedError('Subclasses must implement this method.')
 
 
-class TinyBaseAgent(AbstractAgent, AgentHooks):
+class TinyBaseAgent(AbstractAgent):
     def __init__(
         self,
         llm: AbstractLLM,
@@ -73,18 +73,21 @@ class TinyBaseAgent(AbstractAgent, AgentHooks):
     ) -> AbstractTool | None:
         return next((tool for tool in tools if tool.info.name == name), None)
 
-    def run_llm(self, fn, llm_input: TinyLLMInput, **kwargs) -> Any:
-        self.on_before_llm_call(llm_input)
+    def run_llm(
+        self, run_id: str, fn: Callable, llm_input: TinyLLMInput, **kwargs
+    ) -> Any:
+        self.on_before_llm_call(run_id=run_id, llm_input=llm_input)
         try:
             result = fn(llm_input=llm_input, **kwargs)
-            self.on_after_llm_call(llm_input, result)
+            self.on_after_llm_call(run_id=run_id, llm_input=llm_input, result=result)
             return result
         except Exception as e:
-            self.on_error(e)
+            self.on_error(run_id=run_id, e=e)
             raise
 
     async def run_llm_stream(
         self,
+        run_id: str,
         fn: Callable[
             ...,
             AsyncIterator[TinyLLMResultChunk]
@@ -93,7 +96,7 @@ class TinyBaseAgent(AbstractAgent, AgentHooks):
         llm_input: TinyLLMInput,
         **kwargs: Any,
     ) -> AsyncGenerator[TinyLLMResultChunk, None]:
-        self.on_before_llm_call(llm_input)
+        self.on_before_llm_call(run_id=run_id, llm_input=llm_input)
         try:
             result = fn(llm_input=llm_input, **kwargs)
 
@@ -104,25 +107,29 @@ class TinyBaseAgent(AbstractAgent, AgentHooks):
             async for chunk in result:
                 yield chunk
 
-            self.on_after_llm_call(llm_input, None)
+            self.on_after_llm_call(run_id=run_id, llm_input=llm_input, result=None)
         except Exception as e:
-            self.on_error(e)
+            self.on_error(run_id=run_id, e=e)
             raise
 
-    def run_tool(self, tool: AbstractTool, call: TinyToolCall) -> TinyToolResult:
-        self.on_before_tool_call(tool, call.arguments)
+    def run_tool(
+        self, run_id: str, tool: AbstractTool, call: TinyToolCall
+    ) -> TinyToolResult:
+        self.on_before_tool_call(run_id=run_id, tool=tool, args=call.arguments)
         try:
             result = tool(**call.arguments)
             call.metadata['executed'] = True
             call.result = result
-            self.on_after_tool_call(tool, call.arguments, result)
+            self.on_after_tool_call(
+                run_id=run_id, tool=tool, args=call.arguments, result=result
+            )
 
             return TinyToolResult(
                 call_id=call.call_id or 'unknown',
                 content=str(result),
             )
         except Exception as e:
-            self.on_error(e)
+            self.on_error(run_id=run_id, e=e)
             raise
 
     def __str__(self) -> str:
