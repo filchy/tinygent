@@ -65,8 +65,6 @@ async def tool_call_hook(
     try:
         news_response = NewsSearchApiResponse.model_validate(result)
         for article in news_response.results:
-            print(f'sending source: {article.title} - {article.url}')
-
             await tc.AgentSourceMessage(
                 parent_id=run_id,
                 name=article.title,
