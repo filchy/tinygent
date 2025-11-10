@@ -5,7 +5,7 @@ from typing import Any
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration
 from langchain_core.outputs import Generation
-from google.genai.types import Content
+from google.genai.types import AutomaticFunctionCallingConfigDict, Content
 from google.genai.types import FunctionCallingConfigDict
 from google.genai.types import FunctionCallingConfigMode
 from google.genai.types import ToolConfigDict
@@ -81,6 +81,15 @@ def tiny_attributes_to_gemini_config(
     if structured_output:
         conf_dict['response_mime_type'] = 'application/json'
         conf_dict['response_json_schema'] = structured_output.model_json_schema()
+        conf_dict['automatic_function_calling'] = AutomaticFunctionCallingConfigDict(
+            disable=True
+        )
+        conf_dict['tool_config'] = ToolConfigDict(
+            function_calling_config=FunctionCallingConfigDict(
+                mode=FunctionCallingConfigMode.NONE
+            )
+        )
+        conf_dict.pop('tools', None)
 
     for msg in prompt.messages:
         if isinstance(msg, TinySystemMessage):
@@ -138,6 +147,7 @@ def tiny_prompt_to_gemini_params(
                     parts=[Part(
                         function_response=FunctionResponse(
                             id=msg.call_id or 'tool_call_1',
+                            name=msg.raw.info.name,
                             response={'tool_result': msg.content}
                         )
                     )]

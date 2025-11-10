@@ -95,6 +95,7 @@ Before you begin using tinygent, ensure that you meet the following software pre
 ### LLMs
 1. [OpenAI](packages/tiny_openai/)
 2. [MistralAI](packages/tiny_mistralai/)
+3. [Gemini](packages/tiny_gemini/)
 
 ### Agents
 

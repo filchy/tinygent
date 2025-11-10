@@ -9,7 +9,3 @@ tools:
   - type: reasoning
     name: get_weather_mock
     prompt: 'Explain why are you using this tool and what information you expect to get from it.'
-
-  - type: reasoning
-    name: brave_news
-    prompt: 'Explain why are you using this tool and what information you expect to get from it.'
