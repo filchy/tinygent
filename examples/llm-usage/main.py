@@ -32,7 +32,7 @@ class SummaryResponse(TinyModel):
 
 
 def basic_generation():
-    llm = init_llm('gemini:gemini-2.5-pro')
+    llm = init_llm('openai:gpt-4o')
 
     result = llm.generate_text(
         llm_input=TinyLLMInput(
@@ -45,8 +45,7 @@ def basic_generation():
 
 
 def structured_generation():
-    llm = init_llm('gemini:gemini-2.5-pro')
-    # llm = init_llm('openai:gpt-4o')
+    llm = init_llm('openai:gpt-4o')
 
     result = llm.generate_structured(
         llm_input=TinyLLMInput(
@@ -63,8 +62,7 @@ def structured_generation():
 
 
 def generation_with_tools():
-    llm = init_llm('gemini:gemini-2.5-pro')
-    # llm = init_llm('mistralai:mistral-medium-latest')
+    llm = init_llm('openai:gpt-4o')
 
     tools_list = [add, capitalize]
     tools = {tool.info.name: tool for tool in tools_list}
@@ -89,8 +87,7 @@ def generation_with_tools():
 
 
 async def async_generation():
-    llm = init_llm('gemini:gemini-2.5-pro')
-    # llm = init_llm('openai:gpt-4o')
+    llm = init_llm('openai:gpt-4o')
 
     result = await llm.agenerate_text(
         llm_input=TinyLLMInput(
@@ -103,8 +100,7 @@ async def async_generation():
 
 
 async def text_streaming():
-    llm = init_llm('gemini:gemini-2.5-pro')
-    # llm = init_llm('openai:gpt-4o')
+    llm = init_llm('openai:gpt-4o')
 
     async for chunk in llm.stream_text(
         llm_input=TinyLLMInput(
@@ -117,8 +113,7 @@ async def text_streaming():
 
 
 async def tool_call_streaming():
-    llm = init_llm('gemini:gemini-2.5-pro')
-    # llm = init_llm('openai:gpt-4o')
+    llm = init_llm('openai:gpt-4o')
 
     tools = [add, capitalize]
 
@@ -138,12 +133,12 @@ async def tool_call_streaming():
 if __name__ == '__main__':
 
     async def main():
-        # basic_generation()
-        # structured_generation()
-        # generation_with_tools()
-        #
-        # await async_generation()
-        # await text_streaming()
+        basic_generation()
+        structured_generation()
+        generation_with_tools()
+
+        await async_generation()
+        await text_streaming()
         await tool_call_streaming()
 
     import asyncio
