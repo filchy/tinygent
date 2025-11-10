@@ -32,7 +32,7 @@ class SummaryResponse(TinyModel):
 
 
 def basic_generation():
-    llm = init_llm('openai:gpt-4o')
+    llm = init_llm('gemini:gemini-2.5-pro')
 
     result = llm.generate_text(
         llm_input=TinyLLMInput(
@@ -62,7 +62,8 @@ def structured_generation():
 
 
 def generation_with_tools():
-    llm = init_llm('openai:gpt-4o')
+    llm = init_llm('gemini:gemini-2.5-flash')
+    # llm = init_llm('mistralai:mistral-medium-latest')
 
     tools_list = [add, capitalize]
     tools = {tool.info.name: tool for tool in tools_list}
@@ -133,13 +134,13 @@ async def tool_call_streaming():
 if __name__ == '__main__':
 
     async def main():
-        basic_generation()
-        structured_generation()
+        # basic_generation()
+        # structured_generation()
         generation_with_tools()
-
-        await async_generation()
-        await text_streaming()
-        await tool_call_streaming()
+        #
+        # await async_generation()
+        # await text_streaming()
+        # await tool_call_streaming()
 
     import asyncio
 
