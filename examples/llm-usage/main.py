@@ -45,7 +45,8 @@ def basic_generation():
 
 
 def structured_generation():
-    llm = init_llm('openai:gpt-4o')
+    llm = init_llm('gemini:gemini-2.5-pro')
+    # llm = init_llm('openai:gpt-4o')
 
     result = llm.generate_structured(
         llm_input=TinyLLMInput(
@@ -62,7 +63,7 @@ def structured_generation():
 
 
 def generation_with_tools():
-    llm = init_llm('gemini:gemini-2.5-flash')
+    llm = init_llm('gemini:gemini-2.5-pro')
     # llm = init_llm('mistralai:mistral-medium-latest')
 
     tools_list = [add, capitalize]
@@ -88,7 +89,8 @@ def generation_with_tools():
 
 
 async def async_generation():
-    llm = init_llm('openai:gpt-4o')
+    llm = init_llm('gemini:gemini-2.5-pro')
+    # llm = init_llm('openai:gpt-4o')
 
     result = await llm.agenerate_text(
         llm_input=TinyLLMInput(
@@ -101,7 +103,8 @@ async def async_generation():
 
 
 async def text_streaming():
-    llm = init_llm('openai:gpt-4o')
+    llm = init_llm('gemini:gemini-2.5-pro')
+    # llm = init_llm('openai:gpt-4o')
 
     async for chunk in llm.stream_text(
         llm_input=TinyLLMInput(
@@ -114,7 +117,8 @@ async def text_streaming():
 
 
 async def tool_call_streaming():
-    llm = init_llm('openai:gpt-4o')
+    llm = init_llm('gemini:gemini-2.5-pro')
+    # llm = init_llm('openai:gpt-4o')
 
     tools = [add, capitalize]
 
@@ -136,11 +140,11 @@ if __name__ == '__main__':
     async def main():
         # basic_generation()
         # structured_generation()
-        generation_with_tools()
+        # generation_with_tools()
         #
         # await async_generation()
         # await text_streaming()
-        # await tool_call_streaming()
+        await tool_call_streaming()
 
     import asyncio
 

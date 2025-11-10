@@ -1,7 +1,6 @@
 import typing
 from typing import cast
 from typing import Any
-from typing import TypedDict
 
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration
@@ -20,7 +19,10 @@ from google.genai.types import ModelContent
 from google.genai.types import UserContent
 from google.genai.types import Part
 
+from tinygent.datamodels.llm import LLMStructuredT
+from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 from tinygent.datamodels.llm_io_result import TinyLLMResult
+from tinygent.datamodels.messages import TinyChatMessageChunk
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyToolResult
 from tinygent.datamodels.messages import TinyHumanMessage
@@ -29,13 +31,10 @@ from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
 
+from tiny_gemini.types import GeminiParams
+
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm_io_input import TinyLLMInput
-
-
-class GeminiParams(TypedDict):
-    message: list[Part]
-    history: list[ContentOrDict]
 
 
 def _gemini_parts_to_text(parts: list[Part] | None) -> str:
@@ -66,20 +65,22 @@ def tiny_attributes_to_gemini_config(
     prompt: 'TinyLLMInput',
     temperature: float,
     tools: list[Tool] | None = None,
+    structured_output: type[LLMStructuredT] | None = None,
 ) -> GenerateContentConfigDict:
     conf_dict: GenerateContentConfigDict = {}
     conf_dict['temperature'] = temperature
 
-    print(f'Tools: {tools}')
-
     if tools:
         conf_dict['tools'] = tools
-        print(f'Setting up Gemini tool config for {len(tools)} tools.')
         conf_dict['tool_config'] = ToolConfigDict(
             function_calling_config=FunctionCallingConfigDict(
                 mode=FunctionCallingConfigMode.AUTO
             )
         )
+
+    if structured_output:
+        conf_dict['response_mime_type'] = 'application/json'
+        conf_dict['response_json_schema'] = structured_output.model_json_schema()
 
     for msg in prompt.messages:
         if isinstance(msg, TinySystemMessage):
@@ -189,3 +190,58 @@ def gemini_response_to_tiny_result(resp: GenerateContentResponse) -> TinyLLMResu
         generations=generations,
         llm_output=llm_output,
     )
+
+
+def gemini_chunk_to_tiny_chunks(chunk: GenerateContentResponse) -> list[TinyLLMResultChunk]:
+    """Convert Gemini GenerateContentResponse chunk to TinyLLMResultChunk."""
+    chunks: list[TinyLLMResultChunk] = []
+
+    tiny_result = gemini_response_to_tiny_result(chunk)
+    for msg in tiny_result.tiny_iter():
+        if hasattr(msg, 'content') and isinstance(msg, TinyChatMessage):
+            chunks.append(
+                TinyLLMResultChunk(
+                    type="message",
+                    message=TinyChatMessageChunk(
+                        content=msg.content,
+                        metadata=msg.metadata,
+                    ),
+                )
+            )
+            continue
+
+        if isinstance(msg, TinyToolCall):
+            chunks.append(
+                TinyLLMResultChunk(
+                    type='tool_call',
+                    full_tool_call=msg,
+                    metadata=msg.metadata,
+                )
+            )
+            continue
+
+        if isinstance(msg, TinyToolResult):
+            chunks.append(
+                TinyLLMResultChunk(
+                    type='message',
+                    message=TinyChatMessageChunk(
+                        content=msg.content,
+                        metadata=msg.metadata,
+                    ),
+                )
+            )
+            continue
+
+        if isinstance(msg, (TinyPlanMessage, TinyReasoningMessage)):
+            chunks.append(
+                TinyLLMResultChunk(
+                    type='message',
+                    message=TinyChatMessageChunk(
+                        content=msg.content,
+                        metadata=msg.metadata,
+                    ),
+                )
+            )
+            continue
+
+    return chunks

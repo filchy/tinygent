@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 import os
 import typing
 from typing import Literal
@@ -12,7 +13,9 @@ from google.genai.types import Schema
 
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
+from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 
+from tiny_gemini.utils import gemini_chunk_to_tiny_chunks
 from tiny_gemini.utils import gemini_response_to_tiny_result
 from tiny_gemini.utils import tiny_attributes_to_gemini_config
 from tiny_gemini.utils import tiny_prompt_to_gemini_params
@@ -41,8 +44,7 @@ class GeminiConfig(AbstractLLMConfig['GeminiLLM']):
         )
 
 
-# class GeminiLLM(AbstractLLM[GeminiConfig]):
-class GeminiLLM():
+class GeminiLLM(AbstractLLM[GeminiConfig]):
     def __init__(
         self,
         model_name: str = 'gemini-2.5-flash',
@@ -55,10 +57,12 @@ class GeminiLLM():
                 " or 'GEMINI_API_KEY' env variable.",
             )
 
+        self._sync_client = genai.Client(api_key=api_key)
+
+        self._async_client = self._sync_client.aio
+
         self.model_name = model_name
         self.temperature = temperature
-
-        self._client = genai.Client(api_key=api_key)
 
     @property
     def supports_tool_calls(self) -> bool:
@@ -111,7 +115,7 @@ class GeminiLLM():
         params = tiny_prompt_to_gemini_params(llm_input)
         config = tiny_attributes_to_gemini_config(llm_input, self.temperature)
 
-        chat = self._client.chats.create(
+        chat = self._sync_client.chats.create(
             model=self.model_name,
             config=config,
             history=params['history'],
@@ -119,6 +123,90 @@ class GeminiLLM():
         res = chat.send_message(params['message'])
 
         return gemini_response_to_tiny_result(res)
+
+    async def agenerate_text(
+        self,
+        llm_input: TinyLLMInput,
+    ) -> TinyLLMResult:
+        params = tiny_prompt_to_gemini_params(llm_input)
+        config = tiny_attributes_to_gemini_config(llm_input, self.temperature)
+
+        chat = self._async_client.chats.create(
+            model=self.model_name,
+            config=config,
+            history=params['history'],
+        )
+        res = await chat.send_message(params['message'])
+
+        return gemini_response_to_tiny_result(res)
+
+    async def stream_text(
+        self, llm_input: TinyLLMInput
+    ) -> AsyncIterator[TinyLLMResultChunk]:
+        params = tiny_prompt_to_gemini_params(llm_input)
+        config = tiny_attributes_to_gemini_config(llm_input, self.temperature)
+
+        chat = self._async_client.chats.create(
+            model=self.model_name,
+            config=config,
+            history=params['history'],
+        )
+        res = await chat.send_message_stream(params['message'])
+        async for chunk in res:
+            for tiny_chunk in gemini_chunk_to_tiny_chunks(chunk):
+                yield tiny_chunk
+
+    def generate_structured(
+        self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
+    ) -> LLMStructuredT:
+        params = tiny_prompt_to_gemini_params(llm_input)
+        config = tiny_attributes_to_gemini_config(
+            llm_input,
+            self.temperature,
+            structured_output=output_schema,
+        )
+
+        chat = self._sync_client.chats.create(
+            model=self.model_name,
+            config=config,
+            history=params['history'],
+        )
+        res = chat.send_message(params['message'])
+        tiny_result = gemini_response_to_tiny_result(res)
+        for message in tiny_result.tiny_iter():
+            if (content := getattr(message, 'content', None)):
+                try:
+                    return output_schema.model_validate_json(content)
+                except Exception:
+                    pass
+
+        raise ValueError('No valid structured output found in Gemini response.')
+
+    async def agenerate_structured(
+        self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
+    ) -> LLMStructuredT:
+        params = tiny_prompt_to_gemini_params(llm_input)
+        config = tiny_attributes_to_gemini_config(
+            llm_input,
+            self.temperature,
+            structured_output=output_schema,
+        )
+
+        chat = self._async_client.chats.create(
+            model=self.model_name,
+            config=config,
+            history=params['history'],
+        )
+        res = await chat.send_message(params['message'])
+        tiny_result = gemini_response_to_tiny_result(res)
+        for message in tiny_result.tiny_iter():
+            if (content := getattr(message, 'content', None)):
+                try:
+                    return output_schema.model_validate_json(content)
+                except Exception:
+                    pass
+
+        raise ValueError('No valid structured output found in Gemini response.')
 
     def generate_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
@@ -126,9 +214,13 @@ class GeminiLLM():
         gemini_tools = [self._tool_convertor(tool) for tool in tools]
 
         params = tiny_prompt_to_gemini_params(llm_input)
-        config = tiny_attributes_to_gemini_config(llm_input, self.temperature, gemini_tools)
+        config = tiny_attributes_to_gemini_config(
+            llm_input,
+            self.temperature,
+            tools=gemini_tools
+        )
 
-        chat = self._client.chats.create(
+        chat = self._sync_client.chats.create(
             model=self.model_name,
             config=config,
             history=params['history'],
@@ -136,3 +228,46 @@ class GeminiLLM():
         res = chat.send_message(params['message'])
 
         return gemini_response_to_tiny_result(res)
+
+    async def agenerate_with_tools(
+        self, llm_input: TinyLLMInput, tools: list[AbstractTool]
+    ) -> TinyLLMResult:
+        gemini_tools = [self._tool_convertor(tool) for tool in tools]
+
+        params = tiny_prompt_to_gemini_params(llm_input)
+        config = tiny_attributes_to_gemini_config(
+            llm_input,
+            self.temperature,
+            tools=gemini_tools
+        )
+
+        chat = self._async_client.chats.create(
+            model=self.model_name,
+            config=config,
+            history=params['history'],
+        )
+        res = await chat.send_message(params['message'])
+
+        return gemini_response_to_tiny_result(res)
+
+    async def stream_with_tools(
+        self, llm_input: TinyLLMInput, tools: list[AbstractTool]
+    ) -> AsyncIterator[TinyLLMResultChunk]:
+        gemini_tools = [self._tool_convertor(tool) for tool in tools]
+
+        params = tiny_prompt_to_gemini_params(llm_input)
+        config = tiny_attributes_to_gemini_config(
+            llm_input,
+            self.temperature,
+            tools=gemini_tools
+        )
+
+        chat = self._async_client.chats.create(
+            model=self.model_name,
+            config=config,
+            history=params['history'],
+        )
+        res = await chat.send_message_stream(params['message'])
+        async for chunk in res:
+            for tiny_chunk in gemini_chunk_to_tiny_chunks(chunk):
+                yield tiny_chunk
