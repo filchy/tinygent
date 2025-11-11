@@ -107,7 +107,6 @@ def tiny_prompt_to_mistralai_params(
 
 def mistralai_result_to_tiny_result(resp: ChatCompletionResponse) -> TinyLLMResult:
     """Convert a Mistral AI ChatCompletionResponse to a TinyLLMResult."""
-    print(resp)
     generations: list[list[Generation]] = []
 
     for choice in resp.choices:

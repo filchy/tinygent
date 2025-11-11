@@ -79,7 +79,18 @@ class ReasoningTool(AbstractTool):
     @property
     def info(self) -> Any:
         inner_info = self._inner.info
-        return replace(inner_info, input_schema=self._input_model)
+
+        new_required_fields = [
+            name
+            for name, fld in self._input_model.model_fields.items()
+            if fld.is_required()
+        ]
+
+        return replace(
+            inner_info,
+            input_schema=self._input_model,
+            required_fields=new_required_fields,
+        )
 
     @property
     def raw(self) -> Callable[..., Any]:

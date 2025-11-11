@@ -10,6 +10,7 @@ from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import PrivateAttr
 
+from tinygent.datamodels.tool import AbstractTool
 from tinygent.types.base import TinyModel
 
 logger = logging.getLogger(__name__)
@@ -188,9 +189,22 @@ class TinyToolResult(BaseMessage[Literal['tool_result']]):
     content: str
     """The content of the tool result message."""
 
+    _raw: AbstractTool = PrivateAttr()
+    """The raw tool that produced the result."""
+
     @property
     def tiny_str(self) -> str:
         return f'Tool Result - {self.call_id}: {self.content}'
+
+    @property
+    def raw(self) -> AbstractTool:
+        """The raw tool that produced the result."""
+        return self._raw
+
+    @raw.setter
+    def raw(self, tool: AbstractTool) -> None:
+        """Set the raw tool that produced the result."""
+        self._raw = tool
 
 
 class TinyHumanMessage(BaseMessage[Literal['human']]):

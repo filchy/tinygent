@@ -29,6 +29,7 @@ dev = [
 brave = ["tiny-brave"]
 openai = ["tiny-openai"]
 mistralai = ["tiny-mistralai"]
+gemini = ["tiny-gemini"]
 chat = ["tiny-chat"]
 
 [project.scripts]
@@ -54,6 +55,7 @@ members = ["packages/*", "."]
 tiny-brave = { workspace = true }
 tiny-openai = { workspace = true }
 tiny-mistralai = { workspace = true }
+tiny-gemini = { workspace = true }
 tiny-chat = { workspace = true }
 
 [tool.hatch.build.targets.wheel]

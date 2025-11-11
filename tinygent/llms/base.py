@@ -25,5 +25,9 @@ def init_llm(model: str, *, model_provider: str | None = None, **kwargs) -> Abst
         from tiny_mistralai import MistralAIConfig
 
         return MistralAIConfig(model=model, **kwargs).build()
+    elif model_provider == 'gemini':
+        from tiny_gemini import GeminiConfig
+
+        return GeminiConfig(model=model, **kwargs).build()
     else:
         raise ValueError(f'Unsupported model provider: {model_provider}')

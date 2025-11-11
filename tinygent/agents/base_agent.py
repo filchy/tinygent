@@ -124,10 +124,12 @@ class TinyBaseAgent(AbstractAgent):
                 run_id=run_id, tool=tool, args=call.arguments, result=result
             )
 
-            return TinyToolResult(
+            tool_result = TinyToolResult(
                 call_id=call.call_id or 'unknown',
                 content=str(result),
             )
+            tool_result.raw = tool
+            return tool_result
         except Exception as e:
             self.on_error(run_id=run_id, e=e)
             raise
