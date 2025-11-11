@@ -1,37 +1,37 @@
 import typing
-from typing import cast
 from typing import Any
+from typing import cast
 
-from langchain_core.messages import AIMessage
-from langchain_core.outputs import ChatGeneration
-from langchain_core.outputs import Generation
-from google.genai.types import AutomaticFunctionCallingConfigDict, Content
-from google.genai.types import FunctionCallingConfigDict
-from google.genai.types import FunctionCallingConfigMode
-from google.genai.types import ToolConfigDict
-from google.genai.types import Tool
 from google.genai.chats import ContentOrDict
 from google.genai.chats import GenerateContentResponse
+from google.genai.types import AutomaticFunctionCallingConfigDict
+from google.genai.types import Content
 from google.genai.types import FunctionCall
+from google.genai.types import FunctionCallingConfigDict
+from google.genai.types import FunctionCallingConfigMode
 from google.genai.types import FunctionResponse
 from google.genai.types import GenerateContentConfigDict
 from google.genai.types import ModelContent
-from google.genai.types import UserContent
 from google.genai.types import Part
+from google.genai.types import Tool
+from google.genai.types import ToolConfigDict
+from google.genai.types import UserContent
+from langchain_core.messages import AIMessage
+from langchain_core.outputs import ChatGeneration
+from langchain_core.outputs import Generation
 
+from tiny_gemini.types import GeminiParams
 from tinygent.datamodels.llm import LLMStructuredT
 from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 from tinygent.datamodels.llm_io_result import TinyLLMResult
-from tinygent.datamodels.messages import TinyChatMessageChunk
 from tinygent.datamodels.messages import TinyChatMessage
-from tinygent.datamodels.messages import TinyToolResult
+from tinygent.datamodels.messages import TinyChatMessageChunk
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyPlanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
-
-from tiny_gemini.types import GeminiParams
+from tinygent.datamodels.messages import TinyToolResult
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm_io_input import TinyLLMInput

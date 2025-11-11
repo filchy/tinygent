@@ -6,19 +6,18 @@ import typing
 from typing import Literal
 
 from google import genai
-from google.genai.types import Tool
-from google.genai.types import Type
 from google.genai.types import FunctionDeclaration
 from google.genai.types import Schema
-
-from tinygent.datamodels.llm import AbstractLLM
-from tinygent.datamodels.llm import AbstractLLMConfig
-from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
+from google.genai.types import Tool
+from google.genai.types import Type
 
 from tiny_gemini.utils import gemini_chunk_to_tiny_chunks
 from tiny_gemini.utils import gemini_response_to_tiny_result
 from tiny_gemini.utils import tiny_attributes_to_gemini_config
 from tiny_gemini.utils import tiny_prompt_to_gemini_params
+from tinygent.datamodels.llm import AbstractLLM
+from tinygent.datamodels.llm import AbstractLLMConfig
+from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm import LLMStructuredT
