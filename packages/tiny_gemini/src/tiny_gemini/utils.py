@@ -2,7 +2,6 @@ import typing
 from typing import Any
 from typing import cast
 
-from google.genai.chats import ContentOrDict
 from google.genai.chats import GenerateContentResponse
 from google.genai.types import AutomaticFunctionCallingConfigDict
 from google.genai.types import Content
@@ -13,8 +12,8 @@ from google.genai.types import FunctionResponse
 from google.genai.types import GenerateContentConfigDict
 from google.genai.types import ModelContent
 from google.genai.types import Part
-from google.genai.types import Tool
 from google.genai.types import ToolConfigDict
+from google.genai.types import ToolListUnionDict
 from google.genai.types import UserContent
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration
@@ -40,7 +39,7 @@ if typing.TYPE_CHECKING:
 def _gemini_parts_to_text(parts: list[Part] | None) -> str:
     """Convert Gemini Parts to a single text string."""
     texts: list[str] = []
-    for part in (parts or []):
+    for part in parts or []:
         if part.text:
             texts.append(part.text)
     return ''.join(texts)
@@ -50,21 +49,18 @@ def _gemini_extract_tool_calls(parts: list[Part] | None) -> list[dict[str, Any]]
     """Extract tool calls from Gemini Parts."""
     tool_calls: list[dict[str, Any]] = []
 
-    for part in (parts or []):
-        if (fc := part.function_call):
-            tool_calls.append({
-                'id': fc.id,
-                'name': fc.name,
-                'args': fc.args,
-                'type': 'tool_call'
-            })
+    for part in parts or []:
+        if fc := part.function_call:
+            tool_calls.append(
+                {'id': fc.id, 'name': fc.name, 'args': fc.args, 'type': 'tool_call'}
+            )
     return tool_calls
 
 
 def tiny_attributes_to_gemini_config(
     prompt: 'TinyLLMInput',
     temperature: float,
-    tools: list[Tool] | None = None,
+    tools: ToolListUnionDict | None = None,
     structured_output: type[LLMStructuredT] | None = None,
 ) -> GenerateContentConfigDict:
     conf_dict: GenerateContentConfigDict = {}
@@ -115,42 +111,38 @@ def tiny_prompt_to_gemini_params(
             params.append(ModelContent(str(msg.content)))
 
         elif isinstance(msg, TinyPlanMessage):
-            params.append(
-                ModelContent(
-                    f'<PLAN>\n{msg.content}\n</PLAN>'
-                )
-            )
+            params.append(ModelContent(f'<PLAN>\n{msg.content}\n</PLAN>'))
 
         elif isinstance(msg, TinyReasoningMessage):
-            params.append(
-                ModelContent(
-                    f'<REASONING>\n{msg.content}\n</REASONING>'
-                )
-            )
+            params.append(ModelContent(f'<REASONING>\n{msg.content}\n</REASONING>'))
 
         elif isinstance(msg, TinyToolCall):
             params.append(
                 ModelContent(
-                    parts=[Part(
-                        function_call=FunctionCall(
-                            id=msg.call_id or 'tool_call_1',
-                            name=msg.tool_name,
-                            args=msg.arguments
+                    parts=[
+                        Part(
+                            function_call=FunctionCall(
+                                id=msg.call_id or 'tool_call_1',
+                                name=msg.tool_name,
+                                args=msg.arguments,
+                            )
                         )
-                    )]
+                    ]
                 )
             )
 
         elif isinstance(msg, TinyToolResult):
             params.append(
                 ModelContent(
-                    parts=[Part(
-                        function_response=FunctionResponse(
-                            id=msg.call_id or 'tool_call_1',
-                            name=msg.raw.info.name,
-                            response={'tool_result': msg.content}
+                    parts=[
+                        Part(
+                            function_response=FunctionResponse(
+                                id=msg.call_id or 'tool_call_1',
+                                name=msg.raw.info.name,
+                                response={'tool_result': msg.content},
+                            )
                         )
-                    )]
+                    ]
                 )
             )
 
@@ -161,16 +153,16 @@ def tiny_prompt_to_gemini_params(
     history = params[:-1]
 
     message = cast(list[Part], message)
-    history = cast(list[ContentOrDict], history)
+    history = cast(list[Content], history)
 
-    return GeminiParams(history=history, message=message)
+    return GeminiParams(history=history, message=message)  # type: ignore
 
 
 def gemini_response_to_tiny_result(resp: GenerateContentResponse) -> TinyLLMResult:
     """Convert Gemini GenerateContentResponse to TinyLLMResult."""
     generations: list[list[Generation]] = []
 
-    for candidate in (resp.candidates or []):
+    for candidate in resp.candidates or []:
         if not (content := candidate.content):
             continue
 
@@ -202,7 +194,9 @@ def gemini_response_to_tiny_result(resp: GenerateContentResponse) -> TinyLLMResu
     )
 
 
-def gemini_chunk_to_tiny_chunks(chunk: GenerateContentResponse) -> list[TinyLLMResultChunk]:
+def gemini_chunk_to_tiny_chunks(
+    chunk: GenerateContentResponse,
+) -> list[TinyLLMResultChunk]:
     """Convert Gemini GenerateContentResponse chunk to TinyLLMResultChunk."""
     chunks: list[TinyLLMResultChunk] = []
 
@@ -211,7 +205,7 @@ def gemini_chunk_to_tiny_chunks(chunk: GenerateContentResponse) -> list[TinyLLMR
         if hasattr(msg, 'content') and isinstance(msg, TinyChatMessage):
             chunks.append(
                 TinyLLMResultChunk(
-                    type="message",
+                    type='message',
                     message=TinyChatMessageChunk(
                         content=msg.content,
                         metadata=msg.metadata,

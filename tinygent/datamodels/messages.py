@@ -200,7 +200,7 @@ class TinyToolResult(BaseMessage[Literal['tool_result']]):
     def raw(self) -> AbstractTool:
         """The raw tool that produced the result."""
         return self._raw
-    
+
     @raw.setter
     def raw(self, tool: AbstractTool) -> None:
         """Set the raw tool that produced the result."""

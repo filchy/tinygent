@@ -81,7 +81,8 @@ class ReasoningTool(AbstractTool):
         inner_info = self._inner.info
 
         new_required_fields = [
-            name for name, fld in self._input_model.model_fields.items()
+            name
+            for name, fld in self._input_model.model_fields.items()
             if fld.is_required()
         ]
 

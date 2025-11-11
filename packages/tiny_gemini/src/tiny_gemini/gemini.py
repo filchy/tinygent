@@ -6,9 +6,9 @@ import typing
 from typing import Literal
 
 from google import genai
-from google.genai.types import FunctionDeclaration
-from google.genai.types import Schema
-from google.genai.types import Tool
+from google.genai.types import FunctionDeclarationDict
+from google.genai.types import SchemaDict
+from google.genai.types import ToolDict
 from google.genai.types import Type
 
 from tiny_gemini.utils import gemini_chunk_to_tiny_chunks
@@ -67,7 +67,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
     def supports_tool_calls(self) -> bool:
         return True
 
-    def _tool_convertor(self, tool: AbstractTool) -> Tool:
+    def _tool_convertor(self, tool: AbstractTool) -> ToolDict:
         info = tool.info
         schema = info.input_schema
 
@@ -91,24 +91,22 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
                     if isinstance(field.annotation, type)
                     else type(field.annotation)
                 )
-                properties[name] = Schema(
+                properties[name] = SchemaDict(
                     type=map_type(field_type),
                     description=field.description,
                 )
 
-        func_declaration = FunctionDeclaration(
+        func_declaration = FunctionDeclarationDict(
             name=info.name,
             description=info.description,
-            parameters=Schema(
+            parameters=SchemaDict(
                 type=Type.OBJECT,
                 properties=properties,
                 required=info.required_fields,
             ),
         )
 
-        return Tool(
-            function_declarations=[func_declaration]
-        )
+        return ToolDict(function_declarations=[func_declaration])
 
     def generate_text(self, llm_input: TinyLLMInput) -> TinyLLMResult:
         params = tiny_prompt_to_gemini_params(llm_input)
@@ -119,7 +117,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
             config=config,
             history=params['history'],
         )
-        res = chat.send_message(params['message'])
+        res = chat.send_message(params['message'])  # type: ignore
 
         return gemini_response_to_tiny_result(res)
 
@@ -135,7 +133,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
             config=config,
             history=params['history'],
         )
-        res = await chat.send_message(params['message'])
+        res = await chat.send_message(params['message'])  # type: ignore
 
         return gemini_response_to_tiny_result(res)
 
@@ -150,7 +148,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
             config=config,
             history=params['history'],
         )
-        res = await chat.send_message_stream(params['message'])
+        res = await chat.send_message_stream(params['message'])  # type: ignore
         async for chunk in res:
             for tiny_chunk in gemini_chunk_to_tiny_chunks(chunk):
                 yield tiny_chunk
@@ -170,10 +168,10 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
             config=config,
             history=params['history'],
         )
-        res = chat.send_message(params['message'])
+        res = chat.send_message(params['message'])  # type: ignore
         tiny_result = gemini_response_to_tiny_result(res)
         for message in tiny_result.tiny_iter():
-            if (content := getattr(message, 'content', None)):
+            if content := getattr(message, 'content', None):
                 try:
                     return output_schema.model_validate_json(content)
                 except Exception:
@@ -196,10 +194,10 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
             config=config,
             history=params['history'],
         )
-        res = await chat.send_message(params['message'])
+        res = await chat.send_message(params['message'])  # type: ignore
         tiny_result = gemini_response_to_tiny_result(res)
         for message in tiny_result.tiny_iter():
-            if (content := getattr(message, 'content', None)):
+            if content := getattr(message, 'content', None):
                 try:
                     return output_schema.model_validate_json(content)
                 except Exception:
@@ -216,7 +214,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
         config = tiny_attributes_to_gemini_config(
             llm_input,
             self.temperature,
-            tools=gemini_tools
+            tools=gemini_tools,  # type: ignore
         )
 
         chat = self._sync_client.chats.create(
@@ -224,7 +222,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
             config=config,
             history=params['history'],
         )
-        res = chat.send_message(params['message'])
+        res = chat.send_message(params['message'])  # type: ignore
 
         return gemini_response_to_tiny_result(res)
 
@@ -237,7 +235,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
         config = tiny_attributes_to_gemini_config(
             llm_input,
             self.temperature,
-            tools=gemini_tools
+            tools=gemini_tools,  # type: ignore
         )
 
         chat = self._async_client.chats.create(
@@ -245,7 +243,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
             config=config,
             history=params['history'],
         )
-        res = await chat.send_message(params['message'])
+        res = await chat.send_message(params['message'])  # type: ignore
 
         return gemini_response_to_tiny_result(res)
 
@@ -258,7 +256,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
         config = tiny_attributes_to_gemini_config(
             llm_input,
             self.temperature,
-            tools=gemini_tools
+            tools=gemini_tools,  # type: ignore
         )
 
         chat = self._async_client.chats.create(
@@ -266,7 +264,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
             config=config,
             history=params['history'],
         )
-        res = await chat.send_message_stream(params['message'])
+        res = await chat.send_message_stream(params['message'])  # type: ignore
         async for chunk in res:
             for tiny_chunk in gemini_chunk_to_tiny_chunks(chunk):
                 yield tiny_chunk
