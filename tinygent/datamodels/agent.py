@@ -8,7 +8,7 @@ from typing import Generic
 from typing import TypeVar
 
 from tinygent.datamodels.agent_hooks import AgentHooks
-from tinygent.types.builder import TinyModelBuildable
+from tinygent.types import TinyModelBuildable
 
 AgentType = TypeVar('AgentType', bound='AbstractAgent')
 

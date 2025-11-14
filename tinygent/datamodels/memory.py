@@ -5,8 +5,8 @@ from typing import TypeVar
 
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.runtime.executors import run_sync_in_executor
-from tinygent.types.base import TinyModel
-from tinygent.types.builder import TinyModelBuildable
+from tinygent.types import TinyModel
+from tinygent.types import TinyModelBuildable
 
 T = TypeVar('T', bound='AbstractMemory')
 

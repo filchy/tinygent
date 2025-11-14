@@ -27,7 +27,7 @@ from tinygent.datamodels.prompt import TinyPromptTemplate
 from tinygent.memory import BufferChatMemory
 from tinygent.runtime.executors import run_async_in_executor
 from tinygent.tools.reasoning_tool import ReasoningTool
-from tinygent.types.base import TinyModel
+from tinygent.types import TinyModel
 from tinygent.utils import render_template
 
 if typing.TYPE_CHECKING:

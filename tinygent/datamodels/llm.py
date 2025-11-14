@@ -7,8 +7,8 @@ import typing
 from typing import Generic
 from typing import TypeVar
 
-from tinygent.types.base import TinyModel
-from tinygent.types.builder import TinyModelBuildable
+from tinygent.types import TinyModel
+from tinygent.types import TinyModelBuildable
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk

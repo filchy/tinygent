@@ -17,8 +17,8 @@ from tinygent.datamodels.memory import AbstractMemoryConfig
 from tinygent.datamodels.tool import AbstractTool
 from tinygent.datamodels.tool import AbstractToolConfig
 from tinygent.runtime.global_registry import GlobalRegistry
-from tinygent.types.base import TinyModel
-from tinygent.types.discriminator import HasDiscriminatorField
+from tinygent.types import HasDiscriminatorField
+from tinygent.types import TinyModel
 
 T = TypeVar('T', bound=HasDiscriminatorField)
 

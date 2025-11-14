@@ -22,7 +22,7 @@ from tinygent.datamodels.messages import TinyToolCall
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.runtime.executors import run_async_in_executor
 from tinygent.tools.reasoning_tool import ReasoningTool
-from tinygent.types.base import TinyModel
+from tinygent.types import TinyModel
 from tinygent.utils import render_template
 
 if typing.TYPE_CHECKING:

@@ -3,7 +3,7 @@ from typing import Literal
 from tinygent.datamodels.messages import TinyChatMessageChunk
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.messages import TinyToolCallChunk
-from tinygent.types.base import TinyModel
+from tinygent.types import TinyModel
 
 
 class TinyLLMResultChunk(TinyModel):

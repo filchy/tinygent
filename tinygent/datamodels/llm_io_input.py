@@ -1,5 +1,5 @@
 from tinygent.datamodels.messages import AllTinyMessages
-from tinygent.types.base import TinyModel
+from tinygent.types import TinyModel
 
 
 class TinyLLMInput(TinyModel):

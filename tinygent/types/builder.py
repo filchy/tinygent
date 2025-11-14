@@ -7,7 +7,7 @@ from typing import TypeVar
 
 from pydantic import ConfigDict
 
-from tinygent.types.base import TinyModel
+from tinygent.types import TinyModel
 
 T = TypeVar('T')
 
