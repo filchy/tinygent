@@ -15,6 +15,7 @@ from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import TinyChatMessage
+from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyChatMessageChunk
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
@@ -145,9 +146,11 @@ class TinyReActAgent(TinyBaseAgent):
 
         messages = TinyLLMInput(
             messages=[
-                *self.memory.chat_messages,
-                TinyHumanMessage(content=render_template(template, variables)),
+                *self.memory.copy_chat_messages,
             ]
+        )
+        messages.add_at_beginning(
+            TinySystemMessage(content=render_template(template, variables)),
         )
 
         result = self.run_llm(
@@ -172,14 +175,16 @@ class TinyReActAgent(TinyBaseAgent):
     ) -> AsyncGenerator[TinyLLMResultChunk, None]:
         messages = TinyLLMInput(
             messages=[
-                *self.memory.chat_messages,
-                TinyHumanMessage(
-                    content=render_template(
-                        self.prompt_template.action.action,
-                        {'reasoning': reasoning, 'tools': self._tools},
-                    )
-                ),
+                *self.memory.copy_chat_messages,
             ]
+        )
+        messages.add_at_beginning(
+            TinySystemMessage(
+                content=render_template(
+                    self.prompt_template.action.action,
+                    {'reasoning': reasoning, 'tools': self._tools},
+                )
+            ),
         )
 
         async for chunk in self.run_llm_stream(
@@ -196,19 +201,21 @@ class TinyReActAgent(TinyBaseAgent):
     ) -> AsyncGenerator[str, None]:
         messages = TinyLLMInput(
             messages=[
-                *self.memory.chat_messages,
-                TinyHumanMessage(
-                    content=render_template(
-                        self.prompt_template.fallback.fallback_answer,
-                        {
-                            'task': task,
-                            'overview': '\n'.join(
-                                iteration.summary for iteration in self._react_iterations
-                            ),
-                        },
-                    )
-                ),
+                *self.memory.copy_chat_messages,
             ]
+        )
+        messages.add_at_beginning(
+            TinySystemMessage(
+                content=render_template(
+                    self.prompt_template.fallback.fallback_answer,
+                    {
+                        'task': task,
+                        'overview': '\n'.join(
+                            iteration.summary for iteration in self._react_iterations
+                        ),
+                    },
+                )
+            ),
         )
 
         async for chunk in self.run_llm_stream(

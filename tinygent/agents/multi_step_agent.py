@@ -153,14 +153,16 @@ class TinyMultiStepAgent(TinyBaseAgent):
 
         messages = TinyLLMInput(
             messages=[
-                *self.memory.chat_messages,
-                TinyHumanMessage(
-                    content=render_template(
-                        template,
-                        variables,
-                    )
-                ),
+                *self.memory.copy_chat_messages,
             ]
+        )
+        messages.add_at_beginning(
+            TinySystemMessage(
+                content=render_template(
+                    template,
+                    variables,
+                )
+            ),
         )
 
         result = self.run_llm(
@@ -188,8 +190,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
     ) -> AsyncGenerator[TinyLLMResultChunk]:
         messages = TinyLLMInput(
             messages=[
-                *self.memory.chat_messages,
-                TinySystemMessage(content=self.acter_prompt.system),
+                *self.memory.copy_chat_messages,
                 TinyHumanMessage(
                     content=render_template(
                         self.acter_prompt.final_answer,
@@ -203,6 +204,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
                     )
                 ),
             ]
+        )
+        messages.add_at_beginning(
+            TinySystemMessage(content=self.acter_prompt.system),
         )
 
         async for chunk in self.run_llm_stream(
@@ -219,18 +223,20 @@ class TinyMultiStepAgent(TinyBaseAgent):
     ) -> AsyncGenerator[TinyChatMessageChunk]:
         messages = TinyLLMInput(
             messages=[
-                *self.memory.chat_messages,
-                TinyHumanMessage(
-                    content=render_template(
-                        self.fallback_prompt.fallback_answer,
-                        {
-                            'task': task,
-                            'history': self.memory.load_variables(),
-                            'steps': self._planned_steps,
-                        },
-                    )
-                ),
+                *self.memory.copy_chat_messages,
             ]
+        )
+        messages.add_at_beginning(
+            TinyHumanMessage(
+                content=render_template(
+                    self.fallback_prompt.fallback_answer,
+                    {
+                        'task': task,
+                        'history': self.memory.load_variables(),
+                        'steps': self._planned_steps,
+                    },
+                )
+            ),
         )
 
         async for chunk in self.run_llm_stream(
