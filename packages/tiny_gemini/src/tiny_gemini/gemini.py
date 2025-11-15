@@ -64,6 +64,13 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
         self.temperature = temperature
 
     @property
+    def config(self) -> GeminiConfig:
+        return GeminiConfig(
+            model=self.model_name,
+            temperature=self.temperature,
+        )
+
+    @property
     def supports_tool_calls(self) -> bool:
         return True
 

@@ -76,6 +76,15 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         self.timeout = timeout
 
     @property
+    def config(self) -> OpenAIConfig:
+        return OpenAIConfig(
+            model=self.model_name,
+            base_url=self.base_url,
+            temperature=self.temperature,
+            timeout=self.timeout,
+        )
+
+    @property
     def supports_tool_calls(self) -> bool:
         return True
 

@@ -45,6 +45,12 @@ class AbstractLLM(ABC, Generic[LLMConfigT]):
 
     @property
     @abstractmethod
+    def config(self) -> LLMConfigT:
+        """Return the configuration of the LLM."""
+        raise NotImplementedError('Subclasses must implement this method.')
+
+    @property
+    @abstractmethod
     def supports_tool_calls(self) -> bool:
         """Indicate whether the LLM supports tool calls."""
         raise NotImplementedError('Subclasses must implement this method.')
