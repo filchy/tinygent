@@ -21,6 +21,9 @@ from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.runtime.executors import run_async_in_executor
+from tinygent.telemetry.decorators import tiny_trace
+from tinygent.telemetry.otel import set_tiny_attributes
+from tinygent.telemetry.otel import tiny_trace_span
 from tinygent.tools.reasoning_tool import ReasoningTool
 from tinygent.types import TinyModel
 from tinygent.utils import render_template
@@ -120,6 +123,7 @@ class TinyReActAgent(TinyBaseAgent):
 
         self.memory = memory
 
+    @tiny_trace('react_agent_reasoning')
     def _stream_reasoning(
         self, run_id: str, task: str
     ) -> TinyChatMessage | TinyReasoningMessage:
@@ -153,8 +157,16 @@ class TinyReActAgent(TinyBaseAgent):
             output_schema=TinyReasoningOutcome,
         )
 
+        set_tiny_attributes(
+            {
+                'agent.reasoning.type': result.type,
+                'agent.reasoning.content': result.content,
+            }
+        )
+
         return TinyReasoningMessage(content=result.content)
 
+    @tiny_trace('react_agent_action')
     async def _stream_action(
         self, run_id: str, reasoning: str
     ) -> AsyncGenerator[TinyLLMResultChunk, None]:
@@ -178,6 +190,7 @@ class TinyReActAgent(TinyBaseAgent):
         ):
             yield chunk
 
+    @tiny_trace('react_agent_fallback')
     async def _stream_fallback(
         self, run_id: str, task: str
     ) -> AsyncGenerator[str, None]:
@@ -207,9 +220,19 @@ class TinyReActAgent(TinyBaseAgent):
                 assert isinstance(chunk.message, TinyChatMessageChunk)
                 yield chunk.message.content
 
+    @tiny_trace('agent_run')
     async def _run_agent(
         self, input_text: str, run_id: str
     ) -> AsyncGenerator[str, None]:
+        set_tiny_attributes(
+            {
+                'agent.type': 'react',
+                'agent.max_iterations': str(self.max_iterations),
+                'agent.run_id': run_id,
+                'agent.input_text': input_text,
+            }
+        )
+
         self._iteration_number = 1
         returned_final_answer: bool = False
         yielded_final_answer: str = ''
@@ -219,101 +242,108 @@ class TinyReActAgent(TinyBaseAgent):
         while not returned_final_answer and (
             self._iteration_number <= self.max_iterations
         ):
-            logger.debug('--- ITERATION %d ---', self._iteration_number)
+            with tiny_trace_span(
+                'react_agent_single_iteration', iteration=self._iteration_number
+            ):
+                logger.debug('--- ITERATION %d ---', self._iteration_number)
 
-            try:
-                reasoning_result = self._stream_reasoning(run_id=run_id, task=input_text)
-                logger.debug(
-                    '[%d. ITERATION - Reasoning Result]: %s',
-                    self._iteration_number,
-                    reasoning_result.content,
-                )
-
-                if isinstance(reasoning_result, TinyChatMessage):
+                try:
+                    reasoning_result = self._stream_reasoning(
+                        run_id=run_id, task=input_text
+                    )
                     logger.debug(
-                        '[%d. ITERATION - Reasoning Final Answer]: %s',
+                        '[%d. ITERATION - Reasoning Result]: %s',
                         self._iteration_number,
                         reasoning_result.content,
                     )
-                    returned_final_answer = True
 
-                    self.memory.save_context(reasoning_result)
+                    if isinstance(reasoning_result, TinyChatMessage):
+                        logger.debug(
+                            '[%d. ITERATION - Reasoning Final Answer]: %s',
+                            self._iteration_number,
+                            reasoning_result.content,
+                        )
+                        returned_final_answer = True
 
-                    yield reasoning_result.content
+                        self.memory.save_context(reasoning_result)
 
-                else:
-                    logger.debug(
-                        '[%d. ITERATION - Streaming Action]', self._iteration_number
-                    )
+                        yield reasoning_result.content
 
-                    tool_calls: list[TinyToolCall] = []
-                    async for msg in self._stream_action(
-                        run_id=run_id, reasoning=reasoning_result.content
-                    ):
-                        if msg.is_message and isinstance(
-                            msg.message, TinyChatMessageChunk
+                    else:
+                        logger.debug(
+                            '[%d. ITERATION - Streaming Action]', self._iteration_number
+                        )
+
+                        tool_calls: list[TinyToolCall] = []
+                        async for msg in self._stream_action(
+                            run_id=run_id, reasoning=reasoning_result.content
                         ):
-                            returned_final_answer = True
-                            yielded_final_answer += msg.message.content
+                            if msg.is_message and isinstance(
+                                msg.message, TinyChatMessageChunk
+                            ):
+                                returned_final_answer = True
+                                yielded_final_answer += msg.message.content
 
-                            yield msg.message.content
+                                yield msg.message.content
 
-                        elif msg.is_tool_call and isinstance(
-                            msg.full_tool_call, TinyToolCall
-                        ):
-                            full_tc = msg.full_tool_call
-                            called_tool = self.get_tool(full_tc.tool_name)
-                            if called_tool:
-                                tool_result = self.run_tool(
-                                    run_id=run_id, tool=called_tool, call=full_tc
-                                )
-
-                                self.memory.save_context(full_tc)
-                                self.memory.save_context(tool_result)
-
-                                tool_calls.append(full_tc)
-
-                                if isinstance(called_tool, ReasoningTool):
-                                    reasoning = full_tc.arguments.get('reasoning', '')
-                                    logger.debug(
-                                        '[%d. ITERATION - Tool Reasoning]: %s',
-                                        self._iteration_number,
-                                        reasoning,
+                            elif msg.is_tool_call and isinstance(
+                                msg.full_tool_call, TinyToolCall
+                            ):
+                                full_tc = msg.full_tool_call
+                                called_tool = self.get_tool(full_tc.tool_name)
+                                if called_tool:
+                                    tool_result = self.run_tool(
+                                        run_id=run_id, tool=called_tool, call=full_tc
                                     )
-                                    self.on_tool_reasoning(
-                                        run_id=run_id, reasoning=reasoning
+
+                                    self.memory.save_context(full_tc)
+                                    self.memory.save_context(tool_result)
+
+                                    tool_calls.append(full_tc)
+
+                                    if isinstance(called_tool, ReasoningTool):
+                                        reasoning = full_tc.arguments.get(
+                                            'reasoning', ''
+                                        )
+                                        logger.debug(
+                                            '[%d. ITERATION - Tool Reasoning]: %s',
+                                            self._iteration_number,
+                                            reasoning,
+                                        )
+                                        self.on_tool_reasoning(
+                                            run_id=run_id, reasoning=reasoning
+                                        )
+                                else:
+                                    logger.error(
+                                        'Tool %s not found. Skipping tool call.',
+                                        full_tc.tool_name,
                                     )
-                            else:
-                                logger.error(
-                                    'Tool %s not found. Skipping tool call.',
+
+                                logger.debug(
+                                    '[%s. ITERATION - Tool Call]: %s(%s) = %s',
+                                    self._iteration_number,
                                     full_tc.tool_name,
+                                    full_tc.arguments,
+                                    full_tc.result,
                                 )
 
-                            logger.debug(
-                                '[%s. ITERATION - Tool Call]: %s(%s) = %s',
-                                self._iteration_number,
-                                full_tc.tool_name,
-                                full_tc.arguments,
-                                full_tc.result,
+                        if yielded_final_answer:
+                            self.memory.save_context(
+                                TinyChatMessage(content=yielded_final_answer)
                             )
 
-                    if yielded_final_answer:
-                        self.memory.save_context(
-                            TinyChatMessage(content=yielded_final_answer)
+                        self._react_iterations.append(
+                            self.TinyReactIteration(
+                                iteration_number=self._iteration_number,
+                                tool_calls=tool_calls,
+                                reasoning=reasoning_result.content,
+                            )
                         )
-
-                    self._react_iterations.append(
-                        self.TinyReactIteration(
-                            iteration_number=self._iteration_number,
-                            tool_calls=tool_calls,
-                            reasoning=reasoning_result.content,
-                        )
-                    )
-            except Exception as e:
-                self.on_error(run_id=run_id, e=e)
-                raise e
-            finally:
-                self._iteration_number += 1
+                except Exception as e:
+                    self.on_error(run_id=run_id, e=e)
+                    raise e
+                finally:
+                    self._iteration_number += 1
 
         if not returned_final_answer:
             logger.warning(

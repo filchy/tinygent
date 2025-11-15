@@ -27,7 +27,7 @@ from tinygent.datamodels.prompt import TinyPromptTemplate
 from tinygent.memory import BufferChatMemory
 from tinygent.runtime.executors import run_async_in_executor
 from tinygent.telemetry.decorators import tiny_trace
-from tinygent.telemetry.otel import set_tiny_attribute
+from tinygent.telemetry.otel import set_tiny_attributes
 from tinygent.telemetry.otel import tiny_trace_span
 from tinygent.tools.reasoning_tool import ReasoningTool
 from tinygent.types import TinyModel
@@ -174,10 +174,15 @@ class TinyMultiStepAgent(TinyBaseAgent):
         for step in result.planned_steps:
             yield TinyPlanMessage(content=step)
 
-        set_tiny_attribute('agent.planner.planned_steps', str(result.planned_steps))
-        set_tiny_attribute('agent.planner.reasoning', result.reasoning)
+        set_tiny_attributes(
+            {
+                'agent.planner.planned_steps': str(result.planned_steps),
+                'agent.planner.num_planned_steps': str(len(result.planned_steps)),
+                'agent.planner.reasoning': result.reasoning,
+            }
+        )
 
-    @tiny_trace('multi_step_agent_action_execution')
+    @tiny_trace('multi_step_agent_action')
     async def _stream_action(
         self, run_id: str, task: str
     ) -> AsyncGenerator[TinyLLMResultChunk]:
@@ -208,7 +213,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
         ):
             yield chunk
 
-    @tiny_trace('multi_step_agent_fallback_answer')
+    @tiny_trace('multi_step_agent_fallback')
     async def _stream_fallback_answer(
         self, run_id: str, task: str
     ) -> AsyncGenerator[TinyChatMessageChunk]:
@@ -234,13 +239,17 @@ class TinyMultiStepAgent(TinyBaseAgent):
             if chunk.is_message and isinstance(chunk.message, TinyChatMessageChunk):
                 yield chunk.message
 
-    @tiny_trace('multi_step_agent_run')
+    @tiny_trace('agent_run')
     async def _run_agent(self, input_text: str, run_id: str) -> AsyncGenerator[str]:
-        set_tiny_attribute('agent.type', 'multistep')
-        set_tiny_attribute('agent.max_iterations', str(self.max_iterations))
-        set_tiny_attribute('agent.plan_interval', str(self.plan_interval))
-        set_tiny_attribute('agent.run_id', run_id)
-        set_tiny_attribute('agent.input_text', input_text)
+        set_tiny_attributes(
+            {
+                'agent.type': 'multistep',
+                'agent.max_iterations': str(self.max_iterations),
+                'agent.plan_interval': str(self.plan_interval),
+                'agent.run_id': run_id,
+                'agent.input_text': input_text,
+            }
+        )
 
         self._iteration_number = 1
         returned_final_answer: bool = False

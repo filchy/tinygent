@@ -30,6 +30,7 @@ from tinygent.datamodels.tool import AbstractToolConfig
 from tinygent.memory.buffer_chat_memory import BufferChatMemoryConfig
 from tinygent.telemetry.decorators import tiny_trace
 from tinygent.telemetry.otel import set_tiny_attribute
+from tinygent.telemetry.otel import set_tiny_attributes
 
 T = TypeVar('T', bound='AbstractAgent')
 
@@ -83,12 +84,14 @@ class TinyBaseAgent(AbstractAgent):
     def run_llm(
         self, run_id: str, fn: Callable, llm_input: TinyLLMInput, **kwargs
     ) -> Any:
-        set_tiny_attribute('llm.model', str(self.llm.config.model_dump()))
-        set_tiny_attribute('llm.stream', 'true')
-        set_tiny_attribute(
-            'llm.messages.data', str([m.tiny_str for m in llm_input.messages])
+        set_tiny_attributes(
+            {
+                'llm.model': str(self.llm.config.model_dump()),
+                'llm.stream': 'false',
+                'llm.messages.data': str([m.tiny_str for m in llm_input.messages]),
+                'llm.messages.num_messages': str(len(llm_input.messages)),
+            }
         )
-        set_tiny_attribute('llm.messages.num_messages', str(len(llm_input.messages)))
 
         self.on_before_llm_call(run_id=run_id, llm_input=llm_input)
         try:
@@ -111,9 +114,14 @@ class TinyBaseAgent(AbstractAgent):
         llm_input: TinyLLMInput,
         **kwargs: Any,
     ) -> AsyncGenerator[TinyLLMResultChunk, None]:
-        set_tiny_attribute('llm.model', str(self.llm.config.model_dump()))
-        set_tiny_attribute('llm.stream', 'true')
-        set_tiny_attribute('llm.history', str([m.tiny_str for m in llm_input.messages]))
+        set_tiny_attributes(
+            {
+                'llm.model': str(self.llm.config.model_dump()),
+                'llm.stream': 'true',
+                'llm.messages.data': str([m.tiny_str for m in llm_input.messages]),
+                'llm.messages.num_messages': str(len(llm_input.messages)),
+            }
+        )
 
         self.on_before_llm_call(run_id=run_id, llm_input=llm_input)
         try:
@@ -123,7 +131,9 @@ class TinyBaseAgent(AbstractAgent):
             if isinstance(result, Awaitable):
                 result = await result
 
+            all_chunks = []
             async for chunk in result:
+                all_chunks.append(chunk)
                 yield chunk
 
             self.on_after_llm_call(run_id=run_id, llm_input=llm_input, result=None)
@@ -135,8 +145,12 @@ class TinyBaseAgent(AbstractAgent):
     def run_tool(
         self, run_id: str, tool: AbstractTool, call: TinyToolCall
     ) -> TinyToolResult:
-        set_tiny_attribute('tool.name', tool.info.name)
-        set_tiny_attribute('tool.arguments', str(call.arguments))
+        set_tiny_attributes(
+            {
+                'tool.name': tool.info.name,
+                'tool.arguments': str(call.arguments),
+            }
+        )
 
         self.on_before_tool_call(run_id=run_id, tool=tool, args=call.arguments)
         try:

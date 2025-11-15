@@ -53,6 +53,15 @@ def set_tiny_attribute(key: str, value: str) -> None:
     span.set_attribute(key, value)
 
 
+def set_tiny_attributes(attrs: dict[str, Any]) -> None:
+    if not _is_enabled():
+        return
+
+    span = get_current_span()
+    for k, v in attrs.items():
+        span.set_attribute(k, v)
+
+
 @contextmanager
 def tiny_trace_span(name: str, **attrs: Any):
     tracer = get_tiny_tracer(name)
