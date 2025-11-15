@@ -2,7 +2,7 @@ from typing import List
 
 from pydantic import Field
 
-from tinygent.types.base import TinyModel
+from tinygent.types import TinyModel
 
 
 class Query(TinyModel):

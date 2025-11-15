@@ -25,7 +25,7 @@ Each tool accepts a single Pydantic model as input. The `@tool` decorator wraps 
 
 ```python
 from pydantic import Field
-from tinygent.types.base import TinyModel
+from tinygent.types import TinyModel
 from tinygent.tools.tool import tool
 
 

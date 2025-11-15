@@ -11,7 +11,7 @@ from typing import TextIO
 from typing import TypeVar
 from typing import cast
 
-from tinygent.types.base import TinyModel
+from tinygent.types import TinyModel
 
 P = TypeVar('P', bound=TinyModel)
 R = TypeVar('R')

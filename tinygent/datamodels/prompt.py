@@ -3,7 +3,7 @@ from typing import ClassVar
 
 from pydantic import model_validator
 
-from tinygent.types.base import TinyModel
+from tinygent.types import TinyModel
 from tinygent.utils.jinja_utils import validate_template
 
 

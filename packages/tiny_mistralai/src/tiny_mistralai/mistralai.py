@@ -75,6 +75,15 @@ class MistralAILLM(AbstractLLM[MistralAIConfig]):
         self.timeout = timeout
 
     @property
+    def config(self) -> MistralAIConfig:
+        return MistralAIConfig(
+            model=self.model_name,
+            safe_prompt=self.safe_prompt,
+            temperature=self.temperature,
+            timeout=self.timeout,
+        )
+
+    @property
     def supports_tool_calls(self) -> bool:
         return True  # INFO: Not all models may support tool calls, but mistralai api error if not.
 

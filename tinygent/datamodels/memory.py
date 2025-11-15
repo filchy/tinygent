@@ -5,8 +5,8 @@ from typing import TypeVar
 
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.runtime.executors import run_sync_in_executor
-from tinygent.types.base import TinyModel
-from tinygent.types.builder import TinyModelBuildable
+from tinygent.types import TinyModel
+from tinygent.types import TinyModelBuildable
 
 T = TypeVar('T', bound='AbstractMemory')
 
@@ -24,8 +24,8 @@ class AbstractMemory(TinyModel, ABC):
 
     @property
     @abstractmethod
-    def chat_messages(self) -> list[AllTinyMessages]:
-        """Get the chat messages stored in memory."""
+    def copy_chat_messages(self) -> list[AllTinyMessages]:
+        """Return a copy of the chat messages stored in memory."""
         raise NotImplementedError('Subclasses must implement this method.')
 
     @property

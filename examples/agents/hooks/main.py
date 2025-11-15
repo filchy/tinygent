@@ -7,7 +7,7 @@ from tinygent.agents.multi_step_agent import PlanPromptTemplate
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
 from tinygent.llms.base import init_llm
 from tinygent.tools import reasoning_tool
-from tinygent.types.base import TinyModel
+from tinygent.types import TinyModel
 from tinygent.utils.color_printer import TinyColorPrinter
 
 

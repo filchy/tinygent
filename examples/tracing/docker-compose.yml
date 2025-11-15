@@ -1,0 +1,13 @@
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.47
+    container_name: jaeger
+    environment:
+      - COLLECTOR_OTLP_GRPC_ENABLED=true      # enable gRPC OTLP
+      - COLLECTOR_OTLP_HTTP_ENABLED=true      # enable HTTP OTLP
+      - LOG_LEVEL=debug
+    ports:
+      - "16686:16686"   # web UI
+      - "4317:4317"     # OTLP gRPC (Python exporter uses this)
+      - "4318:4318"     # OTLP HTTP
+    restart: unless-stopped

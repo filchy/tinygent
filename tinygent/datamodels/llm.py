@@ -7,8 +7,8 @@ import typing
 from typing import Generic
 from typing import TypeVar
 
-from tinygent.types.base import TinyModel
-from tinygent.types.builder import TinyModelBuildable
+from tinygent.types import TinyModel
+from tinygent.types import TinyModelBuildable
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
@@ -42,6 +42,12 @@ class AbstractLLM(ABC, Generic[LLMConfigT]):
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the LLM with the given configuration."""
         pass
+
+    @property
+    @abstractmethod
+    def config(self) -> LLMConfigT:
+        """Return the configuration of the LLM."""
+        raise NotImplementedError('Subclasses must implement this method.')
 
     @property
     @abstractmethod

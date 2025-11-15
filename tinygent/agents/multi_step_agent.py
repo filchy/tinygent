@@ -26,8 +26,11 @@ from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.prompt import TinyPromptTemplate
 from tinygent.memory import BufferChatMemory
 from tinygent.runtime.executors import run_async_in_executor
+from tinygent.telemetry.decorators import tiny_trace
+from tinygent.telemetry.otel import set_tiny_attributes
+from tinygent.telemetry.otel import tiny_trace_span
 from tinygent.tools.reasoning_tool import ReasoningTool
-from tinygent.types.base import TinyModel
+from tinygent.types import TinyModel
 from tinygent.utils import render_template
 
 if typing.TYPE_CHECKING:
@@ -124,6 +127,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
         self.plan_prompt = prompt_template.plan
         self.fallback_prompt = prompt_template.fallback
 
+    @tiny_trace('multi_step_agent_steps_creation')
     def _stream_steps(
         self, run_id: str, task: str
     ) -> Generator[TinyPlanMessage | TinyReasoningMessage]:
@@ -149,14 +153,16 @@ class TinyMultiStepAgent(TinyBaseAgent):
 
         messages = TinyLLMInput(
             messages=[
-                *self.memory.chat_messages,
-                TinyHumanMessage(
-                    content=render_template(
-                        template,
-                        variables,
-                    )
-                ),
+                *self.memory.copy_chat_messages,
             ]
+        )
+        messages.add_at_beginning(
+            TinySystemMessage(
+                content=render_template(
+                    template,
+                    variables,
+                )
+            ),
         )
 
         result = self.run_llm(
@@ -170,13 +176,21 @@ class TinyMultiStepAgent(TinyBaseAgent):
         for step in result.planned_steps:
             yield TinyPlanMessage(content=step)
 
+        set_tiny_attributes(
+            {
+                'agent.planner.planned_steps': str(result.planned_steps),
+                'agent.planner.num_planned_steps': str(len(result.planned_steps)),
+                'agent.planner.reasoning': result.reasoning,
+            }
+        )
+
+    @tiny_trace('multi_step_agent_action')
     async def _stream_action(
         self, run_id: str, task: str
     ) -> AsyncGenerator[TinyLLMResultChunk]:
         messages = TinyLLMInput(
             messages=[
-                *self.memory.chat_messages,
-                TinySystemMessage(content=self.acter_prompt.system),
+                *self.memory.copy_chat_messages,
                 TinyHumanMessage(
                     content=render_template(
                         self.acter_prompt.final_answer,
@@ -191,6 +205,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
                 ),
             ]
         )
+        messages.add_at_beginning(
+            TinySystemMessage(content=self.acter_prompt.system),
+        )
 
         async for chunk in self.run_llm_stream(
             run_id=run_id,
@@ -200,23 +217,26 @@ class TinyMultiStepAgent(TinyBaseAgent):
         ):
             yield chunk
 
+    @tiny_trace('multi_step_agent_fallback')
     async def _stream_fallback_answer(
         self, run_id: str, task: str
     ) -> AsyncGenerator[TinyChatMessageChunk]:
         messages = TinyLLMInput(
             messages=[
-                *self.memory.chat_messages,
-                TinyHumanMessage(
-                    content=render_template(
-                        self.fallback_prompt.fallback_answer,
-                        {
-                            'task': task,
-                            'history': self.memory.load_variables(),
-                            'steps': self._planned_steps,
-                        },
-                    )
-                ),
+                *self.memory.copy_chat_messages,
             ]
+        )
+        messages.add_at_beginning(
+            TinyHumanMessage(
+                content=render_template(
+                    self.fallback_prompt.fallback_answer,
+                    {
+                        'task': task,
+                        'history': self.memory.load_variables(),
+                        'steps': self._planned_steps,
+                    },
+                )
+            ),
         )
 
         async for chunk in self.run_llm_stream(
@@ -225,7 +245,18 @@ class TinyMultiStepAgent(TinyBaseAgent):
             if chunk.is_message and isinstance(chunk.message, TinyChatMessageChunk):
                 yield chunk.message
 
+    @tiny_trace('agent_run')
     async def _run_agent(self, input_text: str, run_id: str) -> AsyncGenerator[str]:
+        set_tiny_attributes(
+            {
+                'agent.type': 'multistep',
+                'agent.max_iterations': str(self.max_iterations),
+                'agent.plan_interval': str(self.plan_interval),
+                'agent.run_id': run_id,
+                'agent.input_text': input_text,
+            }
+        )
+
         self._iteration_number = 1
         returned_final_answer: bool = False
         yielded_final_answer: str = ''
@@ -235,91 +266,100 @@ class TinyMultiStepAgent(TinyBaseAgent):
         while not returned_final_answer and (
             self._iteration_number <= self.max_iterations
         ):
-            logger.debug('--- ITERATION %d ---', self._iteration_number)
-
-            if self._iteration_number == 1 or (
-                (self._iteration_number - 1) % self.plan_interval == 0
+            with tiny_trace_span(
+                'multi_step_agent_single_iteration', iteration=self._iteration_number
             ):
-                # Create new plan
-                plan_generator = self._stream_steps(run_id=run_id, task=input_text)
-                self._planned_steps = []
+                logger.debug('--- ITERATION %d ---', self._iteration_number)
 
-                for planner_msg in plan_generator:
-                    if isinstance(planner_msg, TinyPlanMessage):
-                        logger.debug(
-                            '[%d. ITERATION - Plan]: %s',
-                            self._iteration_number,
-                            planner_msg.content,
-                        )
-                        self.on_plan(run_id=run_id, plan=planner_msg.content)
-                        self._planned_steps.append(planner_msg)
+                if self._iteration_number == 1 or (
+                    (self._iteration_number - 1) % self.plan_interval == 0
+                ):
+                    # Create new plan
+                    plan_generator = self._stream_steps(run_id=run_id, task=input_text)
+                    self._planned_steps = []
 
-                    if isinstance(planner_msg, TinyReasoningMessage):
-                        logger.debug(
-                            '[%d. ITERATION - Reasoning]: %s',
-                            self._iteration_number,
-                            planner_msg.content,
-                        )
-                        self.on_reasoning(run_id=run_id, reasoning=planner_msg.content)
-                    self.memory.save_context(planner_msg)
-
-            try:
-                # Execute action
-                async for msg in self._stream_action(run_id=run_id, task=input_text):
-                    if msg.is_message and isinstance(msg.message, TinyChatMessageChunk):
-                        returned_final_answer = True
-                        yielded_final_answer += msg.message.content
-
-                        yield msg.message.content
-
-                    elif msg.is_tool_call and isinstance(
-                        msg.full_tool_call, TinyToolCall
-                    ):
-                        tool_call: TinyToolCall = msg.full_tool_call
-                        called_tool = self.get_tool(tool_call.tool_name)
-
-                        self.memory.save_context(tool_call)
-                        if called_tool:
-                            self.memory.save_context(
-                                self.run_tool(
-                                    run_id=run_id, tool=called_tool, call=tool_call
-                                )
-                            )
-                            self._tool_calls.append(tool_call)
-                        else:
-                            logger.error(
-                                'Tool %s not found. Skipping tool call.',
-                                tool_call.tool_name,
-                            )
-
-                        if isinstance(called_tool, ReasoningTool):
-                            reasoning = tool_call.arguments.get('reasoning', '')
+                    for planner_msg in plan_generator:
+                        if isinstance(planner_msg, TinyPlanMessage):
                             logger.debug(
-                                '[%d. ITERATION - Tool Reasoning]: %s',
+                                '[%d. ITERATION - Plan]: %s',
                                 self._iteration_number,
-                                reasoning,
+                                planner_msg.content,
                             )
-                            self.on_tool_reasoning(run_id=run_id, reasoning=reasoning)
+                            self.on_plan(run_id=run_id, plan=planner_msg.content)
+                            self._planned_steps.append(planner_msg)
 
-                        logger.debug(
-                            '[%s. ITERATION - Tool Call]: %s(%s) = %s',
-                            self._iteration_number,
-                            tool_call.tool_name,
-                            tool_call.arguments,
-                            tool_call.result,
-                        )
+                        if isinstance(planner_msg, TinyReasoningMessage):
+                            logger.debug(
+                                '[%d. ITERATION - Reasoning]: %s',
+                                self._iteration_number,
+                                planner_msg.content,
+                            )
+                            self.on_reasoning(
+                                run_id=run_id, reasoning=planner_msg.content
+                            )
+                        self.memory.save_context(planner_msg)
 
-                if returned_final_answer:
-                    if yielded_final_answer:
-                        self.memory.save_context(
-                            TinyChatMessage(content=yielded_final_answer)
-                        )
-                    break
-            except Exception as e:
-                self.on_error(run_id=run_id, e=e)
-                raise e
-            finally:
-                self._iteration_number += 1
+                try:
+                    # Execute action
+                    async for msg in self._stream_action(run_id=run_id, task=input_text):
+                        if msg.is_message and isinstance(
+                            msg.message, TinyChatMessageChunk
+                        ):
+                            returned_final_answer = True
+                            yielded_final_answer += msg.message.content
+
+                            yield msg.message.content
+
+                        elif msg.is_tool_call and isinstance(
+                            msg.full_tool_call, TinyToolCall
+                        ):
+                            tool_call: TinyToolCall = msg.full_tool_call
+                            called_tool = self.get_tool(tool_call.tool_name)
+
+                            self.memory.save_context(tool_call)
+                            if called_tool:
+                                self.memory.save_context(
+                                    self.run_tool(
+                                        run_id=run_id, tool=called_tool, call=tool_call
+                                    )
+                                )
+                                self._tool_calls.append(tool_call)
+                            else:
+                                logger.error(
+                                    'Tool %s not found. Skipping tool call.',
+                                    tool_call.tool_name,
+                                )
+
+                            if isinstance(called_tool, ReasoningTool):
+                                reasoning = tool_call.arguments.get('reasoning', '')
+                                logger.debug(
+                                    '[%d. ITERATION - Tool Reasoning]: %s',
+                                    self._iteration_number,
+                                    reasoning,
+                                )
+                                self.on_tool_reasoning(
+                                    run_id=run_id, reasoning=reasoning
+                                )
+
+                            logger.debug(
+                                '[%s. ITERATION - Tool Call]: %s(%s) = %s',
+                                self._iteration_number,
+                                tool_call.tool_name,
+                                tool_call.arguments,
+                                tool_call.result,
+                            )
+
+                    if returned_final_answer:
+                        if yielded_final_answer:
+                            self.memory.save_context(
+                                TinyChatMessage(content=yielded_final_answer)
+                            )
+                        break
+                except Exception as e:
+                    self.on_error(run_id=run_id, e=e)
+                    raise e
+                finally:
+                    self._iteration_number += 1
 
         if not returned_final_answer:
             logger.warning(

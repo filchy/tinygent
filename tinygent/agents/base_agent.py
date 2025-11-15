@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator
 from collections.abc import AsyncIterator
 from io import StringIO
+import logging
 import textwrap
 from typing import Any
 from typing import Awaitable
@@ -13,9 +14,9 @@ from typing import TypeVar
 
 from pydantic import Field
 
+from tinygent.agents.middleware.hooks import AgentHooks
 from tinygent.datamodels.agent import AbstractAgent
 from tinygent.datamodels.agent import AbstractAgentConfig
-from tinygent.datamodels.agent_hooks import AgentHooks
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
@@ -27,8 +28,14 @@ from tinygent.datamodels.messages import TinyToolResult
 from tinygent.datamodels.tool import AbstractTool
 from tinygent.datamodels.tool import AbstractToolConfig
 from tinygent.memory.buffer_chat_memory import BufferChatMemoryConfig
+from tinygent.telemetry.decorators import tiny_trace
+from tinygent.telemetry.otel import set_tiny_attribute
+from tinygent.telemetry.otel import set_tiny_attributes
 
 T = TypeVar('T', bound='AbstractAgent')
+
+
+logger = logging.getLogger(__name__)
 
 
 class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
@@ -73,9 +80,19 @@ class TinyBaseAgent(AbstractAgent):
     ) -> AbstractTool | None:
         return next((tool for tool in tools if tool.info.name == name), None)
 
+    @tiny_trace('run_llm')
     def run_llm(
         self, run_id: str, fn: Callable, llm_input: TinyLLMInput, **kwargs
     ) -> Any:
+        set_tiny_attributes(
+            {
+                'llm.model': str(self.llm.config.model_dump()),
+                'llm.stream': 'false',
+                'llm.messages.data': str([m.tiny_str for m in llm_input.messages]),
+                'llm.messages.num_messages': str(len(llm_input.messages)),
+            }
+        )
+
         self.on_before_llm_call(run_id=run_id, llm_input=llm_input)
         try:
             result = fn(llm_input=llm_input, **kwargs)
@@ -85,6 +102,7 @@ class TinyBaseAgent(AbstractAgent):
             self.on_error(run_id=run_id, e=e)
             raise
 
+    @tiny_trace('run_llm_stream')
     async def run_llm_stream(
         self,
         run_id: str,
@@ -96,6 +114,15 @@ class TinyBaseAgent(AbstractAgent):
         llm_input: TinyLLMInput,
         **kwargs: Any,
     ) -> AsyncGenerator[TinyLLMResultChunk, None]:
+        set_tiny_attributes(
+            {
+                'llm.model': str(self.llm.config.model_dump()),
+                'llm.stream': 'true',
+                'llm.messages.data': str([m.tiny_str for m in llm_input.messages]),
+                'llm.messages.num_messages': str(len(llm_input.messages)),
+            }
+        )
+
         self.on_before_llm_call(run_id=run_id, llm_input=llm_input)
         try:
             result = fn(llm_input=llm_input, **kwargs)
@@ -104,7 +131,9 @@ class TinyBaseAgent(AbstractAgent):
             if isinstance(result, Awaitable):
                 result = await result
 
+            all_chunks = []
             async for chunk in result:
+                all_chunks.append(chunk)
                 yield chunk
 
             self.on_after_llm_call(run_id=run_id, llm_input=llm_input, result=None)
@@ -112,9 +141,17 @@ class TinyBaseAgent(AbstractAgent):
             self.on_error(run_id=run_id, e=e)
             raise
 
+    @tiny_trace('run_tool')
     def run_tool(
         self, run_id: str, tool: AbstractTool, call: TinyToolCall
     ) -> TinyToolResult:
+        set_tiny_attributes(
+            {
+                'tool.name': tool.info.name,
+                'tool.arguments': str(call.arguments),
+            }
+        )
+
         self.on_before_tool_call(run_id=run_id, tool=tool, args=call.arguments)
         try:
             result = tool(**call.arguments)
@@ -128,6 +165,8 @@ class TinyBaseAgent(AbstractAgent):
                 call_id=call.call_id or 'unknown',
                 content=str(result),
             )
+
+            set_tiny_attribute('tool.result', str(result))
             tool_result.raw = tool
             return tool_result
         except Exception as e:

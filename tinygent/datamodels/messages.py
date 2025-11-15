@@ -11,7 +11,7 @@ from pydantic import Field
 from pydantic import PrivateAttr
 
 from tinygent.datamodels.tool import AbstractTool
-from tinygent.types.base import TinyModel
+from tinygent.types import TinyModel
 
 logger = logging.getLogger(__name__)
 
