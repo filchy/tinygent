@@ -19,7 +19,7 @@ class BaseChatMemory(AbstractMemory, ABC):
 
     @property
     def copy_chat_messages(self) -> list[AllTinyMessages]:
-        return [tiny_deep_copy(msg) for msg in self._chat_history.messages]
+        return [tiny_deep_copy(msg) for msg in self._chat_history.messages]  # type: ignore
 
     def save_context(self, message: AllTinyMessages) -> None:
         self._chat_history.add_message(message)

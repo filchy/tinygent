@@ -15,10 +15,10 @@ from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import TinyChatMessage
-from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyChatMessageChunk
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
+from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.runtime.executors import run_async_in_executor
