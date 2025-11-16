@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 import os
-from typing import Any
+from typing import Iterator
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
@@ -9,6 +9,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.trace import Tracer
 from opentelemetry.trace import get_current_span
+from opentelemetry.util.types import AttributeValue
 
 _tracer_provider: TracerProvider | None = None
 
@@ -45,7 +46,7 @@ def get_tiny_tracer(service_name: str = 'tinygent') -> Tracer:
     return trace.get_tracer(service_name)
 
 
-def set_tiny_attribute(key: str, value: str) -> None:
+def set_tiny_attribute(key: str, value: AttributeValue) -> None:
     if not _is_enabled():
         return
 
@@ -53,7 +54,7 @@ def set_tiny_attribute(key: str, value: str) -> None:
     span.set_attribute(key, value)
 
 
-def set_tiny_attributes(attrs: dict[str, Any]) -> None:
+def set_tiny_attributes(attrs: dict[str, AttributeValue]) -> None:
     if not _is_enabled():
         return
 
@@ -63,7 +64,7 @@ def set_tiny_attributes(attrs: dict[str, Any]) -> None:
 
 
 @contextmanager
-def tiny_trace_span(name: str, **attrs: Any):
+def tiny_trace_span(name: str, **attrs: AttributeValue) -> Iterator[trace.Span]:
     tracer = get_tiny_tracer(name)
     with tracer.start_as_current_span(name) as span:
         for k, v in attrs.items():
