@@ -28,6 +28,8 @@ Once tracing is enabled, all agents and core logic in Tinygent that use the trac
 
 ## Example
 
+The `examples/tracing/main.py` script demonstrates how to create spans, set attributes, and emit nested telemetry using Tinygent utilities.
+
 To run the tracing example:
 
 1. Start the tracing infrastructure:
@@ -36,13 +38,18 @@ cd examples/tracing
 docker-compose up -d
 ```
 
-2. Run your agent with tracing enabled:
+2. Run the telemetry demo script to generate sample spans:
+```bash
+TINY_OTEL_ENABLED=1 uv run examples/tracing/main.py
+```
+
+3. (Optional) Run a full agent with tracing enabled:
 ```bash
 uv sync --extra openai
 TINY_OTEL_ENABLED=1 uv run examples/agents/multi-step/main.py
 ```
 
-3. View traces in the Jaeger UI:
+4. View traces in the Jaeger UI:
    - Open http://localhost:16686 in your browser
    - Select "tinygent" from the service dropdown
    - Click "Find Traces" to see your agent's execution traces
