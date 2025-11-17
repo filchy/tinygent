@@ -39,7 +39,7 @@ class Registry:
         ] = {}
 
     def _rebuild_annotations(self) -> None:
-        from tinygent.types import TinyModelBuildable
+        from tinygent.types.builder import TinyModelBuildable
 
         configs: list[type[TinyModelBuildable]] = []
         configs.extend(cfg for cfg, _ in self._registered_agents.values())

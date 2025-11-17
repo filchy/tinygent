@@ -83,7 +83,7 @@ tiny terminal \
 
 ```python
 from tinygent.tools.tool import tool
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 from pydantic import Field
 
 class WeatherInput(TinyModel):

@@ -14,7 +14,7 @@ from tinygent.datamodels.tool import AbstractToolConfig
 from tinygent.datamodels.tool_info import ToolInfo
 from tinygent.runtime.tool_catalog import GlobalToolCatalog
 from tinygent.tools.tool import Tool
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 
 T = TypeVar('T', bound=TinyModel)
 

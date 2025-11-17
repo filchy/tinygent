@@ -5,7 +5,7 @@ from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.llms.base import init_llm
 from tinygent.tools import reasoning_tool
 from tinygent.tools import tool
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 
 
 class AddInput(TinyModel):

@@ -1,13 +1,18 @@
 import logging
 from typing import ClassVar
 
+from pydantic import ConfigDict
 from pydantic import model_validator
 
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 from tinygent.utils.jinja_utils import validate_template
 
 
 class TinyPromptTemplate(TinyModel):
+    """Base class for prompt templates with template field validation."""
+
+    model_config = ConfigDict(frozen=True)
+
     _template_fields: ClassVar[dict[str, set[str]]] = {}
 
     @model_validator(mode='after')

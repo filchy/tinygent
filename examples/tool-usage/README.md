@@ -23,7 +23,7 @@ This design allows:
 
 ```python
 from pydantic import Field
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 
 class AddInput(TinyModel):
     a: int = Field(..., description='First number to add')

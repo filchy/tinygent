@@ -32,7 +32,7 @@ class ColorFormatter(logging.Formatter):
         return super().format(record)
 
 
-def setup_logger(log_level: str = 'info') -> logging.Logger:
+def setup_logger(log_level: str = 'info', general_log_level: str = 'warning') -> logging.Logger:
     """Set up the logger for the application with colors by level."""
     num_level = LOG_LEVELS.get(log_level.upper(), logging.INFO)
 
@@ -48,6 +48,8 @@ def setup_logger(log_level: str = 'info') -> logging.Logger:
     root_logger.setLevel(num_level)
     root_logger.handlers.clear()
     root_logger.addHandler(handler)
+
+    setup_general_loggers(general_log_level)
 
     return root_logger
 

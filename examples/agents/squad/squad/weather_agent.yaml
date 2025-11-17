@@ -1,19 +1,11 @@
 type: react
-
 max_iterations: 10
-
-memory:
-  type: buffer_window
-  k: 2
-
 llm:
   type: openai
   model: gpt-4o-mini
   temperature: 0.4
-
-prompt_template: !include prompts.yaml
-
+prompt_template: !include ../prompts/weather_agent.yaml
 tools:
   - type: reasoning
-    name: get_weather_mock
+    name: get_weather
     prompt: 'Explain why are you using this tool and what information you expect to get from it.'

@@ -5,6 +5,7 @@ import time
 from typing import Any
 
 from tinygent.telemetry.decorators import tiny_trace
+from tinygent.telemetry.otel import set_tiny_attribute
 from tinygent.telemetry.otel import set_tiny_attributes
 from tinygent.telemetry.otel import setup_tiny_otel
 from tinygent.telemetry.otel import tiny_trace_span
@@ -22,7 +23,7 @@ def load_config() -> dict[str, Any]:
 @tiny_trace('process-step')
 def process_step(step_index: int) -> None:
     """Simulate a unit of work and annotate the active span."""
-    set_tiny_attributes({'step.index': step_index})
+    set_tiny_attribute('step.index', step_index)
     time.sleep(0.05)
 
 
