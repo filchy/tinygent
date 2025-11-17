@@ -15,7 +15,12 @@ from tinygent.telemetry.otel import tiny_trace_span
 def load_config() -> dict[str, Any]:
     """Simulate loading configuration data for an agent."""
     config = {'agent_name': 'demo-agent', 'step_count': 3}
-    set_tiny_attributes({'config.agent_name': config['agent_name'], 'config.step_count': config['step_count']})
+    set_tiny_attributes(
+        {
+            'config.agent_name': config['agent_name'],
+            'config.step_count': config['step_count'],
+        }
+    )
     time.sleep(0.05)
     return config
 
@@ -41,7 +46,9 @@ def main() -> None:
         with tiny_trace_span('finalize', status='ok'):
             time.sleep(0.05)
 
-    print('Demo completed. If tracing is enabled, open http://localhost:16686 to inspect spans.')
+    print(
+        'Demo completed. If tracing is enabled, open http://localhost:16686 to inspect spans.'
+    )
 
 
 if __name__ == '__main__':

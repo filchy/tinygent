@@ -5,11 +5,14 @@ from io import StringIO
 import logging
 import textwrap
 import typing
-from typing import AsyncGenerator, cast
+from typing import AsyncGenerator
 from typing import Literal
+from typing import Self
+from typing import cast
 import uuid
 
 from pydantic import Field
+from pydantic import model_validator
 
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
@@ -21,10 +24,13 @@ from tinygent.datamodels.agent import AbstractAgent
 from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
-from tinygent.datamodels.messages import TinyHumanMessage, TinySquadMemberMessage, TinySystemMessage
+from tinygent.datamodels.messages import TinyHumanMessage
+from tinygent.datamodels.messages import TinySquadMemberMessage
+from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.runtime.executors import run_async_in_executor
 from tinygent.telemetry.decorators import tiny_trace
-from tinygent.telemetry.otel import set_tiny_attributes, tiny_trace_span
+from tinygent.telemetry.otel import set_tiny_attributes
+from tinygent.telemetry.otel import tiny_trace_span
 from tinygent.types.base import TinyModel
 from tinygent.types.prompt_template import TinyPromptTemplate
 from tinygent.utils.jinja_utils import render_template
@@ -41,9 +47,7 @@ class ClassificationQueryResult(TinyModel):
         ..., description='The name of the selected squad member to handle the task.'
     )
 
-    task: str = Field(
-        ..., description='The task assigned to the selected squad member.'
-    )
+    task: str = Field(..., description='The task assigned to the selected squad member.')
 
     reasoning: str = Field(
         ..., description='The reasoning behind the selection of the squad member.'
@@ -86,7 +90,7 @@ class AgentSquadMember:
         return cls(
             name=config.name,
             description=config.description,
-            agent=build_agent(config.agent)
+            agent=build_agent(config.agent),
         )
 
 
@@ -104,11 +108,15 @@ class TinySquadAgentConfig(TinyBaseAgentConfig['TinySquadAgent']):
             prompt_template=self.prompt_template,
             memory=build_memory(self.memory),
             tools=[build_tool(tool_cfg) for tool_cfg in self.tools],
-            squad=[
-                AgentSquadMember.from_config(agent_cfg)
-                for agent_cfg in self.squad
-            ],
+            squad=[AgentSquadMember.from_config(agent_cfg) for agent_cfg in self.squad],
         )
+
+    @model_validator(mode='after')
+    def validate_agent(self) -> Self:
+        if not self.squad or len(self.squad) == 0:
+            raise ValueError('Squad agent must have at least one squad member.')
+
+        return self
 
 
 class TinySquadAgent(TinyBaseAgent):
@@ -137,8 +145,7 @@ class TinySquadAgent(TinyBaseAgent):
 
     def _get_squad_member(self, name: str) -> AgentSquadMember:
         selected_member = next(
-            (member for member in self._squad if member.name == name),
-            None
+            (member for member in self._squad if member.name == name), None
         )
 
         if selected_member is None:
@@ -147,14 +154,13 @@ class TinySquadAgent(TinyBaseAgent):
         return selected_member
 
     @tiny_trace('classify_query')
-    def _classify_query(
-        self, run_id: str, input_text: str
-    ) -> ClassificationQueryResult:
+    def _classify_query(self, run_id: str, input_text: str) -> ClassificationQueryResult:
         _ValidMemberNames = Literal[tuple([member.name for member in self._squad])]  # type: ignore
 
         class _ClassificationQueryResult(TinyModel):
             selected_member: _ValidMemberNames = Field(  # type: ignore
-                ..., description='The name of the selected squad member to handle the task.'
+                ...,
+                description='The name of the selected squad member to handle the task.',
             )
 
             task: str = Field(
@@ -162,14 +168,11 @@ class TinySquadAgent(TinyBaseAgent):
             )
 
             reasoning: str = Field(
-                ..., description='The reasoning behind the selection of the squad member.'
+                ...,
+                description='The reasoning behind the selection of the squad member.',
             )
 
-        messages = TinyLLMInput(
-            messages=[
-                *self.memory.copy_chat_messages()
-            ]
-        )
+        messages = TinyLLMInput(messages=[*self.memory.copy_chat_messages()])
         messages.add_at_beginning(
             TinySystemMessage(
                 content=render_template(
@@ -178,7 +181,7 @@ class TinySquadAgent(TinyBaseAgent):
                         'task': input_text,
                         'tools': self._tools,
                         'squad_members': self._squad,
-                    }
+                    },
                 )
             )
         )
@@ -212,7 +215,7 @@ class TinySquadAgent(TinyBaseAgent):
                 'agent.squad_size': len(self._squad),
                 'agent.squad_members': ','.join(
                     f'{member.name} - {member.description}' for member in self._squad
-                )
+                ),
             }
         )
 
@@ -220,8 +223,12 @@ class TinySquadAgent(TinyBaseAgent):
         self.memory.save_context(TinyHumanMessage(content=input_text))
 
         try:
-            classification_result = self._classify_query(run_id=run_id, input_text=input_text)
-            selected_member = self._get_squad_member(classification_result.selected_member)
+            classification_result = self._classify_query(
+                run_id=run_id, input_text=input_text
+            )
+            selected_member = self._get_squad_member(
+                classification_result.selected_member
+            )
 
             with tiny_trace_span('selected_squad_member'):
                 async for msg in selected_member.agent.run_stream(
@@ -234,13 +241,11 @@ class TinySquadAgent(TinyBaseAgent):
                 self.memory.save_context(
                     TinySquadMemberMessage(
                         member_name=selected_member.name,
-                        task='',
+                        task=classification_result.task,
                         result=final_answer,
                     )
                 )
-                self.memory.save_context(
-                    TinyHumanMessage(content=final_answer)
-                )
+                self.memory.save_context(TinyHumanMessage(content=final_answer))
         except Exception as e:
             self.on_error(run_id=run_id, e=e)
             raise e
@@ -306,8 +311,9 @@ class TinySquadAgent(TinyBaseAgent):
             textwrap.indent(
                 f'- {member.name}: {member.description}'
                 f'{textwrap.indent(str(member.agent), "\t")}',
-                '\t'
-            ) for member in self._squad
+                '\t',
+            )
+            for member in self._squad
         )
 
         extra_block = '\n'.join(extra)

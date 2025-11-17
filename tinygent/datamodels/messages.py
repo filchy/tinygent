@@ -172,7 +172,9 @@ class TinySquadMemberMessage(BaseMessage[Literal['squad_member']]):
 
     @property
     def tiny_str(self) -> str:
-        return f'Squad Member {self.member_name} - Task: {self.task}, Result: {self.result}'
+        return (
+            f'Squad Member {self.member_name} - Task: {self.task}, Result: {self.result}'
+        )
 
 
 class TinyToolCallChunk(BaseMessage[Literal['tool']]):
@@ -242,7 +244,13 @@ class TinyHumanMessage(BaseMessage[Literal['human']]):
         return f'Human: {self.content}'
 
 
-TinyAIMessage = TinyPlanMessage | TinyReasoningMessage | TinyChatMessage | TinyToolCall | TinySquadMemberMessage
+TinyAIMessage = (
+    TinyPlanMessage
+    | TinyReasoningMessage
+    | TinyChatMessage
+    | TinyToolCall
+    | TinySquadMemberMessage
+)
 
 AllTinyMessages = TinyAIMessage | TinyHumanMessage | TinySystemMessage | TinyToolResult
 
