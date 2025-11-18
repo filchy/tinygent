@@ -51,16 +51,20 @@ uv run examples/agents/multi-step/main.py
 
 ## Hooks
 
-The `TinyMultiStepAgent` emits several **[hooks](../hooks/README.md)** during execution.  
-You can subclass the agent and override these methods, or attach callbacks, to handle custom logging, monitoring, or UI integration.
+`TinyMultiStepAgent` inherits the full hook surface defined in `TinyBaseAgent` and raises them throughout planning and execution:
 
-| Hook                  | Trigger                                                                 |
-|------------------------|-------------------------------------------------------------------------|
-| `on_plan(step: str)`   | Whenever a **plan step** is generated (every `plan_interval` turns).     |
-| `on_reasoning(text: str)` | When the agent emits **reasoning/explanation** about its plan.         |
-| `on_tool_reasoning(text: str)` | When the **ReasoningTool** is used and produces intermediate reasoning. |
-| `on_answer(answer: str)` | When the agent emits a **final answer** (either directly or via a tool). |
-| `on_error(error: Exception)` | When an **exception** occurs during planning, acting, or tool execution. |
+| Hook | Trigger |
+|-------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `on_before_llm_call(*, run_id, llm_input)` | Fired before every LLM invocation (planning, acting, fallback). |
+| `on_after_llm_call(*, run_id, llm_input, result)` | Runs after each LLM call. Streaming calls resolve with `result=None` once all chunks are received. |
+| `on_before_tool_call(*, run_id, tool, args)` | Fired immediately before a tool executes. |
+| `on_after_tool_call(*, run_id, tool, args, result)` | Fired after a tool completes, including its output payload. |
+| `on_plan(*, run_id, plan)` | Emitted for every generated plan step (initial plan and periodic updates). |
+| `on_reasoning(*, run_id, reasoning)` | Emitted when the planner returns reasoning text alongside plan steps. |
+| `on_tool_reasoning(*, run_id, reasoning)` | Emitted when a `ReasoningTool` provides intermediate reasoning. |
+| `on_answer_chunk(*, run_id, chunk, idx)` | Emitted for each streamed chunk returned by `run_stream`. |
+| `on_answer(*, run_id, answer)` | Emitted once the blocking `run` method aggregates the final answer. |
+| `on_error(*, run_id, e)` | Triggered whenever planning, tool execution, or streaming raises an exception. |
 
 ---
 
@@ -83,7 +87,7 @@ tiny terminal \
 
 ```python
 from tinygent.tools.tool import tool
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 from pydantic import Field
 
 class WeatherInput(TinyModel):

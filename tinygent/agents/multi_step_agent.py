@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+from io import StringIO
 import logging
+import textwrap
 import typing
 from typing import Any
 from typing import AsyncGenerator
 from typing import Literal
 import uuid
 
-from tinygent.agents import TinyBaseAgent
-from tinygent.agents import TinyBaseAgentConfig
+from tinygent.agents.base_agent import TinyBaseAgent
+from tinygent.agents.base_agent import TinyBaseAgentConfig
 from tinygent.cli.builder import build_llm
 from tinygent.cli.builder import build_memory
 from tinygent.cli.builder import build_tool
@@ -23,14 +25,13 @@ from tinygent.datamodels.messages import TinyPlanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
-from tinygent.datamodels.prompt import TinyPromptTemplate
-from tinygent.memory import BufferChatMemory
 from tinygent.runtime.executors import run_async_in_executor
 from tinygent.telemetry.decorators import tiny_trace
 from tinygent.telemetry.otel import set_tiny_attributes
 from tinygent.telemetry.otel import tiny_trace_span
 from tinygent.tools.reasoning_tool import ReasoningTool
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
+from tinygent.types.prompt_template import TinyPromptTemplate
 from tinygent.utils import render_template
 
 if typing.TYPE_CHECKING:
@@ -108,7 +109,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
         self,
         llm: AbstractLLM,
         prompt_template: MultiStepPromptTemplate,
-        memory: AbstractMemory = BufferChatMemory(),
+        memory: AbstractMemory,
         tools: list[AbstractTool] = [],
         max_iterations: int = 15,
         plan_interval: int = 5,
@@ -153,7 +154,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
 
         messages = TinyLLMInput(
             messages=[
-                *self.memory.copy_chat_messages,
+                *self.memory.copy_chat_messages(),
             ]
         )
         messages.add_at_beginning(
@@ -190,7 +191,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
     ) -> AsyncGenerator[TinyLLMResultChunk]:
         messages = TinyLLMInput(
             messages=[
-                *self.memory.copy_chat_messages,
+                *self.memory.copy_chat_messages(),
                 TinyHumanMessage(
                     content=render_template(
                         self.acter_prompt.final_answer,
@@ -223,7 +224,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
     ) -> AsyncGenerator[TinyChatMessageChunk]:
         messages = TinyLLMInput(
             messages=[
-                *self.memory.copy_chat_messages,
+                *self.memory.copy_chat_messages(),
             ]
         )
         messages.add_at_beginning(
@@ -387,13 +388,12 @@ class TinyMultiStepAgent(TinyBaseAgent):
 
             self.memory.save_context(TinyChatMessage(content=final_yielded_answer))
 
-    def _reset(self) -> None:
+    def reset(self) -> None:
         logger.debug('[AGENT RESET]')
 
         self._iteration_number = 1
         self._planned_steps = []
         self._tool_calls = []
-        self.memory.clear()
 
     def run(
         self,
@@ -406,7 +406,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
 
         run_id = run_id or str(uuid.uuid4())
         if reset:
-            self._reset()
+            self.reset()
 
         async def _run() -> str:
             final_answer: str = ''
@@ -425,7 +425,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
 
         run_id = run_id or str(uuid.uuid4())
         if reset:
-            self._reset()
+            self.reset()
 
         async def _generator():
             idx = 0
@@ -435,3 +435,19 @@ class TinyMultiStepAgent(TinyBaseAgent):
                 yield res
 
         return _generator()
+
+    def __str__(self) -> str:
+        buf = StringIO()
+
+        extra = []
+        extra.append('Type: Multi-Step Agent')
+        extra.append(f'Max Iterations: {self.max_iterations}')
+        extra.append(f'Plan Interval: {self.plan_interval}')
+
+        extra_block = '\n'.join(extra)
+        extra_block = textwrap.indent(extra_block, '\t')
+
+        buf.write(super().__str__())
+        buf.write(f'{extra_block}\n')
+
+        return buf.getvalue()

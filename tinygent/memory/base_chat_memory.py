@@ -17,7 +17,6 @@ if typing.TYPE_CHECKING:
 class BaseChatMemory(AbstractMemory, ABC):
     _chat_history: BaseChatHistory = PrivateAttr(default_factory=BaseChatHistory)
 
-    @property
     def copy_chat_messages(self) -> list[AllTinyMessages]:
         return [tiny_deep_copy(msg) for msg in self._chat_history.messages]  # type: ignore
 

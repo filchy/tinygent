@@ -8,7 +8,7 @@ from typing import Generic
 from typing import TypeVar
 
 from tinygent.agents.middleware.hooks import AgentHooks
-from tinygent.types import TinyModelBuildable
+from tinygent.types.builder import TinyModelBuildable
 
 AgentType = TypeVar('AgentType', bound='AbstractAgent')
 
@@ -25,6 +25,11 @@ class AbstractAgentConfig(TinyModelBuildable[AgentType], Generic[AgentType]):
 
 class AbstractAgent(AgentHooks, ABC):
     """Abstract base class for agents."""
+
+    @abstractmethod
+    def reset(self) -> None:
+        """Reset the agent's internal state."""
+        raise NotImplementedError('Subclasses must implement this method.')
 
     @abstractmethod
     def run(self, input_text: str, *, run_id: str | None = None) -> str:

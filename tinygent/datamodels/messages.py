@@ -11,13 +11,14 @@ from pydantic import Field
 from pydantic import PrivateAttr
 
 from tinygent.datamodels.tool import AbstractTool
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 
 logger = logging.getLogger(__name__)
 
 TinyMessageType = TypeVar(
     'TinyMessageType',
     Literal['system'],
+    Literal['squad_member'],
     Literal['chat'],
     Literal['tool'],
     Literal['tool_result'],
@@ -154,6 +155,28 @@ class TinyToolCall(BaseMessage[Literal['tool']]):
         ) + f'Tool Call: {self.tool_name}({self.arguments}){result_str}'
 
 
+class TinySquadMemberMessage(BaseMessage[Literal['squad_member']]):
+    """Message representing input from a squad member agent."""
+
+    type: Literal['squad_member'] = 'squad_member'
+    """The type of the message."""
+
+    member_name: str
+    """The name of the squad member."""
+
+    task: str
+    """The task assigned to the squad member."""
+
+    result: str
+    """The result produced by the squad member."""
+
+    @property
+    def tiny_str(self) -> str:
+        return (
+            f'Squad Member {self.member_name} - Task: {self.task}, Result: {self.result}'
+        )
+
+
 class TinyToolCallChunk(BaseMessage[Literal['tool']]):
     """Message representing a chunk of a tool call from the AI."""
 
@@ -221,7 +244,13 @@ class TinyHumanMessage(BaseMessage[Literal['human']]):
         return f'Human: {self.content}'
 
 
-TinyAIMessage = TinyPlanMessage | TinyReasoningMessage | TinyChatMessage | TinyToolCall
+TinyAIMessage = (
+    TinyPlanMessage
+    | TinyReasoningMessage
+    | TinyChatMessage
+    | TinyToolCall
+    | TinySquadMemberMessage
+)
 
 AllTinyMessages = TinyAIMessage | TinyHumanMessage | TinySystemMessage | TinyToolResult
 

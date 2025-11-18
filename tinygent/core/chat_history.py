@@ -7,7 +7,7 @@ from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyAIMessage
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyHumanMessage
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 
 
 class BaseChatHistory(TinyModel):

@@ -2,12 +2,10 @@ from pathlib import Path
 
 from tinygent.cli.builder import build_agent
 from tinygent.cli.utils import discover_and_register_components
-from tinygent.logging import setup_general_loggers
 from tinygent.logging import setup_logger
 from tinygent.utils.yaml import tiny_yaml_load
 
 logger = setup_logger('debug')
-setup_general_loggers('warning')
 
 
 def main():
@@ -17,6 +15,7 @@ def main():
 
     result = agent.run('What is the weather like in Paris?')
 
+    logger.info(f'[AGENT SUMMARY] {str(agent)}')
     logger.info(f'[RESULT] {result}')
 
 

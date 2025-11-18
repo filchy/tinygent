@@ -68,6 +68,12 @@ class TinyBaseAgent(AbstractAgent):
         self._tools = tools
         self._final_answer: str | None = None
 
+    def reset(self) -> None:
+        logger.debug('[BASE AGENT RESET]')
+
+        self.memory.clear()
+        self._final_answer = None
+
     @property
     def tools(self) -> Sequence[AbstractTool]:
         return self._tools
@@ -187,5 +193,7 @@ class TinyBaseAgent(AbstractAgent):
         if len(self.tools) > 0:
             for tool in self.tools:
                 buf.write(f'{textwrap.indent(str(tool), "\t\t")}\n')
+        else:
+            buf.write('\t\tNo tools configured.\n')
 
         return buf.getvalue()

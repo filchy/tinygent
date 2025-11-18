@@ -19,7 +19,7 @@ from tiny_brave.datamodels.responses.videos import VideoSearchApiResponse
 from tiny_brave.datamodels.responses.web import WebSearchApiResponse
 from tiny_brave.exceptions import TinyBraveAPIError
 from tiny_brave.exceptions import TinyBraveClientError
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 
 logger = logging.getLogger(__name__)
 

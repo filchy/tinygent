@@ -1,0 +1,29 @@
+type: squad
+
+prompt_template: !include prompts.yaml
+
+llm:
+  type: openai
+  model: gpt-4o-mini
+  temperature: 0.4
+
+memory:
+  type: combined
+  memory_list:
+    - type: buffer
+
+    - type: buffer_window
+      k: 2
+
+tools:
+  - type: simple
+    name: calculate_sum
+
+squad:
+  - name: weather_agent
+    description: An agent that provides weather information.
+    agent: !include squad/weather_agent.yaml
+
+  - name: geoghraphic_agent
+    description: An agent that provides geographic information.
+    agent: !include squad/geoghraphic_agent.yaml

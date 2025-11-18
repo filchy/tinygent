@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from io import StringIO
 import logging
+import textwrap
 import typing
 from typing import AsyncGenerator
 from typing import Literal
@@ -20,13 +22,13 @@ from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.runtime.executors import run_async_in_executor
 from tinygent.telemetry.decorators import tiny_trace
 from tinygent.telemetry.otel import set_tiny_attributes
 from tinygent.telemetry.otel import tiny_trace_span
 from tinygent.tools.reasoning_tool import ReasoningTool
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
+from tinygent.types.prompt_template import TinyPromptTemplate
 from tinygent.utils import render_template
 
 if typing.TYPE_CHECKING:
@@ -36,7 +38,7 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class ReasonPromptTemplate(TinyModel):
+class ReasonPromptTemplate(TinyPromptTemplate):
     """Used to define the reasoning step."""
 
     init: str
@@ -45,7 +47,7 @@ class ReasonPromptTemplate(TinyModel):
     _template_fields = {'init': {'task'}, 'update': {'task', 'overview'}}
 
 
-class ActionPromptTemplate(TinyModel):
+class ActionPromptTemplate(TinyPromptTemplate):
     """Used to define the final answer or action."""
 
     action: str
@@ -53,7 +55,7 @@ class ActionPromptTemplate(TinyModel):
     _template_fields = {'action': {'reasoning', 'tools'}}
 
 
-class FallbackPromptTemplate(TinyModel):
+class FallbackPromptTemplate(TinyPromptTemplate):
     """Used to define the fallback if agent don't answer in time."""
 
     fallback_answer: str
@@ -94,8 +96,8 @@ class TinyReActAgent(TinyBaseAgent):
         self,
         llm: AbstractLLM,
         prompt_template: ReActPromptTemplate,
+        memory: AbstractMemory,
         tools: list[AbstractTool] = [],
-        memory: AbstractMemory = BufferChatMemory(),
         max_iterations: int = 10,
         **kwargs,
     ) -> None:
@@ -122,8 +124,6 @@ class TinyReActAgent(TinyBaseAgent):
         self.prompt_template = prompt_template
         self.max_iterations = max_iterations
 
-        self.memory = memory
-
     @tiny_trace('react_agent_reasoning')
     def _stream_reasoning(
         self, run_id: str, task: str
@@ -146,7 +146,7 @@ class TinyReActAgent(TinyBaseAgent):
 
         messages = TinyLLMInput(
             messages=[
-                *self.memory.copy_chat_messages,
+                *self.memory.copy_chat_messages(),
             ]
         )
         messages.add_at_beginning(
@@ -175,7 +175,7 @@ class TinyReActAgent(TinyBaseAgent):
     ) -> AsyncGenerator[TinyLLMResultChunk, None]:
         messages = TinyLLMInput(
             messages=[
-                *self.memory.copy_chat_messages,
+                *self.memory.copy_chat_messages(),
             ]
         )
         messages.add_at_beginning(
@@ -201,7 +201,7 @@ class TinyReActAgent(TinyBaseAgent):
     ) -> AsyncGenerator[str, None]:
         messages = TinyLLMInput(
             messages=[
-                *self.memory.copy_chat_messages,
+                *self.memory.copy_chat_messages(),
             ]
         )
         messages.add_at_beginning(
@@ -375,12 +375,13 @@ class TinyReActAgent(TinyBaseAgent):
 
             self.memory.save_context(TinyChatMessage(content=final_yielded_answer))
 
-    def _reset(self) -> None:
+    def reset(self) -> None:
+        super().reset()
+
         logger.debug('[AGENT RESET]')
 
         self._iteration_number = 1
         self._react_iterations = []
-        self.memory.clear()
 
     def run(
         self,
@@ -393,7 +394,7 @@ class TinyReActAgent(TinyBaseAgent):
 
         run_id = run_id or str(uuid.uuid4())
         if reset:
-            self._reset()
+            self.reset()
 
         async def _run() -> str:
             final_answer = ''
@@ -416,7 +417,7 @@ class TinyReActAgent(TinyBaseAgent):
 
         run_id = run_id or str(uuid.uuid4())
         if reset:
-            self._reset()
+            self.reset()
 
         async def _generator():
             idx = 0
@@ -426,3 +427,18 @@ class TinyReActAgent(TinyBaseAgent):
                 yield res
 
         return _generator()
+
+    def __str__(self) -> str:
+        buf = StringIO()
+
+        extra = []
+        extra.append('Type: ReAct')
+        extra.append(f'Max Iterations: {self.max_iterations}')
+
+        extra_block = '\n'.join(extra)
+        extra_block = textwrap.indent(extra_block, '\t')
+
+        buf.write(super().__str__())
+        buf.write(f'{extra_block}\n')
+
+        return buf.getvalue()

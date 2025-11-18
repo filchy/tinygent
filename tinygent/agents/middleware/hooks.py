@@ -167,7 +167,10 @@ class AgentHooks:
         return self._on_before_llm_call
 
     @on_before_llm_call.setter
-    def on_before_llm_call(self, fn: HookBeforeLLMCall) -> None:
+    def on_before_llm_call(self, fn: HookBeforeLLMCall | None) -> None:
+        if fn is None:
+            self._on_before_llm_call = lambda *args, **kwargs: None
+            return
         self._on_before_llm_call = _wrap_hook_sync(fn)
 
     @property
@@ -175,7 +178,10 @@ class AgentHooks:
         return self._on_after_llm_call
 
     @on_after_llm_call.setter
-    def on_after_llm_call(self, fn: HookAfterLLMCall) -> None:
+    def on_after_llm_call(self, fn: HookAfterLLMCall | None) -> None:
+        if fn is None:
+            self._on_after_llm_call = lambda *args, **kwargs: None
+            return
         self._on_after_llm_call = _wrap_hook_sync(fn)
 
     @property
@@ -183,7 +189,10 @@ class AgentHooks:
         return self._on_before_tool_call
 
     @on_before_tool_call.setter
-    def on_before_tool_call(self, fn: HookBeforeToolCall) -> None:
+    def on_before_tool_call(self, fn: HookBeforeToolCall | None) -> None:
+        if fn is None:
+            self._on_before_tool_call = lambda *args, **kwargs: None
+            return
         self._on_before_tool_call = _wrap_hook_sync(fn)
 
     @property
@@ -191,7 +200,10 @@ class AgentHooks:
         return self._on_after_tool_call
 
     @on_after_tool_call.setter
-    def on_after_tool_call(self, fn: HookAfterToolCall) -> None:
+    def on_after_tool_call(self, fn: HookAfterToolCall | None) -> None:
+        if fn is None:
+            self._on_after_tool_call = lambda *args, **kwargs: None
+            return
         self._on_after_tool_call = _wrap_hook_sync(fn)
 
     @property
@@ -199,7 +211,10 @@ class AgentHooks:
         return self._on_plan
 
     @on_plan.setter
-    def on_plan(self, fn: HookPlan) -> None:
+    def on_plan(self, fn: HookPlan | None) -> None:
+        if fn is None:
+            self._on_plan = lambda *args, **kwargs: None
+            return
         self._on_plan = _wrap_hook_sync(fn)
 
     @property
@@ -207,7 +222,10 @@ class AgentHooks:
         return self._on_reasoning
 
     @on_reasoning.setter
-    def on_reasoning(self, fn: HookReasoning) -> None:
+    def on_reasoning(self, fn: HookReasoning | None) -> None:
+        if fn is None:
+            self._on_reasoning = lambda *args, **kwargs: None
+            return
         self._on_reasoning = _wrap_hook_sync(fn)
 
     @property
@@ -215,7 +233,10 @@ class AgentHooks:
         return self._on_tool_reasoning
 
     @on_tool_reasoning.setter
-    def on_tool_reasoning(self, fn: HookToolReasoning) -> None:
+    def on_tool_reasoning(self, fn: HookToolReasoning | None) -> None:
+        if fn is None:
+            self._on_tool_reasoning = lambda *args, **kwargs: None
+            return
         self._on_tool_reasoning = _wrap_hook_sync(fn)
 
     @property
@@ -223,7 +244,10 @@ class AgentHooks:
         return self._on_answer
 
     @on_answer.setter
-    def on_answer(self, fn: HookAnswer) -> None:
+    def on_answer(self, fn: HookAnswer | None) -> None:
+        if fn is None:
+            self._on_answer = lambda *args, **kwargs: None
+            return
         self._on_answer = _wrap_hook_sync(fn)
 
     @property
@@ -231,7 +255,10 @@ class AgentHooks:
         return self._on_answer_chunk
 
     @on_answer_chunk.setter
-    def on_answer_chunk(self, fn: HookAnswerChunk) -> None:
+    def on_answer_chunk(self, fn: HookAnswerChunk | None) -> None:
+        if fn is None:
+            self._on_answer_chunk = lambda *args, **kwargs: None
+            return
         self._on_answer_chunk = _wrap_hook_sync(fn)
 
     @property
@@ -239,5 +266,8 @@ class AgentHooks:
         return self._on_error
 
     @on_error.setter
-    def on_error(self, fn: HookError) -> None:
+    def on_error(self, fn: HookError | None) -> None:
+        if fn is None:
+            self._on_error = lambda *args, **kwargs: None
+            return
         self._on_error = _wrap_hook_sync(fn)

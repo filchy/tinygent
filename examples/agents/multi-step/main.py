@@ -8,15 +8,16 @@ from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
 from tinygent.agents.multi_step_agent import PlanPromptTemplate
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
 from tinygent.llms.base import init_llm
-from tinygent.logging import setup_general_loggers
 from tinygent.logging import setup_logger
+from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.memory.buffer_window_chat_memory import BufferWindowChatMemory
+from tinygent.memory.combined_memory import CombinedMemory
 from tinygent.tools.reasoning_tool import reasoning_tool
 from tinygent.tools.tool import tool
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 from tinygent.utils.yaml import tiny_yaml_load
 
 logger = setup_logger('debug')
-setup_general_loggers('warning')
 
 
 class WeatherInput(TinyModel):
@@ -60,6 +61,12 @@ def main():
             fallback=FallbackAnswerPromptTemplate(
                 fallback_answer=multi_step_agent_prompt['fallback']['fallback_answer']
             ),
+        ),
+        memory=CombinedMemory(
+            memory_list=[
+                BufferChatMemory(),
+                BufferWindowChatMemory(k=3),
+            ]
         ),
         tools=[get_weather, get_best_destination],
     )

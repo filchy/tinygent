@@ -4,7 +4,7 @@ from typing import Optional
 
 from pydantic import Field
 
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 
 
 class Thumbnail(TinyModel):

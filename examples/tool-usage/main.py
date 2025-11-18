@@ -5,7 +5,7 @@ from tinygent.tools.jit_tool import jit_tool
 from tinygent.tools.reasoning_tool import register_reasoning_tool
 from tinygent.tools.tool import register_tool
 from tinygent.tools.tool import tool
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 
 
 class AddInput(TinyModel):

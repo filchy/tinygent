@@ -8,14 +8,13 @@ from tinygent.agents.react_agent import ReActPromptTemplate
 from tinygent.agents.react_agent import ReasonPromptTemplate
 from tinygent.agents.react_agent import TinyReActAgent
 from tinygent.llms.base import init_llm
-from tinygent.logging import setup_general_loggers
 from tinygent.logging import setup_logger
+from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.tools.tool import tool
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 from tinygent.utils.yaml import tiny_yaml_load
 
 logger = setup_logger('debug')
-setup_general_loggers('warning')
 
 
 class WeatherInput(TinyModel):
@@ -46,6 +45,7 @@ async def main():
     react_agent = TinyReActAgent(
         llm=init_llm('openai:gpt-4o', temperature=0.1),
         max_iterations=3,
+        memory=BufferChatMemory(),
         prompt_template=ReActPromptTemplate(
             reason=ReasonPromptTemplate(
                 init=react_agent_prompt['reason']['init'],
@@ -64,8 +64,8 @@ async def main():
     ):
         logger.info(f'[STREAM CHUNK] {chunk}')
 
-    logger.info(f'[MEMORY] {react_agent.memory.load_variables()}')
     logger.info(f'[AGENT SUMMARY] {str(react_agent)}')
+    logger.info(f'[MEMORY] {react_agent.memory.load_variables()}')
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@ from pydantic import Field
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.tools.tool import register_tool
-from tinygent.types import TinyModel
+from tinygent.types.base import TinyModel
 
 
 class TinyFinalAnswerInput(TinyModel):
