@@ -22,7 +22,9 @@ export class WSClient {
 
     // Default to current window location
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    return `${protocol}://${window.location.host}/ws`
+    const aa = `${protocol}://${window.location.host}/ws`
+    console.log('Resolved WebSocket URL:', aa)
+    return aa
   }
 
   private scheduleReconnect() {
@@ -42,29 +44,48 @@ export class WSClient {
   }
 
   connect() {
+    let opened = false
+
     this.clearReconnect()
 
     this.ws = new WebSocket(this.resolveUrl())
 
     const { setConnectionStatus } = useStateStore()
 
-    this.ws.onopen = () => {
-      console.log('WebSocket connection established')
+    const timeout = window.setTimeout(() => {
+      if (opened) return
 
+      console.error('WebSocket connection timeout')
+      setConnectionStatus('disconnected')
+
+      try {
+        this.ws?.close()
+      } catch {}
+
+      this.scheduleReconnect()
+    }, 400)
+
+    this.ws.onopen = () => {
+      opened = true
+      clearTimeout(timeout)
+
+      console.log('WebSocket connection established')
       setConnectionStatus('connected')
       this.clearReconnect()
     }
 
     this.ws.onclose = () => {
-      console.log('WebSocket connection closed')
+      clearTimeout(timeout)
 
+      console.log('WebSocket connection closed')
       setConnectionStatus('disconnected')
       this.scheduleReconnect()
     }
 
     this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error)
+      clearTimeout(timeout)
 
+      console.error('WebSocket error:', error)
       setConnectionStatus('disconnected')
       this.scheduleReconnect()
     }

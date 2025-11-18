@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Alerts from '@/components/alerts.vue'
+import Alerts from '@/components/alerts-container.vue'
 import ChatWindow from '@/components/chat-window.vue'
 import NavigationDrawer from '@/components/nav-drawer.vue'
 import InfoDrawer from '@/components/info-drawer.vue'
@@ -14,6 +14,31 @@ const { addMessage } = useChatStore()
 onMounted(() => {
   console.log('Connecting to WebSocket server...')
   wsClient.connect()
+
+  // addMessage({
+  //   id: crypto.randomUUID(),
+  //   type: 'text',
+  //   sender: 'bot',
+  //   content: `
+  // Bubble sort je jednoduchý algoritmus pro třídění, který opakovaně prochází seznam, porovnává sousední prvky a vyměňuje je, pokud jsou ve špatném pořadí. Tento proces se opakuje, dokud není seznam seřazen.
+  //
+  // Zde je jednoduchá implementace bubble sort v Pythonu:
+  //
+  // \`\`\`python
+  // def bubble_sort(arr):
+  //     n = len(arr)
+  //     for i in range(n):
+  //         for j in range(0, n - i - 1):
+  //             if arr[j] > arr[j + 1]:
+  //                 arr[j], arr[j + 1] = arr[j + 1], arr[j]
+  //     return arr
+  // \`\`\`
+  //
+  // Tato funkce \`bubble_sort\` přijímá seznam \`arr\` jako vstup a třídí ho vzestupně pomocí algoritmu bubble sort.
+  //
+  // Pokud máte další dotazy nebo potřebujete další informace, dejte mi vědět!
+  // `,
+  // })
 
   wsClient.onMessage((msg) => {
     addMessage(msg)
@@ -41,8 +66,8 @@ const sendMessage = (message: string) => {
 
     <TopBar @toggle-drawer="drawer = !drawer" />
 
-    <v-main class='app-main d-flex flex-column flex-grow-1'>
-      <div class='d-flex flex-column' style='position: relative; height: 100%;'>
+    <v-main class="app-main d-flex flex-column flex-grow-1">
+      <div class="d-flex flex-column" style="position: relative; height: 100%">
         <Alerts />
         <ChatWindow />
       </div>

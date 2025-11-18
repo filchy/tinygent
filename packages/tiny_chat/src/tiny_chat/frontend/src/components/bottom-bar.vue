@@ -12,17 +12,19 @@ const emit = defineEmits<{
 }>()
 
 const theme = useTheme()
-const message = ref('')
+const message = ref<string>('')
 const { addMessage } = useChatStore()
-const { loadingOwner, connectionStatus, setLoadingOwner } = useStateStore()
+const { loadingOwner, connectionStatus } = useStateStore()
 
-let typingWatchEnabled = true
+const typingWatchEnabled = ref<boolean>(true)
 
 const currentAvatar = computed(() => (theme.global.current.value.dark ? lightAvatar : darkAvatar))
 
 const sendMessageEnabled = computed(
-  () => message.value.trim().length > 0 && connectionStatus.value !== 'disconnected' &&
-    !loadingOwner.value
+  () =>
+    message.value.trim().length > 0 &&
+    connectionStatus.value !== 'disconnected' &&
+    !loadingOwner.value,
 )
 
 const addUserMessage = (msg: string) => {
@@ -40,7 +42,7 @@ const sendMessage = () => {
   const messageValue = message.value.trim()
   if (!messageValue) return
 
-  typingWatchEnabled = false
+  typingWatchEnabled.value = false
 
   message.value = ''
 
@@ -48,7 +50,7 @@ const sendMessage = () => {
   emit('send-message', messageValue)
 
   nextTick(() => {
-    typingWatchEnabled = true
+    typingWatchEnabled.value = true
   })
 }
 
@@ -60,29 +62,29 @@ const stopMessage = () => {
 <template>
   <v-footer
     app
-    class='d-flex flex-column align-center justify-center text-caption font-weight-thin pt-0'
-    color='transparent'
+    class="d-flex flex-column align-center justify-center text-caption font-weight-thin pt-0"
+    color="transparent"
   >
     <v-text-field
-      v-model='message'
-      label='Type your tiny message here...'
-      width='100%'
-      max-width='min(48rem, 100vw)'
-      variant='solo'
-      color='grey'
-      autocomplete='off'
+      v-model="message"
+      label="Type your tiny message here..."
+      width="100%"
+      max-width="min(48rem, 100vw)"
+      variant="solo"
+      color="grey"
+      autocomplete="off"
       rounded
-      @keyup.enter='sendMessage'
+      @keyup.enter="sendMessage"
     >
       <template #append-inner>
-        <v-tooltip bottom v-if='!loadingOwner'>
-          <template #activator='{ props }'>
+        <v-tooltip bottom v-if="!loadingOwner">
+          <template #activator="{ props }">
             <v-btn
               icon
-              variant='text'
-              v-bind='props'
-              :disabled='!sendMessageEnabled'
-              @click='sendMessage'
+              variant="text"
+              v-bind="props"
+              :disabled="!sendMessageEnabled"
+              @click="sendMessage"
             >
               <v-icon>mdi-send</v-icon>
             </v-btn>
@@ -90,13 +92,8 @@ const stopMessage = () => {
           Send Message
         </v-tooltip>
         <v-tooltip bottom v-else>
-          <template #activator='{ props }'>
-            <v-btn
-              icon
-              variant='text'
-              v-bind='props'
-              @click='stopMessage'
-            >
+          <template #activator="{ props }">
+            <v-btn icon variant="text" v-bind="props" @click="stopMessage">
               <v-icon>mdi-square</v-icon>
             </v-btn>
           </template>
@@ -105,14 +102,14 @@ const stopMessage = () => {
       </template>
     </v-text-field>
 
-    <span class='d-flex align-center text-caption'>
+    <span class="d-flex align-center text-caption">
       Build with
-      <v-img :src='currentAvatar' alt='tinygent logo' width='32' height='32' class='mx-1' contain />
+      <v-img :src="currentAvatar" alt="tinygent logo" width="32" height="32" class="mx-1" contain />
       <a
-        class='font-weight-bold'
-        href='https://github.com/filchy/tinygent'
-        target='_blank'
-        style='text-decoration: none; color: inherit'
+        class="font-weight-bold"
+        href="https://github.com/filchy/tinygent"
+        target="_blank"
+        style="text-decoration: none; color: inherit"
       >
         tinygent
       </a>

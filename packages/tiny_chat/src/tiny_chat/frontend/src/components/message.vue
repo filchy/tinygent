@@ -9,11 +9,11 @@ const componentMap: Record<string, any> = {
 </script>
 
 <template>
-  <BaseMessage :msg='props.msg'>
+  <BaseMessage :msg="props.msg">
     <component
-      :is='componentMap[props.msg.type]'
-      :msg='props.msg'
-      :color='props.msg.sender === "user" ? "primary" : "grey-lighten-3"'
+      :is="componentMap[props.msg.type]"
+      :msg="props.msg"
+      :color="props.msg.sender === 'user' ? 'primary' : 'grey-lighten-3'"
     />
   </BaseMessage>
 </template>

@@ -1,24 +1,13 @@
 <script setup lang="ts">
-import { useTheme } from 'vuetify'
-
-import darkAvatar from '@/assets/dark-avatar.png'
-import lightAvatar from '@/assets/light-avatar.png'
-
-const theme = useTheme()
-
 const props = defineProps<{ msg: BaseMessage }>()
-
-const currentAvatar = computed(() =>
-  theme.global.current.value.dark ? lightAvatar : darkAvatar
-)
 </script>
 
 <template>
   <div
-    class='d-flex chat-message align-start'
-    :class='props.msg.sender === "user" ? "justify-end" : "justify-start"'
+    class="d-flex chat-message align-start"
+    :class="props.msg.sender === 'user' ? 'justify-end' : 'justify-start'"
   >
-    <v-sheet max-width='70%' color='transparent'>
+    <v-sheet max-width="70%" color="transparent">
       <slot />
     </v-sheet>
   </div>

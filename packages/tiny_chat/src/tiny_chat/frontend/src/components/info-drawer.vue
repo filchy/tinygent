@@ -5,28 +5,34 @@ const localDrawer = ref<boolean>(false)
 const localSources = ref<SourceMessage[]>([])
 
 onMounted(() => {
-  emitter.on('displaySources', (sources: SourceMessage[] ) => {
+  emitter.on('displaySources', ({ sources }) => {
     localDrawer.value = true
     localSources.value = sources
   })
+})
+
+watch(localDrawer, (newVal) => {
+  if (!newVal) {
+    closeDrawer()
+  }
 })
 
 const closeDrawer = () => {
   localDrawer.value = false
 
   nextTick(() => {
-    sources.value = []
+    localSources.value = []
   })
 }
 
 const openUrl = (url: string) => {
-    globalThis.open(url, '_blank')
+  globalThis.open(url, '_blank')
 }
 
 const sourceTitle = (url: string) => {
   try {
     const parsed = new URL(url)
-    let host = parsed.hostname || this.attributes.url
+    let host = parsed.hostname
     if (host.startsWith('www.')) host = host.slice(4)
     return host
   } catch {
@@ -36,56 +42,43 @@ const sourceTitle = (url: string) => {
 </script>
 
 <template>
-  <v-navigation-drawer
-    v-model='localDrawer'
-    app
-    location='right'
-  >
+  <v-navigation-drawer v-model="localDrawer" app location="right">
     <template v-slot:prepend>
       <v-list-item>
         <template v-slot:prepend>
-          <span class='font-weight-medium'>Sources</span>
+          <span class="font-weight-medium">Sources</span>
         </template>
         <template v-slot:append>
-          <v-icon
-            icon='mdi-close'
-            size='x-small'
-            @click='localDrawer = false'
-          />
+          <v-icon icon="mdi-close" size="x-small" @click="localDrawer = false" />
         </template>
       </v-list-item>
 
       <v-divider />
     </template>
 
-    <div class='d-flex flex-column px-2 pt-2' style='width: 100%;'>
+    <div class="d-flex flex-column px-2 pt-2" style="width: 100%">
       <v-card
-        v-for='source in localSources'
-        :key='source.id'
-        class='d-flex flex-column pa-2'
+        v-for="source in localSources"
+        :key="source.id"
+        class="d-flex flex-column pa-2"
         hover
-        variant='text'
+        variant="text"
         @click="openUrl(source.url)"
       >
-        <div class='text-caption d-flex align-center justify-end' style='gap: 4px;'>
+        <div class="text-caption d-flex align-center justify-end" style="gap: 4px">
           {{ sourceTitle(source.url) }}
-          <div style='width: 16px;'>
-            <v-img
-              v-if='source.favicon'
-              :src='source.favicon!'
-            ></v-img>
-            <v-icon
-              v-else
-              icon='mdi-web'
-              size='14'
-            />
+          <div style="width: 16px">
+            <v-img v-if="source.favicon" :src="source.favicon!"></v-img>
+            <v-icon v-else icon="mdi-web" size="14" />
           </div>
         </div>
-        <div class='text-caption font-weight-bold' style='white-space: nowrap; overflow: hidden;
-        text-overflow: ellipsis;'>
+        <div
+          class="text-caption font-weight-bold"
+          style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis"
+        >
           {{ source.name }}
         </div>
-        <div class='text-caption text-grey-darken-1'>
+        <div class="text-caption text-grey-darken-1">
           {{ source.description ?? 'No description provided' }}
         </div>
       </v-card>
