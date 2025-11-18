@@ -1,48 +1,66 @@
-# frontend
+# tiny-chat frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+This package ships a Vue 3 + Vite frontend that is published together with the Python `tiny-chat` API. The frontend code lives in `src/tiny_chat/frontend` and is bundled into `dist/` during builds.
 
-## Recommended IDE Setup
+## Prerequisites
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- [nvm (Node Version Manager)](https://github.com/nvm-sh/nvm#installing-and-updating) – required to install and pin the correct Node.js runtime.
+- Node.js 22 (the project targets `>=22.12.0 <23`).
+- npm (bundled with Node.js).
 
-## Recommended Browser Setup
+```bash
+# install nvm (see project docs for alternative install methods)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+# load nvm in your current shell
+export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-## Type Support for `.vue` Imports in TS
+# install and activate Node 22 for this project
+nvm install 22
+nvm use 22
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+# optional: make Node 22 the default
+nvm alias default 22
+```
 
-## Customize configuration
+> **Tip:** run `nvm use 22` in every new shell before working on the frontend to ensure the correct engine version.
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+## Install dependencies
 
-## Project Setup
+From `packages/tiny_chat/src/tiny_chat/frontend`:
 
-```sh
+```bash
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+## Local workflows
 
-```sh
-npm run dev
+- **Run the dev server:** `npm run dev`
+- **Create a production build:** `npm run build`
+- **Preview the production build:** `npm run preview`
+
+The `build` script runs `vue-tsc` via `npm run type-check` before bundling with Vite. The compiled output lands in `src/tiny_chat/frontend/dist`.
+
+## Quality tooling
+
+- **Lint with ESLint + auto-fix:** `npm run lint`
+- **Format with Prettier:** `npm run format`
+- **Type-check with vue-tsc:** `npm run type-check`
+
+Run these commands from `packages/tiny_chat/src/tiny_chat/frontend`.
+
+## Python package integration note
+
+When iterating locally on the Python package, remove any stale frontend artifacts so Hatch picks up the fresh sources:
+
+```bash
+rm -rf packages/tiny_chat/src/tiny_chat/frontend/dist
 ```
 
-### Type-Check, Compile and Minify for Production
+If `dist/` exists, Hatch will bundle those files automatically (see `[tool.hatch.build]` in `pyproject.toml`). Deleting the directory ensures the Python package serves your live `npm run dev` assets or newly built output.
 
-```sh
-npm run build
-```
+## Next steps
 
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+1. Keep `nvm use 22` in your shell startup (e.g., by adding it to `.bashrc`) to avoid version drift.
+2. Add the lint, format, and build commands to CI to enforce consistent quality.
