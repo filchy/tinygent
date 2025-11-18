@@ -54,11 +54,18 @@ You can subclass the agent and override these methods, or attach callbacks, to h
 
 ## Hooks
 
-The `TinyReActAgent` can emit:
+`TinyReActAgent` inherits the hook surface from `TinyBaseAgent` and invokes these callbacks during a run:
 
-- `on_answer(answer: str)` — when a final answer is produced  
-- `on_tool_reasoning(reasoning: str)` — when a `ReasoningTool` emits reasoning  
-- `on_error(error: Exception)` — when an exception occurs  
+| Hook | Trigger |
+|-------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| `on_before_llm_call(*, run_id, llm_input)` | Fired before every LLM call (reasoning, action orchestration, and fallback prompts). |
+| `on_after_llm_call(*, run_id, llm_input, result)` | Runs after each LLM call completes; streaming calls finish with `result=None` once all chunks arrive. |
+| `on_before_tool_call(*, run_id, tool, args)` | Fired immediately before any tool is executed. |
+| `on_after_tool_call(*, run_id, tool, args, result)` | Fired after a tool executes successfully, including the tool output. |
+| `on_tool_reasoning(*, run_id, reasoning)` | Emitted whenever a `ReasoningTool` shares intermediate reasoning text. |
+| `on_answer_chunk(*, run_id, chunk, idx)` | Emitted for every streamed chunk returned by `run_stream`. |
+| `on_answer(*, run_id, answer)` | Emitted once the blocking `run` method aggregates and returns the final answer. |
+| `on_error(*, run_id, e)` | Triggered whenever reasoning, tool execution, or streaming raises an exception. |
 
 ---
 
