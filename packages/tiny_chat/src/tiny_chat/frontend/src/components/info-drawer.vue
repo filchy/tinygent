@@ -5,7 +5,7 @@ const localDrawer = ref<boolean>(false)
 const localSources = ref<SourceMessage[]>([])
 
 onMounted(() => {
-  emitter.on('displaySources', (sources: SourceMessage[] ) => {
+  emitter.on('displaySources', ({ sources }) => {
     localDrawer.value = true
     localSources.value = sources
   })
@@ -15,7 +15,7 @@ const closeDrawer = () => {
   localDrawer.value = false
 
   nextTick(() => {
-    sources.value = []
+    localSources.value = []
   })
 }
 
@@ -26,7 +26,7 @@ const openUrl = (url: string) => {
 const sourceTitle = (url: string) => {
   try {
     const parsed = new URL(url)
-    let host = parsed.hostname || this.attributes.url
+    let host = parsed.hostname
     if (host.startsWith('www.')) host = host.slice(4)
     return host
   } catch {

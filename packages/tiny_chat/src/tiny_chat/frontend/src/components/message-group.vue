@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { useTheme } from 'vuetify'
 
+import {
+  isSourceMessage,
+  isToolCallMessage
+} from '@/utils/message-utils'
 import { emitter } from '@/services/event-bus'
 import darkAvatar from '@/assets/dark-avatar.png'
 import lightAvatar from '@/assets/light-avatar.png'
+
+import MarkdownRenderer from './markdown-renderer.vue'
 
 const props = defineProps<{ messageGroup: MessageGroup }>()
 
@@ -23,11 +29,11 @@ const isLoading = computed(() =>
   main?.type === 'loading'
 )
 
-const toolCalls = computed(() => children.filter(c => c.type === 'tool'))
-const sources = computed(() => children.filter(c => c.type === 'source'))
+const toolCalls = computed(() => children.filter(c => isToolCallMessage(c)))
+const sources = computed(() => children.filter(c => isSourceMessage(c)))
 
 const openInfoDrawer = () => {
-  emitter.emit('displaySources', sources.value)
+  emitter.emit('displaySources', { sources: sources.value })
 }
 </script>
 
@@ -112,7 +118,7 @@ const openInfoDrawer = () => {
           </v-expand-transition>
 
           <div style='min-height: 36px;' class='d-flex align-center text-body-1 py-3' v-if='!isLoading'>
-            {{ main?.content }}
+            <markdown-renderer :content='main?.content ?? ""' />
           </div>
 
           <div class='d-flex align-center' style='height: 36px;' v-else>

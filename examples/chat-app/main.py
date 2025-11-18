@@ -8,10 +8,13 @@ from tiny_brave import NewsSearchApiResponse
 from tiny_brave import NewsSearchRequest
 from tiny_brave import brave_news_search
 import tiny_chat as tc
+from tinygent.agents.react_agent import ReActPromptTemplate, TinyReActAgent
 from tinygent.cli.builder import build_agent
 from tinygent.cli.utils import discover_and_register_components
 from tinygent.datamodels.tool import AbstractTool
+from tinygent.llms.base import init_llm
 from tinygent.logging import setup_logger
+from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.tools.tool import register_tool
 from tinygent.types.base import TinyModel
 from tinygent.utils.yaml import tiny_yaml_load
@@ -75,9 +78,17 @@ async def tool_call_hook(
         logger.exception('Failed to parse tool call.')
 
 
-agent = build_agent(
-    tiny_yaml_load(str(Path(__file__).parent.parent / 'agents' / 'react' / 'agent.yaml'))
+agent = TinyReActAgent(
+    llm=init_llm('openai:gpt-4o'),
+    tools=[brave_news],
+    memory=BufferChatMemory(),
+    prompt_template=ReActPromptTemplate(
+        **tiny_yaml_load(
+            str(Path(__file__).parent.parent / 'agents' / 'react' / 'prompts.yaml')
+        )
+    )
 )
+
 agent.on_answer = answer_hook
 agent.on_answer_chunk = answer_chunk_hook
 agent.on_after_tool_call = tool_call_hook
