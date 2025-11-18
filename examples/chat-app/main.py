@@ -8,8 +8,8 @@ from tiny_brave import NewsSearchApiResponse
 from tiny_brave import NewsSearchRequest
 from tiny_brave import brave_news_search
 import tiny_chat as tc
-from tinygent.agents.react_agent import ReActPromptTemplate, TinyReActAgent
-from tinygent.cli.builder import build_agent
+from tinygent.agents.react_agent import ReActPromptTemplate
+from tinygent.agents.react_agent import TinyReActAgent
 from tinygent.cli.utils import discover_and_register_components
 from tinygent.datamodels.tool import AbstractTool
 from tinygent.llms.base import init_llm
@@ -86,7 +86,7 @@ agent = TinyReActAgent(
         **tiny_yaml_load(
             str(Path(__file__).parent.parent / 'agents' / 'react' / 'prompts.yaml')
         )
-    )
+    ),
 )
 
 agent.on_answer = answer_hook
