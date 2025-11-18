@@ -33,7 +33,7 @@ declare interface ReasoningMessage extends ChildMessage {
 declare interface ToolMessage extends ChildMessage {
   type: 'tool'
   sender: 'agent'
-  content: string = ''
+  content: string
   tool_name: string
   tool_args: Record<string, any>
 }
@@ -48,7 +48,13 @@ declare interface SourceMessage extends ChildMessage {
 }
 
 // Union type for all messages
-declare type Message = UserMessage | AgentTextMessage | LoadingMessage | ReasoningMessage | SourceMessage | ToolMessage
+declare type Message =
+  | UserMessage
+  | AgentTextMessage
+  | LoadingMessage
+  | ReasoningMessage
+  | SourceMessage
+  | ToolMessage
 
 // Main messages union
 declare type MainMessage = UserMessage | AgentMessage | LoadingMessage

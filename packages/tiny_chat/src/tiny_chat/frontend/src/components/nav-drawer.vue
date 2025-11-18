@@ -1,4 +1,4 @@
-<script setup lang='ts'>
+<script setup lang="ts">
 import { useDisplay, useTheme } from 'vuetify'
 import darkAvatar from '@/assets/dark-avatar.png'
 import lightAvatar from '@/assets/light-avatar.png'
@@ -51,39 +51,42 @@ const currentLogo = computed(() => (isDark.value ? lightLogo : darkLogo))
 
 <template>
   <v-navigation-drawer
-    v-model='localDrawer'
-    :rail='!smAndDown && rail'
-    :temporary='smAndDown'
-    :permanent='!smAndDown'
+    v-model="localDrawer"
+    :rail="!smAndDown && rail"
+    :temporary="smAndDown"
+    :permanent="!smAndDown"
     app
   >
-    <div class='d-flex align-center justify-space-between px-1 py-2' style='height: 64px
-    user-select: none;'>
-      <div class='d-flex align-center'>
+    <div
+      class="d-flex align-center justify-space-between px-1 py-2"
+      style="height: 64px
+    user-select: none;"
+    >
+      <div class="d-flex align-center">
         <v-img
-          v-show='!(!smAndDown && rail)'
-          :src='currentAvatar'
-          width='56'
-          height='56'
-          class='rounded transition-fast-in-fast-out'
+          v-show="!(!smAndDown && rail)"
+          :src="currentAvatar"
+          width="56"
+          height="56"
+          class="rounded transition-fast-in-fast-out"
           contain
         />
         <v-img
-          v-show='!(!smAndDown && rail)'
-          :src='currentLogo'
-          width='56'
-          height='56'
-          class='rounded transition-fast-in-fast-out'
+          v-show="!(!smAndDown && rail)"
+          :src="currentLogo"
+          width="56"
+          height="56"
+          class="rounded transition-fast-in-fast-out"
           contain
-          style='margin-left: -8px'
+          style="margin-left: -8px"
         />
       </div>
 
       <v-btn
         icon
-        variant='text'
-        size='small'
-        @click.stop='smAndDown ? (localDrawer = false) : (rail = !rail)'
+        variant="text"
+        size="small"
+        @click.stop="smAndDown ? (localDrawer = false) : (rail = !rail)"
       >
         <v-icon>{{
           smAndDown ? 'mdi-close' : rail ? 'mdi-chevron-right' : 'mdi-chevron-left'
@@ -92,10 +95,10 @@ const currentLogo = computed(() => (isDark.value ? lightLogo : darkLogo))
     </div>
 
     <v-alert
-      v-if='!isChatHistory && !rail'
-      type='warning'
-      class='mx-3 my-2 text-caption'
-      density='compact'
+      v-if="!isChatHistory && !rail"
+      type="warning"
+      class="mx-3 my-2 text-caption"
+      density="compact"
       text
     >
       Chat history is disabled.
@@ -121,16 +124,16 @@ const currentLogo = computed(() => (isDark.value ? lightLogo : darkLogo))
     <!-- </v-list> -->
 
     <template #append>
-      <div v-if='!rail'>
+      <div v-if="!rail">
         <v-divider />
-        <div class='d-flex align-center justify-space-between px-3 py-2'>
+        <div class="d-flex align-center justify-space-between px-3 py-2">
           <span>Theme</span>
           <v-switch
-            v-model='isDark'
+            v-model="isDark"
             hide-details
             inset
-            true-icon='mdi-weather-night'
-            false-icon='mdi-white-balance-sunny'
+            true-icon="mdi-weather-night"
+            false-icon="mdi-white-balance-sunny"
           />
         </div>
       </div>

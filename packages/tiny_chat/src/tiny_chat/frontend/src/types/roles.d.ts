@@ -1,1 +1,1 @@
-declare type Role = 'user' | 'agent';
+declare type Role = 'user' | 'agent'
