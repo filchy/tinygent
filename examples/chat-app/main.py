@@ -36,19 +36,15 @@ async def brave_news(data: BraveNewsConfig):
 
 
 async def answer_hook(*, run_id: str, answer: str):
-    await tc.BaseMessage(
+    await tc.AgentAnswerMessage(
         id=run_id,
-        type='text',
-        sender='agent',
         content=answer,
     ).send()
 
 
 async def answer_chunk_hook(*, run_id: str, chunk: str, idx: str):
-    await tc.BaseMessage(
+    await tc.AgentAnswerMessageChunk(
         id=run_id,
-        type='text',
-        sender='agent',
         content=chunk,
     ).send()
 
@@ -95,7 +91,8 @@ agent.on_after_tool_call = tool_call_hook
 
 
 @tc.on_message
-async def handle_message(msg: tc.BaseMessage):
+async def handle_message(msg: tc.BaseMessage, history: list[tc.BaseMessage]):
+    print('historyyyy: ', history)
     async for _ in agent.run_stream(msg.content):
         pass
 
