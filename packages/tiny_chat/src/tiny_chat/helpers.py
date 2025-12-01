@@ -12,7 +12,6 @@ class SessionProxy:
         return session
 
     def set(self, key: str, value: Any) -> None:
-        print(f'saving {key=} {value=}')
         self._session.set(key, value)
 
     def get(self, key: str, default: Any = None) -> Any:
