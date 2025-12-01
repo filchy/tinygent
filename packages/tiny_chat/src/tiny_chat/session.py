@@ -5,8 +5,8 @@ from fastapi import WebSocket
 
 from tiny_chat.context import current_chat_id
 from tiny_chat.emitter import emitter
-from tiny_chat.message import AgentAnswerMessage
-from tiny_chat.message import AgentAnswerMessageChunk
+from tiny_chat.message import AgentMessage
+from tiny_chat.message import AgentMessageChunk
 from tiny_chat.message import BaseMessage
 from tiny_chat.message import MessageUnion
 
@@ -22,22 +22,22 @@ class BaseSession:
         msgs = sorted(self.chats[current_chat_id.get()], key=lambda m: m._created_at)
 
         clean: list[BaseMessage] = []
-        chunks: dict[str, list[AgentAnswerMessageChunk]] = defaultdict(list)
+        chunks: dict[str, list[AgentMessageChunk]] = defaultdict(list)
 
         for m in msgs:
-            if isinstance(m, AgentAnswerMessageChunk):
+            if isinstance(m, AgentMessageChunk):
                 chunks[m.id].append(m)
 
         processed_ids: set[str] = set()
 
         for m in msgs:
-            if isinstance(m, AgentAnswerMessageChunk):
+            if isinstance(m, AgentMessageChunk):
                 if m.id in processed_ids:
                     continue
                 processed_ids.add(m.id)
 
                 group = chunks[m.id]
-                merged = AgentAnswerMessage(
+                merged = AgentMessage(
                     id=m.id, content=''.join(chunk.content for chunk in group)
                 )
                 clean.append(merged)

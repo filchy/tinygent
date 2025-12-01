@@ -18,6 +18,7 @@ from tinygent.cli.builder import build_tool
 from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
+from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyChatMessageChunk
 from tinygent.datamodels.messages import TinyHumanMessage
@@ -389,11 +390,21 @@ class TinyMultiStepAgent(TinyBaseAgent):
             self.memory.save_context(TinyChatMessage(content=final_yielded_answer))
 
     def reset(self) -> None:
+        super().reset()
+
         logger.debug('[AGENT RESET]')
 
         self._iteration_number = 1
         self._planned_steps = []
         self._tool_calls = []
+
+    def setup(self, reset: bool, history: list[AllTinyMessages] | None) -> None:
+        if reset:
+            self.reset()
+
+        if history:
+            for msg in history:
+                self.memory.save_context(message=msg)
 
     def run(
         self,
@@ -401,12 +412,12 @@ class TinyMultiStepAgent(TinyBaseAgent):
         *,
         run_id: str | None = None,
         reset: bool = True,
+        history: list[AllTinyMessages] | None = None,
     ) -> str:
         logger.debug('[USER INPUT] %s', input_text)
 
         run_id = run_id or str(uuid.uuid4())
-        if reset:
-            self.reset()
+        self.setup(reset=reset, history=history)
 
         async def _run() -> str:
             final_answer: str = ''
@@ -419,13 +430,17 @@ class TinyMultiStepAgent(TinyBaseAgent):
         return run_async_in_executor(_run)
 
     def run_stream(
-        self, input_text: str, *, run_id: str | None = None, reset: bool = True
+        self,
+        input_text: str,
+        *,
+        run_id: str | None = None,
+        reset: bool = True,
+        history: list[AllTinyMessages] | None = None,
     ) -> AsyncGenerator[str, None]:
         logger.debug('[USER INPUT] %s', input_text)
 
         run_id = run_id or str(uuid.uuid4())
-        if reset:
-            self.reset()
+        self.setup(reset=reset, history=history)
 
         async def _generator():
             idx = 0

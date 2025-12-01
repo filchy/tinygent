@@ -8,6 +8,7 @@ from tiny_brave import NewsSearchApiResponse
 from tiny_brave import NewsSearchRequest
 from tiny_brave import brave_news_search
 import tiny_chat as tc
+from tiny_chat.utils import tinychat_2_tinygent_message
 from tinygent.agents.react_agent import ReActPromptTemplate
 from tinygent.agents.react_agent import TinyReActAgent
 from tinygent.cli.utils import discover_and_register_components
@@ -36,14 +37,14 @@ async def brave_news(data: BraveNewsConfig):
 
 
 async def answer_hook(*, run_id: str, answer: str):
-    await tc.AgentAnswerMessage(
+    await tc.AgentMessage(
         id=run_id,
         content=answer,
     ).send()
 
 
 async def answer_chunk_hook(*, run_id: str, chunk: str, idx: str):
-    await tc.AgentAnswerMessageChunk(
+    await tc.AgentMessageChunk(
         id=run_id,
         content=chunk,
     ).send()
@@ -57,6 +58,7 @@ async def tool_call_hook(
         parent_id=run_id,
         tool_name=tool.info.name,
         tool_args=args,
+        content=result,
     ).send()
 
     try:
@@ -92,8 +94,9 @@ agent.on_after_tool_call = tool_call_hook
 
 @tc.on_message
 async def handle_message(msg: tc.BaseMessage, history: list[tc.BaseMessage]):
-    print('historyyyy: ', history)
-    async for _ in agent.run_stream(msg.content):
+    agent_hist = [tinychat_2_tinygent_message(m) for m in history]
+
+    async for _ in agent.run_stream(msg.content, history=agent_hist):
         pass
 
 

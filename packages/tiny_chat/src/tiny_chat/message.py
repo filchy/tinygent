@@ -29,12 +29,12 @@ class UserMessage(BaseMessage):
     chat_id: str
 
 
-class AgentAnswerMessage(BaseMessage):
+class AgentMessage(BaseMessage):
     type: Literal['text'] = 'text'
     sender: Literal['agent'] = 'agent'
 
 
-class AgentAnswerMessageChunk(BaseMessage):
+class AgentMessageChunk(BaseMessage):
     type: Literal['chunk'] = 'chunk'
     sender: Literal['agent'] = 'agent'
 
@@ -47,7 +47,7 @@ class AgentToolCallMessage(ChildBaseMessage):
     type: Literal['tool'] = 'tool'
     sender: Literal['agent'] = 'agent'
 
-    content: str = ''
+    content: Any = ''
     tool_name: str
     tool_args: dict[str, Any]
 
@@ -65,14 +65,14 @@ class AgentSourceMessage(ChildBaseMessage):
 
 MessageUnion: TypeAdapter[
     UserMessage
-    | AgentAnswerMessage
-    | AgentAnswerMessageChunk
+    | AgentMessage
+    | AgentMessageChunk
     | AgentToolCallMessage
     | AgentSourceMessage
 ] = TypeAdapter(
     UserMessage
-    | AgentAnswerMessage
-    | AgentAnswerMessageChunk
+    | AgentMessage
+    | AgentMessageChunk
     | AgentToolCallMessage
     | AgentSourceMessage
 )
