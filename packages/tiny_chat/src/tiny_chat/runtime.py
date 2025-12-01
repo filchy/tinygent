@@ -1,11 +1,13 @@
 import inspect
+from typing import Any
+from typing import Callable
 
 from tiny_chat.message import BaseMessage
 
 _message_fn = None
 
 
-def on_message(fn):
+def on_message(fn: Callable[[BaseMessage], Any]):
     global _message_fn
     _message_fn = fn
     return fn

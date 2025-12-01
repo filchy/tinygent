@@ -24,6 +24,7 @@ from tinygent.datamodels.agent import AbstractAgent
 from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
+from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinySquadMemberMessage
 from tinygent.datamodels.messages import TinySystemMessage
@@ -252,10 +253,20 @@ class TinySquadAgent(TinyBaseAgent):
 
     def reset(self) -> None:
         logger.debug('[AGENT RESET]')
+        super().reset()
+
         self.memory.clear()
 
         for member in self._squad:
             member.agent.reset()
+
+    def setup(self, reset: bool, history: list[AllTinyMessages] | None) -> None:
+        if reset:
+            self.reset()
+
+        if history:
+            for msg in history:
+                self.memory.save_context(message=msg)
 
     def run(
         self,
@@ -263,12 +274,12 @@ class TinySquadAgent(TinyBaseAgent):
         *,
         run_id: str | None = None,
         reset: bool = True,
+        history: list[AllTinyMessages] | None = None,
     ) -> str:
         logger.debug('[USER INPUT] %s', input_text)
 
         run_id = run_id or str(uuid.uuid4())
-        if reset:
-            self.reset()
+        self.setup(reset=reset, history=history)
 
         async def _run() -> str:
             final_answer = ''
@@ -286,12 +297,12 @@ class TinySquadAgent(TinyBaseAgent):
         *,
         run_id: str | None = None,
         reset: bool = True,
+        history: list[AllTinyMessages] | None = None,
     ) -> AsyncGenerator[str, None]:
         logger.debug('[USER INPUT] %s', input_text)
 
         run_id = run_id or str(uuid.uuid4())
-        if reset:
-            self.reset()
+        self.setup(reset=reset, history=history)
 
         async def _generator():
             idx = 0

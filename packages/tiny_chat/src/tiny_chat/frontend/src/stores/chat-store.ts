@@ -1,6 +1,7 @@
 import { useStateStore } from '@/stores/state-store'
 
 const messages = ref<Message[]>([])
+const chatId = ref<string>(crypto.randomUUID())
 const { loadingOwner, setLoadingOwner } = useStateStore()
 
 export function useChatStore() {
@@ -57,6 +58,7 @@ export function useChatStore() {
 
   return {
     messages,
+    chatId,
     addMessage,
     clearMessages,
   }

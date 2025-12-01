@@ -1,5 +1,6 @@
 declare interface BaseMessage {
   id: string
+  chat_id: string
   type: 'text' | 'reasoning' | 'loading' | 'source' | 'tool'
   sender: Role
   content: string
@@ -33,6 +34,7 @@ declare interface ReasoningMessage extends ChildMessage {
 declare interface ToolMessage extends ChildMessage {
   type: 'tool'
   sender: 'agent'
+
   content: string
   tool_name: string
   tool_args: Record<string, any>
@@ -41,6 +43,7 @@ declare interface ToolMessage extends ChildMessage {
 declare interface SourceMessage extends ChildMessage {
   type: 'source'
   sender: 'agent'
+
   url: string
   name: string
   favicon?: string

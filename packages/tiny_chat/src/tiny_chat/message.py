@@ -1,8 +1,11 @@
+from datetime import datetime
 from typing import Any
 from typing import Literal
 import uuid
 
 from pydantic import BaseModel
+from pydantic import PrivateAttr
+from pydantic import TypeAdapter
 
 from tiny_chat.emitter import emitter
 
@@ -13,12 +16,26 @@ class BaseMessage(BaseModel):
     sender: Any
     content: str
 
+    _created_at: datetime = PrivateAttr(default_factory=datetime.now)
+
     async def send(self):
         await emitter.send(self)
 
 
-class AgentAnswerMessage(BaseMessage):
+class UserMessage(BaseMessage):
     type: Literal['text'] = 'text'
+    sender: Literal['user'] = 'user'
+
+    chat_id: str
+
+
+class AgentMessage(BaseMessage):
+    type: Literal['text'] = 'text'
+    sender: Literal['agent'] = 'agent'
+
+
+class AgentMessageChunk(BaseMessage):
+    type: Literal['chunk'] = 'chunk'
     sender: Literal['agent'] = 'agent'
 
 
@@ -30,7 +47,7 @@ class AgentToolCallMessage(ChildBaseMessage):
     type: Literal['tool'] = 'tool'
     sender: Literal['agent'] = 'agent'
 
-    content: str = ''
+    content: Any = ''
     tool_name: str
     tool_args: dict[str, Any]
 
@@ -44,3 +61,18 @@ class AgentSourceMessage(ChildBaseMessage):
     url: str
     favicon: str | None = None
     description: str | None = None
+
+
+MessageUnion: TypeAdapter[
+    UserMessage
+    | AgentMessage
+    | AgentMessageChunk
+    | AgentToolCallMessage
+    | AgentSourceMessage
+] = TypeAdapter(
+    UserMessage
+    | AgentMessage
+    | AgentMessageChunk
+    | AgentToolCallMessage
+    | AgentSourceMessage
+)

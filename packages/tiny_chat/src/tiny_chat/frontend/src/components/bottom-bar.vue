@@ -8,12 +8,12 @@ import { useChatStore } from '@/stores/chat-store'
 import { useStateStore } from '@/stores/state-store'
 
 const emit = defineEmits<{
-  (e: 'send-message', message: string): void
+  (e: 'send-message', message: UserMessage): void
 }>()
 
 const theme = useTheme()
 const message = ref<string>('')
-const { addMessage } = useChatStore()
+const { chatId, addMessage } = useChatStore()
 const { loadingOwner, connectionStatus } = useStateStore()
 
 const typingWatchEnabled = ref<boolean>(true)
@@ -27,15 +27,6 @@ const sendMessageEnabled = computed(
     !loadingOwner.value,
 )
 
-const addUserMessage = (msg: string) => {
-  addMessage({
-    id: crypto.randomUUID(),
-    type: 'text',
-    sender: 'user',
-    content: msg,
-  })
-}
-
 const sendMessage = () => {
   if (!sendMessageEnabled.value) return
 
@@ -46,8 +37,16 @@ const sendMessage = () => {
 
   message.value = ''
 
-  addUserMessage(messageValue)
-  emit('send-message', messageValue)
+  const userMsg = {
+    id: crypto.randomUUID(),
+    chat_id: chatId.value,
+    type: 'text',
+    sender: 'user',
+    content: messageValue,
+  } as UserMessage
+
+  addMessage(userMsg)
+  emit('send-message', userMsg)
 
   nextTick(() => {
     typingWatchEnabled.value = true
