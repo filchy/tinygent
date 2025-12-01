@@ -44,6 +44,11 @@ class AbstractMemory(TinyModel, ABC):
         raise NotImplementedError('Subclasses must implement this method.')
 
     @abstractmethod
+    def save_multiple_context(self, messages: list[AllTinyMessages]) -> None:
+        """Save multiple messages to memory."""
+        raise NotImplementedError('Subclasses must implement this method.')
+
+    @abstractmethod
     def clear(self) -> None:
         """Clear the memory."""
         raise NotImplementedError('Subclasses must implement this method.')
@@ -55,6 +60,10 @@ class AbstractMemory(TinyModel, ABC):
     async def asave_context(self, message: AllTinyMessages) -> None:
         """Asynchronously save the context of a conversation to memory."""
         return await run_sync_in_executor(self.save_context, message)
+
+    async def asave_multiple_context(self, messages: list[AllTinyMessages]) -> None:
+        """Asynchronously save multiple messages to memory."""
+        return await run_sync_in_executor(self.save_multiple_context, messages)
 
     async def aclear(self) -> None:
         """Asynchronously clear the memory."""

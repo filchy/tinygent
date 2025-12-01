@@ -1,50 +1,33 @@
 from asyncio import Task
-from collections import defaultdict
+from typing import Any
 
 from fastapi import WebSocket
 
-from tiny_chat.context import current_chat_id
+from tiny_chat.context import current_session
 from tiny_chat.emitter import emitter
-from tiny_chat.message import AgentMessage
-from tiny_chat.message import AgentMessageChunk
 from tiny_chat.message import BaseMessage
-from tiny_chat.message import MessageUnion
 
 
-class BaseSession:
+class SessionStore:
+    def __init__(self) -> None:
+        self.store: dict[str, Any] = {}
+
+    def set(self, key: str, value: Any) -> None:
+        self.store[key] = value
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return self.store.get(key, default)
+
+    def has(self, key: str) -> bool:
+        return key in self.store
+
+
+class BaseSession(SessionStore):
     def __init__(self, id: str, user: str | None = None):
+        super().__init__()
+
         self.session_id = id
         self.user = user
-        self.chats: dict[str, list[BaseMessage]] = defaultdict(list)
-
-    @property
-    def clean_chat(self) -> list[BaseMessage]:
-        msgs = sorted(self.chats[current_chat_id.get()], key=lambda m: m._created_at)
-
-        clean: list[BaseMessage] = []
-        chunks: dict[str, list[AgentMessageChunk]] = defaultdict(list)
-
-        for m in msgs:
-            if isinstance(m, AgentMessageChunk):
-                chunks[m.id].append(m)
-
-        processed_ids: set[str] = set()
-
-        for m in msgs:
-            if isinstance(m, AgentMessageChunk):
-                if m.id in processed_ids:
-                    continue
-                processed_ids.add(m.id)
-
-                group = chunks[m.id]
-                merged = AgentMessage(
-                    id=m.id, content=''.join(chunk.content for chunk in group)
-                )
-                clean.append(merged)
-            else:
-                clean.append(m)
-
-        return clean
 
 
 class WebsocketSession(BaseSession):
@@ -59,15 +42,12 @@ class WebsocketSession(BaseSession):
         ws_sessions_sid[socket_id] = self
         ws_sessions_id[session_id] = self
 
-    def _add_message(self, msg: BaseMessage):
-        parsed_msg = MessageUnion.validate_python(msg.model_dump())
-        self.chats[current_chat_id.get()].append(parsed_msg)
+        current_session.set(self)
 
-    async def _send_json(self, msg: BaseMessage):
+    async def _send_json(self, msg: BaseMessage) -> None:
         await self.ws.send_json(msg.model_dump())
-        self._add_message(msg)
 
-    def restore(self, new_socket_id: str, new_ws: WebSocket):
+    def restore(self, new_socket_id: str, new_ws: WebSocket) -> None:
         ws_sessions_sid.pop(self.socket_id, None)
         ws_sessions_sid[new_socket_id] = self
         self.socket_id = new_socket_id

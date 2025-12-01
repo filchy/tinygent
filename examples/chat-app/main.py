@@ -8,7 +8,6 @@ from tiny_brave import NewsSearchApiResponse
 from tiny_brave import NewsSearchRequest
 from tiny_brave import brave_news_search
 import tiny_chat as tc
-from tiny_chat.utils import tinychat_2_tinygent_message
 from tinygent.agents.react_agent import ReActPromptTemplate
 from tinygent.agents.react_agent import TinyReActAgent
 from tinygent.cli.utils import discover_and_register_components
@@ -93,11 +92,13 @@ agent.on_after_tool_call = tool_call_hook
 
 
 @tc.on_message
-async def handle_message(msg: tc.BaseMessage, history: list[tc.BaseMessage]):
-    agent_hist = [tinychat_2_tinygent_message(m) for m in history]
+async def handle_message(msg: tc.BaseMessage):
+    agent_history = tc.current_session.get('agent_history', [])
 
-    async for _ in agent.run_stream(msg.content, history=agent_hist):
+    async for _ in agent.run_stream(msg.content, history=agent_history):
         pass
+
+    tc.current_session.set('agent_history', agent.memory.copy_chat_messages())
 
 
 if __name__ == '__main__':

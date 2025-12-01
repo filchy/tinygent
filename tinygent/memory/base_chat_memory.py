@@ -23,6 +23,10 @@ class BaseChatMemory(AbstractMemory, ABC):
     def save_context(self, message: AllTinyMessages) -> None:
         self._chat_history.add_message(message)
 
+    def save_multiple_context(self, messages: list[AllTinyMessages]) -> None:
+        for msg in messages:
+            self.save_context(msg)
+
     def clear(self) -> None:
         self._chat_history.clear()
 

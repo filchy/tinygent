@@ -9,6 +9,7 @@ from fastapi import WebSocket
 from fastapi import WebSocketDisconnect
 
 from tiny_chat.context import current_chat_id
+from tiny_chat.context import current_session
 from tiny_chat.message import MessageUnion
 from tiny_chat.message import UserMessage
 from tiny_chat.runtime import call_message
@@ -41,12 +42,11 @@ def _run_in_context():
 def _handle_user_message(session: WebsocketSession, msg: UserMessage):
     with _run_in_context() as ctx:
         current_chat_id.set(msg.chat_id)
+        current_session.set(session)
 
         async def _run_message():
             try:
-                result = await call_message(msg, session.clean_chat)
-
-                session.chats[current_chat_id.get()].append(msg)
+                result = await call_message(msg)
 
                 logger.debug(
                     'Processed message on WebSocket session %s: %s',
