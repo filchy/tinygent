@@ -37,7 +37,7 @@ const sendMessage = (message: UserMessage) => {
     <TopBar @toggle-drawer="drawer = !drawer" />
 
     <v-main class="app-main d-flex flex-column flex-grow-1">
-      <div class="d-flex flex-column" style="position: relative; height: 100%">
+      <div class="d-flex flex-column" style="position: relative; height: 100%; gap: 15px;">
         <Alerts />
         <ChatWindow />
       </div>
