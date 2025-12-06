@@ -137,7 +137,7 @@ class ActorPromptTemplate(TinyPromptTemplate):
         'init_fixer.user': {'question', 'validation'},
         'continuos.user': {'question', 'previous_questions'},
         'continuos_fixer.user': {'question', 'validation'},
-        'evaluator.user': {'state', 'subgoal'}
+        'evaluator.user': {'state', 'subgoal'},
     }
 
 
@@ -197,7 +197,7 @@ class TinyMAPAgentConfig(TinyBaseAgentConfig['TinyMAPAgent']):
             max_plan_length=self.max_plan_length,
             max_branches_per_layer=self.max_branches_per_layer,
             max_layer_depth=self.max_layer_depth,
-            max_recurrsion=self.max_recurrsion
+            max_recurrsion=self.max_recurrsion,
         )
 
 
@@ -233,30 +233,24 @@ class TinyMAPAgent(TinyBaseAgent):
 
             subgoals: list[subgoal]
 
-        messages = TinyLLMInput(
-            messages=[
-                *self.memory.copy_chat_messages()
-            ]
-        )
+        messages = TinyLLMInput(messages=[*self.memory.copy_chat_messages()])
         messages.add_at_end(
             TinyHumanMessage(
                 content=render_template(
                     self.prompt_template.task_decomposer.user,
-                    {'question': input_txt, 'max_subquestions': self.max_plan_length}
+                    {'question': input_txt, 'max_subquestions': self.max_plan_length},
                 )
             )
         )
         messages.add_before_last(
-            TinySystemMessage(
-                content=self.prompt_template.task_decomposer.system
-            )
+            TinySystemMessage(content=self.prompt_template.task_decomposer.system)
         )
 
         result = self.run_llm(
             run_id=run_id,
             fn=self.llm.generate_structured,
             llm_input=messages,
-            output_schema=DecomposedTask
+            output_schema=DecomposedTask,
         )
 
         all_subgoals = [f'{sq.index}. {sq.question}' for sq in result.subgoals]
@@ -264,7 +258,7 @@ class TinyMAPAgent(TinyBaseAgent):
         set_tiny_attributes(
             {
                 'agent.map.task_decomposer.subgoals': '\n'.join(all_subgoals),
-                'agent.map.task_decomposer.num_subgoals': len(all_subgoals)
+                'agent.map.task_decomposer.num_subgoals': len(all_subgoals),
             }
         )
         return all_subgoals
@@ -283,31 +277,20 @@ class TinyMAPAgent(TinyBaseAgent):
             else self.prompt_template.action_proposal.actor.init
         )
 
-        formatted_proposals = [
-            p.sum
-            for p in prev_proposals
-        ]
-        messages = TinyLLMInput(
-            messages=[
-                *self.memory.copy_chat_messages()
-            ]
-        )
+        formatted_proposals = [p.sum for p in prev_proposals]
+        messages = TinyLLMInput(messages=[*self.memory.copy_chat_messages()])
         messages.add_at_end(
             TinyHumanMessage(
                 content=render_template(
                     prompt_templ.user,
                     {
                         'question': subgoal,
-                        'previous_questions': '\n'.join(formatted_proposals)
-                    }
+                        'previous_questions': '\n'.join(formatted_proposals),
+                    },
                 )
             )
         )
-        messages.add_before_last(
-            TinySystemMessage(
-                content=prompt_templ.system
-            )
-        )
+        messages.add_before_last(TinySystemMessage(content=prompt_templ.system))
         if feedback:
             fix_prompt_templ = (
                 self.prompt_template.action_proposal.actor.continuos_fixer
@@ -324,18 +307,13 @@ class TinyMAPAgent(TinyBaseAgent):
                 TinyHumanMessage(
                     content=render_template(
                         fix_prompt_templ.user,
-                        {
-                            'question': subgoal,
-                            'validation': '\n'.join(feedback)
-                        }
+                        {'question': subgoal, 'validation': '\n'.join(feedback)},
                     )
                 )
             )
 
         result = self.run_llm(
-            run_id=run_id,
-            fn=self.llm.generate_text,
-            llm_input=messages
+            run_id=run_id, fn=self.llm.generate_text, llm_input=messages
         )
 
         subanswer = ' '.join(
@@ -348,8 +326,10 @@ class TinyMAPAgent(TinyBaseAgent):
             {
                 'agent.map.search.action_proposal.actor.subgoal': subgoal,
                 'agent.map.search.action_proposal.actor.subanswer': subanswer,
-                'agent.map.search.action_proposal.actor.prev_subgoals': '\n'.join(formatted_proposals),
-                'agent.map.search.action_proposal.actor.is_repairing': bool(feedback)
+                'agent.map.search.action_proposal.actor.prev_subgoals': '\n'.join(
+                    formatted_proposals
+                ),
+                'agent.map.search.action_proposal.actor.is_repairing': bool(feedback),
             }
         )
         return subanswer
@@ -359,7 +339,7 @@ class TinyMAPAgent(TinyBaseAgent):
         self,
         run_id: str,
         current_proposal: TinyMAPActionProposal,
-        prev_proposals: list[TinyMAPActionProposal] = []
+        prev_proposals: list[TinyMAPActionProposal] = [],
     ) -> TinyMAPMonitorValidity:
         class _MonitorResult(TinyModel):
             is_valid: bool
@@ -372,10 +352,7 @@ class TinyMAPAgent(TinyBaseAgent):
             else self.prompt_template.action_proposal.monitor.init
         )
 
-        formatted_proposals = [
-            p.sum
-            for p in prev_proposals
-        ]
+        formatted_proposals = [p.sum for p in prev_proposals]
         messages = TinyLLMInput()
         messages.add_at_end(
             TinyHumanMessage(
@@ -384,29 +361,27 @@ class TinyMAPAgent(TinyBaseAgent):
                     {
                         'question': current_proposal.question,
                         'answer': current_proposal.answer,
-                        'previous_questions': '\n'.join(formatted_proposals)
-                    }
+                        'previous_questions': '\n'.join(formatted_proposals),
+                    },
                 )
             )
         )
-        messages.add_before_last(
-            TinySystemMessage(
-                content=prompt_templ.system
-            )
-        )
+        messages.add_before_last(TinySystemMessage(content=prompt_templ.system))
 
         result = self.run_llm(
             run_id=run_id,
             fn=self.llm.generate_structured,
             llm_input=messages,
-            output_schema=_MonitorResult
+            output_schema=_MonitorResult,
         )
 
         set_tiny_attributes(
             {
                 'agent.map.search.action_proposal.monitor.current_question': current_proposal.question,
                 'agent.map.search.action_proposal.monitor.current_answer': current_proposal.answer,
-                'agent.map.search.action_proposal.monitor.previous_proposals': '\n'.join(formatted_proposals),
+                'agent.map.search.action_proposal.monitor.previous_proposals': '\n'.join(
+                    formatted_proposals
+                ),
                 'agent.map.search.action_proposal.monitor.result.is_valid': result.is_valid,
                 'agent.map.search.action_proposal.monitor.result.feedback': result.feedback,
             }
@@ -421,10 +396,7 @@ class TinyMAPAgent(TinyBaseAgent):
 
     @tiny_trace('map_agent_single_action_proposal')
     async def _single_action_proposal(
-        self,
-        run_id: str,
-        subgoal: str,
-        prev_actions: list[TinyMAPActionProposal]
+        self, run_id: str, subgoal: str, prev_actions: list[TinyMAPActionProposal]
     ) -> TinyMAPActionProposal:
         num_tries = 0
         validity = False
@@ -435,10 +407,7 @@ class TinyMAPAgent(TinyBaseAgent):
         while not validity and num_tries < self.max_recurrsion:
             subanswer = self._actor(run_id, subgoal, prev_actions, feedback)
 
-            proposal = TinyMAPActionProposal(
-                question=subgoal,
-                answer=subanswer
-            )
+            proposal = TinyMAPActionProposal(question=subgoal, answer=subanswer)
 
             monitor_validity = self._monitor(run_id, proposal, prev_actions)
             validity = monitor_validity.is_valid
@@ -449,13 +418,20 @@ class TinyMAPAgent(TinyBaseAgent):
             num_tries += 1
 
         if not (proposal := all_proposals[-1]):
-            raise RuntimeError('Failed to generate action proposal in reccursion limit (%d)', self.max_recurrsion)
+            raise RuntimeError(
+                'Failed to generate action proposal in reccursion limit (%d)',
+                self.max_recurrsion,
+            )
 
         set_tiny_attributes(
             {
                 'agent.map.search.action_proposal.single_action_proposal.num_tries': num_tries,
-                'agent.map.search.action_proposal.single_action_proposal.all_proposals': '\n'.join([p.sum for p in all_proposals]),
-                'agent.map.search.action_proposal.single_action_proposal.all_feedback': '\n'.join(feedback),
+                'agent.map.search.action_proposal.single_action_proposal.all_proposals': '\n'.join(
+                    [p.sum for p in all_proposals]
+                ),
+                'agent.map.search.action_proposal.single_action_proposal.all_feedback': '\n'.join(
+                    feedback
+                ),
             }
         )
 
@@ -463,13 +439,8 @@ class TinyMAPAgent(TinyBaseAgent):
 
     @tiny_trace('map_agent.map.search.action_proposal')
     async def _action_proposal(
-        self,
-        run_id: str,
-        subgoal: str,
-        prev_actions: list[TinyMAPActionProposal]
+        self, run_id: str, subgoal: str, prev_actions: list[TinyMAPActionProposal]
     ) -> list[TinyMAPActionProposal]:
-        proposals: list[TinyMAPActionProposal] = []
-
         tasks = [
             asyncio.create_task(
                 self._single_action_proposal(run_id, subgoal, prev_actions)
@@ -479,46 +450,40 @@ class TinyMAPAgent(TinyBaseAgent):
 
         proposals: list[TinyMAPActionProposal] = await asyncio.gather(*tasks)
 
-        formatted_proposals = '\n'.join([
-            f'{i} - {p.sum}'
-            for i, p in enumerate(proposals)
-        ])
+        formatted_proposals = '\n'.join(
+            [f'{i} - {p.sum}' for i, p in enumerate(proposals)]
+        )
 
         set_tiny_attributes(
             {
                 'agent.map.search.action_proposal.num_proposals': len(proposals),
-                'agent.map.search.action_proposal.proposals': formatted_proposals
+                'agent.map.search.action_proposal.proposals': formatted_proposals,
             }
         )
         return proposals
 
     @tiny_trace('map_agent_predictor')
     def _predictor(
-        self,
-        run_id: str,
-        state: TinyMAPState,
-        action: TinyMAPActionProposal
+        self, run_id: str, state: TinyMAPState, action: TinyMAPActionProposal
     ) -> TinyMAPState:
         messages = TinyLLMInput()
         messages.add_at_end(
             TinyHumanMessage(
                 content=render_template(
                     self.prompt_template.predictor.user,
-                    {'state': state.next_state, 'proposed_action': action.sum}
+                    {'state': state.next_state, 'proposed_action': action.sum},
                 )
             )
         )
         messages.add_before_last(
-            TinySystemMessage(
-                content=self.prompt_template.predictor.system
-            )
+            TinySystemMessage(content=self.prompt_template.predictor.system)
         )
 
         result = self.run_llm(
             run_id=run_id,
             fn=self.llm.generate_structured,
             llm_input=messages,
-            output_schema=TinyMAPState
+            output_schema=TinyMAPState,
         )
 
         set_tiny_attributes(
@@ -551,12 +516,7 @@ class TinyMAPAgent(TinyBaseAgent):
             orch_res = self._orchestrator(run_id, pred_state, subgoal)
 
             if depth < self.max_layer_depth and not orch_res.fully_satisfies:
-                child_res = await self._search(
-                    run_id,
-                    depth + 1,
-                    pred_state,
-                    subgoal
-                )
+                child_res = await self._search(run_id, depth + 1, pred_state, subgoal)
 
                 l_next_state = child_res.next_state
                 l_eval_score = child_res.eval_score
@@ -580,7 +540,7 @@ class TinyMAPAgent(TinyBaseAgent):
             {
                 'agent.map.search.best_state': best_state.next_state,
                 'agent.map.search.best_action': best_action.sum,
-                'agent.map.search.best_eval_score': best_eval_score.score
+                'agent.map.search.best_eval_score': best_eval_score.score,
             }
         )
 
@@ -591,13 +551,15 @@ class TinyMAPAgent(TinyBaseAgent):
         )
 
     @tiny_trace('map_agent_evaluator')
-    def _evaluator(self, run_id: str, state: TinyMAPState, subgoal: str) -> TinyMAPEvaluatorResult:
+    def _evaluator(
+        self, run_id: str, state: TinyMAPState, subgoal: str
+    ) -> TinyMAPEvaluatorResult:
         messages = TinyLLMInput()
         messages.add_at_end(
             TinyHumanMessage(
                 content=render_template(
                     self.prompt_template.action_proposal.actor.evaluator.user,
-                    {'state': state.next_state, 'subgoal': subgoal}
+                    {'state': state.next_state, 'subgoal': subgoal},
                 )
             )
         )
@@ -611,7 +573,7 @@ class TinyMAPAgent(TinyBaseAgent):
             run_id=run_id,
             fn=self.llm.generate_structured,
             llm_input=messages,
-            output_schema=TinyMAPEvaluatorResult
+            output_schema=TinyMAPEvaluatorResult,
         )
 
         set_tiny_attributes(
@@ -624,30 +586,27 @@ class TinyMAPAgent(TinyBaseAgent):
         return result
 
     @tiny_trace('map_agent_orchestrator')
-    def _orchestrator(self, run_id: str, state: TinyMAPState, subgoal: str) -> TinyMAPOrchestratorResult:
+    def _orchestrator(
+        self, run_id: str, state: TinyMAPState, subgoal: str
+    ) -> TinyMAPOrchestratorResult:
         messages = TinyLLMInput()
         messages.add_at_end(
             TinyHumanMessage(
                 content=render_template(
                     self.prompt_template.orchestrator.user,
-                    {
-                        'question': subgoal,
-                        'answer': state.next_state
-                    }
+                    {'question': subgoal, 'answer': state.next_state},
                 )
             )
         )
         messages.add_before_last(
-            TinySystemMessage(
-                content=self.prompt_template.orchestrator.system
-            )
+            TinySystemMessage(content=self.prompt_template.orchestrator.system)
         )
 
         result = self.run_llm(
             run_id=run_id,
             fn=self.llm.generate_structured,
             llm_input=messages,
-            output_schema=TinyMAPOrchestratorResult
+            output_schema=TinyMAPOrchestratorResult,
         )
 
         set_tiny_attributes(
@@ -661,7 +620,9 @@ class TinyMAPAgent(TinyBaseAgent):
     @tiny_trace('map_agent_map')
     async def _map(self, run_id: str, question: str) -> list[TinyMAPActionProposal]:
         subgoals = self._task_decomposer(run_id, question)
-        subgoals.append(question)  # INFO: Last and final subgoal is original user question
+        subgoals.append(
+            question
+        )  # INFO: Last and final subgoal is original user question
 
         final_plan: list[TinyMAPActionProposal] = []
 
@@ -670,12 +631,14 @@ class TinyMAPAgent(TinyBaseAgent):
                 is_valid=True,
                 next_state=f'Initial problem context: {question}',
                 reason='initial state',
-                metadata=''
+                metadata='',
             )
 
             validity = self._orchestrator(run_id, current_state, subgoal)
 
-            while not validity.fully_satisfies and len(final_plan) < self.max_plan_length:
+            while (
+                not validity.fully_satisfies and len(final_plan) < self.max_plan_length
+            ):
                 search_res = await self._search(run_id, 0, current_state, subgoal)
 
                 final_plan.append(search_res.action)
@@ -683,32 +646,23 @@ class TinyMAPAgent(TinyBaseAgent):
                 validity = self._orchestrator(run_id, current_state, subgoal)
 
         set_tiny_attributes(
-            {
-                'agent.map.final_plane': '\n'.join([p.sum for p in final_plan])
-            }
+            {'agent.map.final_plan': '\n'.join([p.sum for p in final_plan])}
         )
         return final_plan
 
     @tiny_trace('agent_run')
-    async def _run_agent(self, input_text: str, run_id: str):
+    async def _run_agent(self, input_text: str, run_id: str) -> str:
         set_tiny_attributes(
             {
                 'agent.type': 'map',
                 'agent.run_id': run_id,
-                'agent.input_text': input_text
+                'agent.input_text': input_text,
             }
         )
 
         final_plan = await self._map(run_id, input_text)
-        logger.info('FINAL MAP')
-        logger.info('FINAL MAP')
-        logger.info('FINAL MAP')
 
-        logger.info(final_plan)
-
-        logger.info('FINAL MAP')
-        logger.info('FINAL MAP')
-        logger.info('FINAL MAP')
+        return '\n\n'.join([p.sum for p in final_plan])
 
     def reset(self) -> None:
         super().reset()
@@ -736,8 +690,7 @@ class TinyMAPAgent(TinyBaseAgent):
         self.setup(reset, history)
 
         async def _run() -> str:
-            a = await self._run_agent(run_id=run_id, input_text=input_text)
-            return 'ahoj'
+            return await self._run_agent(run_id=run_id, input_text=input_text)
 
         return run_async_in_executor(_run)
 
@@ -755,13 +708,13 @@ class TinyMAPAgent(TinyBaseAgent):
         self.setup(reset, history)
 
         async def _generator():
-            yield 'ahoj'
+            yield await self._run_agent(run_id=run_id, input_text=input_text)
 
         return _generator()
 
     def __str__(self) -> str:
-        import textwrap
         from io import StringIO
+        import textwrap
 
         buf = StringIO()
 

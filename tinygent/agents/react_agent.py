@@ -435,8 +435,8 @@ class TinyReActAgent(TinyBaseAgent):
         return _generator()
 
     def __str__(self) -> str:
-        import textwrap
         from io import StringIO
+        import textwrap
 
         buf = StringIO()
 

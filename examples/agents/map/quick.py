@@ -13,7 +13,9 @@ def main():
 
     agent = build_agent(tiny_yaml_load(str(Path(__file__).parent / 'agent.yaml')))
 
-    result = agent.run('Will the Albany in Georgia reach a hundred thousand occupants before the one in New York?')
+    result = agent.run(
+        'Will the Albany in Georgia reach a hundred thousand occupants before the one in New York?'
+    )
 
     logger.info(f'[RESULT] {result}')
     logger.info(f'[AGENT] {str(agent)}')

@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 from typing import ClassVar
 
 from pydantic import ConfigDict
@@ -13,6 +14,7 @@ class TinyPromptTemplate(TinyModel):
 
     class UserSystem(TinyModel):
         """User & System prompt template"""
+
         user: str
         system: str
 
@@ -30,7 +32,7 @@ class TinyPromptTemplate(TinyModel):
             )
 
             parts = field_path.split('.')
-            value = self
+            value: TinyPromptTemplate | Any | None = self
 
             for part in parts:
                 value = getattr(value, part, None)

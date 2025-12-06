@@ -7,7 +7,7 @@ __all__ = [
     'TinyReActAgentConfig',
     'TinySquadAgent',
     'TinySquadAgentConfig',
-    'TinyMAPAgent'
+    'TinyMAPAgent',
 ]
 
 
