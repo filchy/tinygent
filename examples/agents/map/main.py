@@ -1,5 +1,7 @@
 from pathlib import Path
-from tinygent.agents.map_agent import MapPromptTemplate, TinyMAPAgent
+
+from tinygent.agents.map_agent import MapPromptTemplate
+from tinygent.agents.map_agent import TinyMAPAgent
 from tinygent.llms.base import init_llm
 from tinygent.logging import setup_logger
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
@@ -27,6 +29,7 @@ async def main():
 
     logger.info(f'[RESULT] {result}')
     logger.info(f'[AGENT] {str(agent)}')
+
 
 if __name__ == '__main__':
     import asyncio

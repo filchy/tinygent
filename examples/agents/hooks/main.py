@@ -110,7 +110,7 @@ def main():
         on_reasoning=reasoning_hook,
         on_answer=answer_hook,
         on_error=error_hook,
-        memory=BufferChatMemory()
+        memory=BufferChatMemory(),
     )
 
     result = agent.run('Say hello to Alice')
