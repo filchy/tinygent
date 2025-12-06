@@ -645,6 +645,8 @@ class TinyMAPAgent(TinyBaseAgent):
                 current_state = search_res.next_state
                 validity = self._orchestrator(run_id, current_state, subgoal)
 
+                self.on_plan(run_id=run_id, plan=search_res.action.sum)
+
         set_tiny_attributes(
             {'agent.map.final_plan': '\n'.join([p.sum for p in final_plan])}
         )
@@ -660,9 +662,15 @@ class TinyMAPAgent(TinyBaseAgent):
             }
         )
 
-        final_plan = await self._map(run_id, input_text)
+        self.memory.save_context(TinyHumanMessage(content=input_text))
 
-        return '\n\n'.join([p.sum for p in final_plan])
+        try:
+            final_plan = await self._map(run_id, input_text)
+
+            return '\n\n'.join([p.sum for p in final_plan])
+        except Exception as e:
+            self.on_error(run_id=run_id, e=e)
+            raise e
 
     def reset(self) -> None:
         super().reset()
@@ -687,10 +695,13 @@ class TinyMAPAgent(TinyBaseAgent):
         logger.debug('[USER INPUT] %s', input_text)
 
         run_id = run_id or str(uuid.uuid4())
-        self.setup(reset, history)
+        self.setup(reset=reset, history=history)
 
         async def _run() -> str:
-            return await self._run_agent(run_id=run_id, input_text=input_text)
+            plan = await self._run_agent(run_id=run_id, input_text=input_text)
+
+            self.on_answer(run_id=run_id, answer=plan)
+            return plan
 
         return run_async_in_executor(_run)
 
@@ -705,10 +716,13 @@ class TinyMAPAgent(TinyBaseAgent):
         logger.debug('[USER INPUT] %s', input_text)
 
         run_id = run_id or str(uuid.uuid4())
-        self.setup(reset, history)
+        self.setup(reset=reset, history=history)
 
         async def _generator():
-            yield await self._run_agent(run_id=run_id, input_text=input_text)
+            plan = await self._run_agent(run_id=run_id, input_text=input_text)
+
+            self.on_answer_chunk(run_id=run_id, chunk=plan, idx='0')
+            yield plan
 
         return _generator()
 
