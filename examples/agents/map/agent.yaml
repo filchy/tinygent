@@ -1,0 +1,21 @@
+type: map
+
+max_plan_length: 4
+max_branches_per_layer: 3
+max_layer_depth: 4
+max_recurrsion: 3
+
+prompt_template: !include prompts.yaml
+
+llm:
+  type: openai
+  model: gpt-4o-mini
+  temperature: 0.4
+
+memory:
+  type: buffer
+
+tools:
+  - type: reasoning
+    name: get_weather_mock
+    prompt: 'Explain why are you using this tool and what information you expect to get from it.'

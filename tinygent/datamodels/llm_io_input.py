@@ -5,7 +5,7 @@ from tinygent.types.base import TinyModel
 class TinyLLMInput(TinyModel):
     """Input to an LLM, consisting of a list of messages."""
 
-    messages: list[AllTinyMessages]
+    messages: list[AllTinyMessages] = []
 
     def add_before_last(self, message: AllTinyMessages) -> None:
         """Add a message before the last message in the list."""

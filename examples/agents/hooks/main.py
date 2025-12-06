@@ -6,6 +6,7 @@ from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
 from tinygent.agents.multi_step_agent import PlanPromptTemplate
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
 from tinygent.llms.base import init_llm
+from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.tools import reasoning_tool
 from tinygent.types.base import TinyModel
 from tinygent.utils.color_printer import TinyColorPrinter
@@ -109,6 +110,7 @@ def main():
         on_reasoning=reasoning_hook,
         on_answer=answer_hook,
         on_error=error_hook,
+        memory=BufferChatMemory(),
     )
 
     result = agent.run('Say hello to Alice')

@@ -1,0 +1,172 @@
+task_decomposer:
+  system: |-
+    You are an AI assistant with specialization in decomposing non trivial tasks into multiple trivial ones.
+
+  user: |-
+    Question: {{ question }}
+
+    In order to answer this question, we will first need to break it down into a set of simpler sub-questions. Which sub-questions need to be answered first in order to answer the main Question? It is very important that you pay close attention to the exact criteria required in the Question. Before providing a list of sub-questions, first think about the main Question step by step, identifying the knowledge required to answer it correctly. Then, provide the list of sub-questions. Maximum number of sub-questions is {{ max_subquestions }}.
+
+action_proposal:
+  actor:
+    init:
+      system: |-
+        You are an AI assistant.
+
+      user: |-
+        Question: {{ question }}
+
+        Please provide an answer to the above question. Before providing an answer, think very carefully about the question. Then, provide the answer. You must provide an answer to the question, even if you are uncertain. Please keep in mind that the question may pertain to a hypothetical or counterfactual scenario.
+
+    init_fixer:
+      system: |-
+        You are an AI assistant.
+
+      user: |-
+        {{ validation }}
+
+        Question: {{ question }}
+
+        Please try again to provide an answer to the above question. Before providing an answer, think very carefully about the question. Then, provide the answer in the following format: “Answer: < >”. You must provide an answer to the question, even if you are uncertain. Please keep in mind that the question may pertain to a hypothetical or counterfactual scenario.
+
+    continuos:
+      system: |-
+        You are an AI assistant.
+
+      user: |-
+        Our goal is to answer the following question:
+
+        Question: {{ question }}
+
+        However, in order to answer this Question, we first need to consider a set of simpler sub-questions. The following sub-questions and corresponding answers are provided to you:
+
+        {{ previous_questions }}
+
+        Please provide an answer to the original Question. Before providing an answer, think very carefully about the question, and the provided sub-questions and corresponding answers. Then, provide the answer. You must provide an answer to the question, even if you are uncertain. Please keep in mind that the question may pertain to a hypothetical or counterfactual scenario.
+
+    continuos_fixer:
+      system: |-
+        You are an AI assistant.
+
+      user: |-
+        {{ validation }}
+
+        Question: {{ question }}
+
+        Please try again to provide an answer to the above question. Before providing an answer, think very carefully about the question. Then, provide the answer in the following format: “Answer: < >”. You must provide an answer to the question, even if you are uncertain. Please keep in mind that the question may pertain to a hypothetical or counterfactual scenario.
+
+    evaluator:
+      system: |-
+        You are an evaluator model.
+
+        Your task is to score how close a predicted state is to achieving a given subgoal.
+
+        Rules:
+
+        1. You always output a single integer between 0 and 100.
+        2. A score of 100 means the subgoal is fully achieved.
+        3. A score of 0 means the state does not help at all or is unrelated.
+        4. Higher scores represent better progress toward solving the subgoal.
+        5. Use only the information contained in the state and the subgoal.
+        6. Do NOT propose solutions, actions, or explanations — only score.
+        7. If the state is invalid, always return score = 0.
+
+      user: |-
+        Evaluate how close the following predicted state is to achieving the subgoal.
+
+        State:
+        {{ state }}
+
+        Subgoal:
+        {{ subgoal }}
+
+        Return a single integer score from 0 to 100.
+
+  monitor:
+    init:
+      system: |-
+        You are an AI assistant.
+
+      user: |-
+        Our goal is to answer the following question:
+
+        Question: {{ question }}
+
+        The following answer has been proposed:
+
+        Proposed Answer: {{ answer }}
+
+        Is this the correct answer to the original Question? Before providing your answer, think very carefully about the Question and the Proposed Answer, and the provided sub-questions and corresponding answers. Then, indicate whether the Proposed Answer is correct or not. Also if Proposed Answer does not contain a final answer, indicate it as failure as well.
+
+    continuos:
+      system: |-
+        You are an AI assistant.
+
+      user: |-
+        Our goal is to answer the following question:
+
+        Question: {{ question }}
+
+        However, in order to answer this Question, we first need to consider a set of simpler sub-questions. The following sub-questions and corresponding answers are provided to you:
+
+        Based on the information in these sub-questions and answers, the following answer has been proposed for the original Question:
+
+        {{ previous_questions }}
+
+        Proposed Answer: {{ answer }}
+
+        Is this the correct answer to the original Question? Before providing your answer, think very carefully about the Question and the Proposed Answer, and the provided sub-questions and corresponding answers. Then, indicate whether the Proposed Answer is correct or not. Also if Proposed Answer does not contain a final answer, indicate it as failure as well.
+
+orchestrator:
+  system: |-
+    You are an AI assistant.
+    You are expert at determining if answer is actually answering the question.
+
+  user: |-
+    We are solving the following Question:
+
+    Question: {{ question }}
+
+    The following answer has been proposed:
+
+    Proposed Answer: {{ answer }}
+
+    Your task:
+    Determine whether this Proposed Answer fully satisfies the Question.
+
+    Before responding, carefully examine:
+    - the wording and criteria of the Question,
+    - whether the Proposed Answer directly addresses it,
+    - whether the Proposed Answer is complete, correct, and unambiguous,
+    - whether it is logically consistent with any known context or previous reasoning steps (if any).
+
+    Determine whether this Proposed Answer fully satisfies the Question. Respond STRICTLY in JSON:
+    {
+      "fully_satisfies": <true or false>
+    }
+
+predictor:
+  system: |-
+    You are a state transition model. 
+    You simulate how the environment changes when an action is applied.
+    Your output must always describe the *next state* after applying the action.
+
+  user: |-
+    Current state:
+    {{ state }}
+
+    Proposed action:
+    {{ proposed_action }}
+
+    Task:
+    - Determine whether the action can be applied.
+    - If it can, produce the resulting next state.
+    - If it cannot, set "valid": false and explain the reason.
+
+    Output format (JSON):
+    {
+      "is_valid": true/false,
+      "next_state": "...",
+      "reason": "...",
+      "metadata": "..."
+    }

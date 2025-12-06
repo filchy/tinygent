@@ -2,10 +2,7 @@ from pathlib import Path
 
 from pydantic import Field
 
-from tinygent.agents.react_agent import ActionPromptTemplate
-from tinygent.agents.react_agent import FallbackPromptTemplate
 from tinygent.agents.react_agent import ReActPromptTemplate
-from tinygent.agents.react_agent import ReasonPromptTemplate
 from tinygent.agents.react_agent import TinyReActAgent
 from tinygent.llms.base import init_llm
 from tinygent.logging import setup_logger
@@ -46,16 +43,7 @@ async def main():
         llm=init_llm('openai:gpt-4o', temperature=0.1),
         max_iterations=3,
         memory=BufferChatMemory(),
-        prompt_template=ReActPromptTemplate(
-            reason=ReasonPromptTemplate(
-                init=react_agent_prompt['reason']['init'],
-                update=react_agent_prompt['reason']['update'],
-            ),
-            action=ActionPromptTemplate(action=react_agent_prompt['action']['action']),
-            fallback=FallbackPromptTemplate(
-                fallback_answer=react_agent_prompt['fallback']['fallback_answer']
-            ),
-        ),
+        prompt_template=ReActPromptTemplate(**react_agent_prompt),
         tools=[get_weather, get_best_destination],
     )
 
