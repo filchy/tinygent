@@ -103,6 +103,7 @@ Before you begin using tinygent, ensure that you meet the following software pre
 2. [ReAct Agent](examples/agents/react/)
 3. [Multi-Step Agent](examples/agents/multi-step/)
 4. [Squad Agent](examples/agents/squad/)
+5. [Modual Agentic Planner Agent](examples/agents/map/)
 
 ## Linting & Formatting
 

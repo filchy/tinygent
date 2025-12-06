@@ -11,6 +11,11 @@ from tinygent.utils.jinja_utils import validate_template
 class TinyPromptTemplate(TinyModel):
     """Base class for prompt templates with template field validation."""
 
+    class UserSystem(TinyModel):
+        """User & System prompt template"""
+        user: str
+        system: str
+
     model_config = ConfigDict(frozen=True)
 
     _template_fields: ClassVar[dict[str, set[str]]] = {}
@@ -19,17 +24,30 @@ class TinyPromptTemplate(TinyModel):
     def _validate_template_fields(self) -> 'TinyPromptTemplate':
         logger = logging.getLogger(__name__)
 
-        for field_name, required in self._template_fields.items():
+        for field_path, required in self._template_fields.items():
             logger.debug(
-                f'Validating prompt template field: {field_name} with required fields: {required}'
+                f'Validating prompt template field: {field_path} with required fields: {required}'
             )
-            value = getattr(self, field_name, None)
-            if value is None:
+
+            parts = field_path.split('.')
+            value = self
+
+            for part in parts:
+                value = getattr(value, part, None)
+
+                if value is None:
+                    raise ValueError(
+                        f'Field "{field_path}" is required in the prompt template.'
+                    )
+
+            if not isinstance(value, str):
                 raise ValueError(
-                    f'Field "{field_name}" is required in the prompt template.'
+                    f'Field "{field_path}" resolved to non-string value: {type(value)}. '
+                    f'Template validation requires a string.'
                 )
+
             if not validate_template(value, required_fields=required):
                 raise ValueError(
-                    f'{self.__class__.__name__}.{field_name} is missing required fields: {required}'
+                    f'{self.__class__.__name__}.{field_path} is missing required fields: {required}'
                 )
         return self

@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from io import StringIO
 import logging
-import textwrap
 import typing
 from typing import AsyncGenerator
 from typing import Literal
@@ -105,8 +103,8 @@ class TinySquadAgentConfig(TinyBaseAgentConfig['TinySquadAgent']):
 
     def build(self) -> TinySquadAgent:
         return TinySquadAgent(
-            llm=build_llm(self.llm),
             prompt_template=self.prompt_template,
+            llm=build_llm(self.llm),
             memory=build_memory(self.memory),
             tools=[build_tool(tool_cfg) for tool_cfg in self.tools],
             squad=[AgentSquadMember.from_config(agent_cfg) for agent_cfg in self.squad],
@@ -265,8 +263,7 @@ class TinySquadAgent(TinyBaseAgent):
             self.reset()
 
         if history:
-            for msg in history:
-                self.memory.save_context(message=msg)
+            self.memory.save_multiple_context(history)
 
     def run(
         self,
@@ -314,6 +311,9 @@ class TinySquadAgent(TinyBaseAgent):
         return _generator()
 
     def __str__(self) -> str:
+        import textwrap
+        from io import StringIO
+
         buf = StringIO()
 
         extra = []

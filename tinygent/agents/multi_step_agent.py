@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from io import StringIO
 import logging
-import textwrap
 import typing
 from typing import Any
 from typing import AsyncGenerator
@@ -95,9 +93,9 @@ class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
     def build(self) -> TinyMultiStepAgent:
         return TinyMultiStepAgent(
             llm=build_llm(self.llm),
-            prompt_template=self.prompt_template,
             tools=[build_tool(tool) for tool in self.tools],
             memory=build_memory(self.memory),
+            prompt_template=self.prompt_template,
             max_iterations=self.max_iterations,
             plan_interval=self.plan_interval,
         )
@@ -403,8 +401,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
             self.reset()
 
         if history:
-            for msg in history:
-                self.memory.save_context(message=msg)
+            self.memory.save_multiple_context(history)
 
     def run(
         self,
@@ -452,6 +449,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
         return _generator()
 
     def __str__(self) -> str:
+        import textwrap
+        from io import StringIO
+
         buf = StringIO()
 
         extra = []

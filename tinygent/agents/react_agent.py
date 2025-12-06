@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from io import StringIO
 import logging
-import textwrap
 import typing
 from typing import AsyncGenerator
 from typing import Literal
@@ -82,8 +80,8 @@ class TinyReActAgentConfig(TinyBaseAgentConfig['TinyReActAgent']):
 
     def build(self) -> TinyReActAgent:
         return TinyReActAgent(
-            llm=build_llm(self.llm),
             prompt_template=self.prompt_template,
+            llm=build_llm(self.llm),
             tools=[build_tool(tool) for tool in self.tools],
             memory=build_memory(self.memory),
             max_iterations=self.max_iterations,
@@ -389,8 +387,7 @@ class TinyReActAgent(TinyBaseAgent):
             self.reset()
 
         if history:
-            for message in history:
-                self.memory.save_context(message)
+            self.memory.save_multiple_context(history)
 
     def run(
         self,
@@ -438,6 +435,9 @@ class TinyReActAgent(TinyBaseAgent):
         return _generator()
 
     def __str__(self) -> str:
+        import textwrap
+        from io import StringIO
+
         buf = StringIO()
 
         extra = []

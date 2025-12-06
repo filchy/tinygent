@@ -7,6 +7,7 @@ __all__ = [
     'TinyReActAgentConfig',
     'TinySquadAgent',
     'TinySquadAgentConfig',
+    'TinyMAPAgent'
 ]
 
 
@@ -50,5 +51,10 @@ def __getattr__(name):
         from .squad_agent import TinySquadAgentConfig
 
         return TinySquadAgentConfig
+
+    if name == 'TinyMAPAgent':
+        from .map_agent import TinyMAPAgent
+
+        return TinyMAPAgent
 
     raise AttributeError(name)

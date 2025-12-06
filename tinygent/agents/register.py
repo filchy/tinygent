@@ -1,3 +1,5 @@
+from tinygent.agents.map_agent import TinyMAPAgent
+from tinygent.agents.map_agent import TinyMAPAgentConfig
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
 from tinygent.agents.multi_step_agent import TinyMultiStepAgentConfig
 from tinygent.agents.react_agent import TinyReActAgent
@@ -13,6 +15,7 @@ def _register_agents() -> None:
     registry.register_agent('multistep', TinyMultiStepAgentConfig, TinyMultiStepAgent)
     registry.register_agent('react', TinyReActAgentConfig, TinyReActAgent)
     registry.register_agent('squad', TinySquadAgentConfig, TinySquadAgent)
+    registry.register_agent('map', TinyMAPAgentConfig, TinyMAPAgent)
 
 
 _register_agents()
