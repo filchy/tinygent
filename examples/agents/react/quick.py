@@ -9,14 +9,16 @@ logger = setup_logger('debug')
 
 
 def main():
-    discover_and_register_components()
+    parent_path = Path(__file__).parent
 
-    agent = build_agent(tiny_yaml_load(str(Path(__file__).parent / 'agent.yaml')))
+    discover_and_register_components(str(parent_path / 'main.py'))
+
+    agent = build_agent(tiny_yaml_load(str(parent_path / 'agent.yaml')))
 
     result = agent.run('What is the weather like in Paris?')
 
-    logger.info(f'[AGENT SUMMARY] {str(agent)}')
     logger.info(f'[RESULT] {result}')
+    logger.info(f'[AGENT SUMMARY] {str(agent)}')
 
 
 if __name__ == '__main__':

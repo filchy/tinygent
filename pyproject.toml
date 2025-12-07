@@ -1,7 +1,7 @@
 [project]
 name = "tinygent"
 version = "0.1.0"
-description = "Tiny agentic framework for building AI agents which can do more than tiny tasks."
+description = "Tiny agentic framework for building AI agents which can do more than tiny just tasks."
 readme = "README.md"
 authors = [
     { name = "Filip Chytil", email = "chytilfilip@gmail.com" }
@@ -43,9 +43,6 @@ fmt = "scripts.fmt:main"
 tiny_agents = "tinygent.agents.register"
 tiny_tools = "tinygent.tools.register"
 tiny_memory = "tinygent.memory.register"
-
-[project.entry-points.functions]
-tiny_default_tools = "tinygent.tools.default_tools"
 
 [tool.uv]
 package = true

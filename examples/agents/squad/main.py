@@ -13,19 +13,24 @@ from tinygent.llms.base import init_llm
 from tinygent.logging import setup_logger
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.memory.buffer_window_chat_memory import BufferWindowChatMemory
-from tinygent.tools.reasoning_tool import reasoning_tool
-from tinygent.tools.tool import tool
+from tinygent.tools.reasoning_tool import register_reasoning_tool
+from tinygent.tools.tool import register_tool
 from tinygent.types.base import TinyModel
 from tinygent.utils.yaml import tiny_yaml_load
 
 logger = setup_logger('debug')
+
+# NOTE: Using @register_tool & @register_reasoning_tool decorator to register tools globally,
+# allowing them to be discovered and reused by:
+# - quick.py via discover_and_register_components()
+# - CLI terminal command via config-based agent building
 
 
 class WeatherInput(TinyModel):
     location: str = Field(..., description='The location to get the weather for.')
 
 
-@reasoning_tool(
+@register_reasoning_tool(
     reasoning_prompt='Provide reasoning for why the weather information is needed.'
 )
 def get_weather(data: WeatherInput) -> str:
@@ -38,11 +43,21 @@ class GetBestDestinationInput(TinyModel):
     top_k: int = Field(..., description='The number of top destinations to return.')
 
 
-@tool
+@register_tool
 def get_best_destination(data: GetBestDestinationInput) -> list[str]:
     """Get the best travel destinations."""
     destinations = {'Paris', 'New York', 'Tokyo', 'Barcelona', 'Rome'}
     return list(destinations)[: data.top_k]
+
+
+class SumInput(TinyModel):
+    numbers: list[int] = Field(..., description='A list of numbers to sum.')
+
+
+@register_tool
+def calculate_sum(data: SumInput) -> int:
+    """Calculate the sum of a list of numbers."""
+    return sum(data.numbers)
 
 
 def main():
@@ -87,6 +102,7 @@ def main():
             ),
         ],
         memory=BufferChatMemory(),
+        tools=[calculate_sum],
     )
 
     result = squad_agent.run(

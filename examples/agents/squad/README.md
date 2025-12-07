@@ -97,9 +97,11 @@ Squad members keep their own hook configuration. If you want the top-level agent
 ## Quick Run
 
 ```bash
-tiny terminal \
+tiny \
+    -i examples/agents/squad/main.py \
+    terminal \
     -c examples/agents/squad/agent.yaml \
-    -q "Find a city for a team offsite and describe the weather."
+    -q "What is the best travel destination and what is the weather like there?"
 ```
 
 ---

@@ -45,7 +45,7 @@ acter:
     {{ task }}
     ```
 
-    If you feel like you do not need more information, provide your final answer now using dedicated tool "Final Answer".
+    If you feel like you do not need more information, provide your final answer.
 
 plan:
   init_plan: |-
@@ -165,4 +165,4 @@ fallback:
     {{ task }}
     ```
 
-    If you feel like you do not have enough information to provide a final answer, state what additional information you need and why. If you have enough information, provide your final answer now using dedicated tool "Final Answer".
+    If you feel like you do not have enough information to provide a final answer, state what additional information you need and why. If you have enough information, provide your final answer now.
