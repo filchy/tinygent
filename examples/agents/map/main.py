@@ -17,9 +17,9 @@ async def main():
         llm=init_llm('openai:gpt-4o-mini', temperature=0.1),
         prompt_template=MapPromptTemplate(**map_agent_prompt),
         memory=BufferChatMemory(),
-        max_plan_length=4,
-        max_branches_per_layer=3,
-        max_layer_depth=4,
+        max_plan_length=3,
+        max_branches_per_layer=2,
+        max_layer_depth=2,
         max_recurrsion=3,
     )
 
@@ -28,6 +28,7 @@ async def main():
     )
 
     logger.info(f'[RESULT] {result}')
+    logger.info(f'[MEMORY] {agent.memory.load_variables()}')
     logger.info(f'[AGENT] {str(agent)}')
 
 

@@ -79,10 +79,11 @@ You can subclass the agent and override these methods, or attach callbacks, to h
 ## Quick Run
 
 ```bash
-tiny terminal \
-  -c examples/agents/react/agent.yaml \
-  -q "What is the weather like in Tokyo?" \
-  -q "What is the best travel destination?" \
+tiny \
+    -i examples/agents/react/main.py \
+    terminal \
+    -c examples/agents/react/agent.yaml \
+    -q "What is the best travel destination and what is the weather like there?"
 ```
 
 ---

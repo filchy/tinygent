@@ -22,6 +22,8 @@ from tinygent.types.discriminator import HasDiscriminatorField
 
 T = TypeVar('T', bound=HasDiscriminatorField)
 
+_discovered_modules: bool = False
+
 
 def make_union(getter: Callable[[], Mapping[str, tuple[type[T], Any]]]):
     """Create a discriminated union type from registered config classes."""
@@ -51,7 +53,19 @@ def _parse_config(
     return adapter.validate_python(config)
 
 
+def _check_modules() -> None:
+    """Check if modules were already discovered or not. If not discovers them."""
+    if _discovered_modules:
+        return
+    
+    from tinygent.cli.utils import discover_and_register_components
+    discover_and_register_components()
+
+
 def build_agent(config: dict | AbstractAgentConfig) -> AbstractAgent:
+    """Build tiny agent."""
+    _check_modules()
+
     if isinstance(config, AbstractAgentConfig):
         config = config.model_dump()
 
@@ -62,6 +76,9 @@ def build_agent(config: dict | AbstractAgentConfig) -> AbstractAgent:
 
 
 def build_llm(config: dict | AbstractLLMConfig) -> AbstractLLM:
+    """Build tiny llm."""
+    _check_modules()
+
     if isinstance(config, AbstractLLMConfig):
         config = config.model_dump()
 
@@ -70,6 +87,9 @@ def build_llm(config: dict | AbstractLLMConfig) -> AbstractLLM:
 
 
 def build_memory(config: dict | AbstractMemoryConfig) -> AbstractMemory:
+    """Build tiny memory."""
+    _check_modules()
+
     if isinstance(config, AbstractMemoryConfig):
         config = config.model_dump()
 
@@ -80,6 +100,9 @@ def build_memory(config: dict | AbstractMemoryConfig) -> AbstractMemory:
 
 
 def build_tool(config: dict | AbstractToolConfig) -> AbstractTool:
+    """Build tiny tool."""
+    _check_modules()
+
     if isinstance(config, AbstractToolConfig):
         config = config.model_dump()
 

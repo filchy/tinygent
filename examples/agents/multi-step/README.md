@@ -77,10 +77,12 @@ uv run examples/agents/multi-step/main.py
 
 ## Quick Run
 ```bash
-tiny terminal \
-  -c examples/agents/multi-step/agent.yaml \
-  -q "What is the weather like in Paris?" \
-  -q "What is the weather like in New York?" \
+tiny \
+    -i examples/agents/multi-step/main.py \
+    terminal \
+    -c examples/agents/multi-step/agent.yaml \
+    -q "What is the weather like in Paris?" \
+    -q "What is the weather like in New York?" \
 ```
 
 ## Example Tools

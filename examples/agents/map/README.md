@@ -155,9 +155,11 @@ Performs tree search with `L` layers and `B` branches per layer:
 ## Quick Run
 
 ```bash
-tiny terminal \
-  -c examples/agents/map/agent.yaml \
-  -q "Will the Albany in Georgia reach a hundred thousand occupants before the one in New York?"
+tiny \
+    -i examples/agents/map/main.py \
+    terminal \
+    -c examples/agents/map/agent.yaml \
+    -q "Will the Albany in Georgia reach a hundred thousand occupants before the one in New York?"
 ```
 
 ---

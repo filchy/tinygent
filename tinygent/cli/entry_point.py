@@ -44,6 +44,14 @@ def cli(
             click_type=click.Choice(list(LOG_LEVELS.keys()), case_sensitive=False),
         ),
     ] = 'info',
+    add_imports: Annotated[
+        list[str],
+        typer.Option(
+            '--add-imports',
+            '-i',
+            help='Import additional paths.',
+        ),
+    ] = [],
 ) -> None:
     """Main entry point for the TinyGent CLI."""
     setup_logger(log_level)
@@ -56,4 +64,4 @@ def cli(
     logger.info("Starting 'Tinygent' CLI...")
     logger.info('Hold tight, tiny things are about to do huge work!')
 
-    discover_and_register_components()
+    discover_and_register_components(add_imports)

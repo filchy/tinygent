@@ -9,6 +9,29 @@ import typer
 logger = logging.getLogger(__name__)
 
 
+def _path_to_import_path(path: str) -> str:
+    """Convert 'path-like' path to 'import-like' path."""
+    import sys
+    from pathlib import Path
+    p = Path(path).resolve()
+
+    if p.is_dir():
+        p = p / '__init__.py'
+
+    if p.suffix != '.py':
+        raise ValueError(f'Path is not a Python module: {path}')
+
+    for root in map(Path, sys.path):
+        try:
+            rel = p.relative_to(root.resolve())
+            rel = rel.with_suffix('')
+            return '.'.join(rel.parts)
+        except ValueError:
+            continue
+
+    raise ValueError(f'Path {path} is not under any sys.path entry')
+
+
 def get_click_context() -> click.Context:
     """Get the current Click context."""
     ctx = click.get_current_context(silent=True)
@@ -47,9 +70,26 @@ def discover_entry_points(
     return discovered
 
 
-def discover_and_register_components() -> None:
+def create_entry_point_from_path(
+    path: str
+) -> importlib.metadata.EntryPoint:
+    """Create new entry point from 'folder-like' path."""
+    import_path = _path_to_import_path(path)
+
+    return importlib.metadata.EntryPoint(
+        name=import_path.replace('.', '_'),
+        value=import_path,
+        group='manual'
+    )
+
+
+def discover_and_register_components(additional_paths: list[str] | str = []) -> None:
     """Discover and register components from the 'tinygent' package."""
     entry_points = discover_entry_points(['components', 'functions'])
+    entry_points.extend([
+        create_entry_point_from_path(p)
+        for p in (additional_paths if isinstance(additional_paths, list) else [additional_paths])
+    ])
 
     count = 0
     for entry_point in entry_points:
