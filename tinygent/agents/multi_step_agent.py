@@ -257,6 +257,8 @@ class TinyMultiStepAgent(TinyBaseAgent):
             }
         )
 
+        logger.debug('[%s] Running agent with input %s', run_id, input_text)
+
         self._iteration_number = 1
         returned_final_answer: bool = False
         yielded_final_answer: str = ''

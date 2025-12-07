@@ -56,12 +56,12 @@ async def main():
     async for chunk in react_agent.run_stream(
         'What is the best travel destination and what is the weather like there?'
     ):
-        logger.info(f'[STREAM CHUNK] {chunk}')
+        logger.info('[STREAM CHUNK] %s', chunk)
         result += chunk
 
-    logger.info(f'[RESULT] {result}')
-    logger.info(f'[MEMORY] {react_agent.memory.load_variables()}')
-    logger.info(f'[AGENT SUMMARY] {str(react_agent)}')
+    logger.info('[RESULT] %s', result)
+    logger.info('[MEMORY] %s', react_agent.memory.load_variables())
+    logger.info('[AGENT SUMMARY] %s', str(react_agent))
 
 
 if __name__ == '__main__':

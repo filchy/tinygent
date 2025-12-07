@@ -1,3 +1,4 @@
+import logging
 from typing import Callable
 from typing import Sequence
 
@@ -8,6 +9,8 @@ from tinygent.datamodels.messages import TinyAIMessage
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.types.base import TinyModel
+
+logger = logging.getLogger(__name__)
 
 
 class BaseChatHistory(TinyModel):
@@ -29,32 +32,45 @@ class BaseChatHistory(TinyModel):
         )
 
     def add_message(self, message: AllTinyMessages) -> None:
+        logger.debug('Adding message to chat history: %s', message)
+
         self.messages.append(message)
 
     def add_messages(self, messages: Sequence[AllTinyMessages]) -> None:
+        logger.debug('Adding multiple messages to chat history: %s', messages)
+
         self.messages.extend(messages)
 
     def add_ai_message(self, message: TinyAIMessage | str) -> None:
+        logger.debug('Adding AI message to chat history: %s', message)
+
         if isinstance(message, str):
             message = TinyChatMessage(content=message)
 
         self.messages.append(message)
 
     def add_human_message(self, message: str | TinyHumanMessage) -> None:
+        logger.debug('Adding human message to chat history: %s', message)
+
         if isinstance(message, str):
             message = TinyHumanMessage(content=message)
 
         self.messages.append(message)
 
     def clear(self) -> None:
+        logger.debug('Clearing chat history')
         self.messages.clear()
 
     def add_filter(self, name: str, func: Callable[[AllTinyMessages], bool]) -> None:
+        logger.debug('Adding filter to chat history: %s', name)
+
         if name in self._filters:
             raise ValueError(f"Filter with name '{name}' already exists.")
         self._filters[name] = func
 
     def remove_filter(self, name: str) -> None:
+        logger.debug('Removing filter from chat history: %s', name)
+
         if name not in self._filters:
             raise ValueError(f"Filter with name '{name}' does not exist.")
         self._filters.pop(name)

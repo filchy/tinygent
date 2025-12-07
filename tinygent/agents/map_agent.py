@@ -55,6 +55,10 @@ class TinyMAPState(TinyModel):
 
     metadata: str
 
+    @property
+    def sum(self) -> str:
+        return f'Next state({"valid" if self.is_valid else "non-valid"}): {self.next_state} reason: {self.reason} metadata: {self.metadata}'
+
 
 class TinyMAPSearchResult(TinyModel):
     """Result of the 'search' component containing 'next state', 'proposed action' and its eval score."""
@@ -226,6 +230,8 @@ class TinyMAPAgent(TinyBaseAgent):
 
     @tiny_trace('map_agent_task_decomposer')
     def _task_decomposer(self, run_id: str, input_txt: str) -> list[str]:
+        logger.debug('[TASK DECOMPOSER] task: %s', input_txt)
+
         class DecomposedTask(TinyModel):
             class subgoal(TinyModel):
                 index: int
@@ -261,6 +267,9 @@ class TinyMAPAgent(TinyBaseAgent):
                 'agent.map.task_decomposer.num_subgoals': len(all_subgoals),
             }
         )
+        logger.debug(
+            '[TASK DECOMPOSER] decomposed task (%s): %s', input_txt, all_subgoals
+        )
         return all_subgoals
 
     @tiny_trace('map_agent_actor')
@@ -271,6 +280,13 @@ class TinyMAPAgent(TinyBaseAgent):
         prev_proposals: list[TinyMAPActionProposal],
         feedback: list[str],
     ) -> str:
+        logger.debug(
+            '[ACTOR] subgoal: %s prev proposals: %s feedback: %s',
+            subgoal,
+            [a.sum for a in prev_proposals],
+            feedback,
+        )
+
         prompt_templ = (
             self.prompt_template.action_proposal.actor.continuos
             if prev_proposals
@@ -332,6 +348,7 @@ class TinyMAPAgent(TinyBaseAgent):
                 'agent.map.search.action_proposal.actor.is_repairing': bool(feedback),
             }
         )
+        logger.debug('[ACTOR] subgoal: %s subanswer: %s', subgoal, subanswer)
         return subanswer
 
     @tiny_trace('map_agent_monitor')
@@ -341,6 +358,12 @@ class TinyMAPAgent(TinyBaseAgent):
         current_proposal: TinyMAPActionProposal,
         prev_proposals: list[TinyMAPActionProposal] = [],
     ) -> TinyMAPMonitorValidity:
+        logger.debug(
+            '[MONITOR] curr proposal: %s prev_proposals: %s',
+            current_proposal.sum,
+            [a.sum for a in prev_proposals],
+        )
+
         class _MonitorResult(TinyModel):
             is_valid: bool
 
@@ -386,6 +409,12 @@ class TinyMAPAgent(TinyBaseAgent):
                 'agent.map.search.action_proposal.monitor.result.feedback': result.feedback,
             }
         )
+        logger.debug(
+            '[MONITOR] curr proposal: %s valid: %r feedback: %s',
+            current_proposal.sum,
+            result.is_valid,
+            result.feedback,
+        )
 
         return TinyMAPMonitorValidity(
             orig_question=current_proposal.question,
@@ -398,6 +427,12 @@ class TinyMAPAgent(TinyBaseAgent):
     async def _single_action_proposal(
         self, run_id: str, subgoal: str, prev_actions: list[TinyMAPActionProposal]
     ) -> TinyMAPActionProposal:
+        logger.debug(
+            '[SINGLE ACTION PROPOSAL] subgoal: %s prev_actions: %s',
+            subgoal,
+            [a.sum for a in prev_actions],
+        )
+
         num_tries = 0
         validity = False
 
@@ -434,6 +469,11 @@ class TinyMAPAgent(TinyBaseAgent):
                 ),
             }
         )
+        logger.debug(
+            '[SINGLE ACTION PROPOSAL] subgoal: %s proposals: %s',
+            subgoal,
+            [p.sum for p in all_proposals],
+        )
 
         return proposal
 
@@ -441,6 +481,12 @@ class TinyMAPAgent(TinyBaseAgent):
     async def _action_proposal(
         self, run_id: str, subgoal: str, prev_actions: list[TinyMAPActionProposal]
     ) -> list[TinyMAPActionProposal]:
+        logger.debug(
+            '[ACTION PROPOSAL] subgoal: %s prev_actions: %s',
+            subgoal,
+            [a.sum for a in prev_actions],
+        )
+
         tasks = [
             asyncio.create_task(
                 self._single_action_proposal(run_id, subgoal, prev_actions)
@@ -460,12 +506,19 @@ class TinyMAPAgent(TinyBaseAgent):
                 'agent.map.search.action_proposal.proposals': formatted_proposals,
             }
         )
+        logger.debug(
+            '[ACTION PROPOSAL] subgoal: %s all proposals: %s',
+            subgoal,
+            formatted_proposals,
+        )
         return proposals
 
     @tiny_trace('map_agent_predictor')
     def _predictor(
         self, run_id: str, state: TinyMAPState, action: TinyMAPActionProposal
     ) -> TinyMAPState:
+        logger.debug('[PREDICTOR] state: %s action: %s', state.sum, action.sum)
+
         messages = TinyLLMInput()
         messages.add_at_end(
             TinyHumanMessage(
@@ -494,6 +547,12 @@ class TinyMAPAgent(TinyBaseAgent):
                 'agent.map.search.predictor.metadata': result.metadata,
             }
         )
+        logger.debug(
+            '[PREDICTOR] state: %s action: %s result: %s',
+            state.sum,
+            action.sum,
+            result.sum,
+        )
         return result
 
     @tiny_trace('map_agent_search')
@@ -504,6 +563,10 @@ class TinyMAPAgent(TinyBaseAgent):
         state: TinyMAPState,  # x
         subgoal: str,  # y
     ) -> TinyMAPSearchResult:
+        logger.debug(
+            '[SEARCH] depth: %d state: %s subgoal: %s', depth, state.sum, subgoal
+        )
+
         eval_values: list[TinyMAPEvaluatorResult] = []
         next_states: list[TinyMAPState] = []
         actions: list[TinyMAPActionProposal] = []
@@ -511,6 +574,7 @@ class TinyMAPAgent(TinyBaseAgent):
         proposed_actions = await self._action_proposal(run_id, subgoal, [])
 
         for action in proposed_actions:
+            logger.debug('[SEARCH] current action: %s', action.sum)
             pred_state = self._predictor(run_id, state, action)
 
             orch_res = self._orchestrator(run_id, pred_state, subgoal)
@@ -543,6 +607,13 @@ class TinyMAPAgent(TinyBaseAgent):
                 'agent.map.search.best_eval_score': best_eval_score.score,
             }
         )
+        logger.debug(
+            '[SEARCH] subgoal: %s best state: %s best action: %s best score: %d',
+            subgoal,
+            best_state.sum,
+            best_action.sum,
+            best_eval_score.score,
+        )
 
         return TinyMAPSearchResult(
             next_state=best_state,
@@ -554,6 +625,8 @@ class TinyMAPAgent(TinyBaseAgent):
     def _evaluator(
         self, run_id: str, state: TinyMAPState, subgoal: str
     ) -> TinyMAPEvaluatorResult:
+        logger.debug('[EVALUATOR] subgoal: %s state: %s', subgoal, state.sum)
+
         messages = TinyLLMInput()
         messages.add_at_end(
             TinyHumanMessage(
@@ -583,12 +656,20 @@ class TinyMAPAgent(TinyBaseAgent):
                 'agent.map.search.evaluator.score': result.score,
             }
         )
+        logger.debug(
+            '[EVALUATOR] subgoal: %s state: %s score: %d',
+            subgoal,
+            state.sum,
+            result.score,
+        )
         return result
 
     @tiny_trace('map_agent_orchestrator')
     def _orchestrator(
         self, run_id: str, state: TinyMAPState, subgoal: str
     ) -> TinyMAPOrchestratorResult:
+        logger.debug('[ORCHESTRATOR] subgoal: %s current state: %s', subgoal, state.sum)
+
         messages = TinyLLMInput()
         messages.add_at_end(
             TinyHumanMessage(
@@ -615,10 +696,12 @@ class TinyMAPAgent(TinyBaseAgent):
                 'agent.orchestrator.next_state': state.next_state,
             }
         )
+        logger.debug('[ORCHESTRATOR] finished with %r', result.fully_satisfies)
         return result
 
     @tiny_trace('map_agent_map')
     async def _map(self, run_id: str, question: str) -> list[TinyMAPActionProposal]:
+        logger.debug('[MAP] Running MAP module with task: %s', question)
         subgoals = self._task_decomposer(run_id, question)
         subgoals.append(
             question
@@ -627,6 +710,7 @@ class TinyMAPAgent(TinyBaseAgent):
         final_plan: list[TinyMAPActionProposal] = []
 
         for subgoal in subgoals:
+            logger.debug('[MAP] current subgoal: %s', subgoal)
             current_state = TinyMAPState(
                 is_valid=True,
                 next_state=f'Initial problem context: {question}',
@@ -650,6 +734,9 @@ class TinyMAPAgent(TinyBaseAgent):
         set_tiny_attributes(
             {'agent.map.final_plan': '\n'.join([p.sum for p in final_plan])}
         )
+        logger.debug(
+            '[MAP] task: %s final plan: %s', question, [p.sum for p in final_plan]
+        )
         return final_plan
 
     @tiny_trace('agent_run')
@@ -661,6 +748,7 @@ class TinyMAPAgent(TinyBaseAgent):
                 'agent.input_text': input_text,
             }
         )
+        logger.debug('Running agent with task: %s', input_text)
 
         self.memory.save_context(TinyHumanMessage(content=input_text))
 
@@ -669,6 +757,7 @@ class TinyMAPAgent(TinyBaseAgent):
 
             return '\n\n'.join([p.sum for p in final_plan])
         except Exception as e:
+            logger.warning('Error during MAP: %s', e)
             self.on_error(run_id=run_id, e=e)
             raise e
 

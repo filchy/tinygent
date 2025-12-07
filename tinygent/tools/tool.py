@@ -1,4 +1,5 @@
 from io import StringIO
+import logging
 from typing import Any
 from typing import Awaitable
 from typing import Callable
@@ -17,6 +18,8 @@ from tinygent.runtime.executors import run_async_in_executor
 from tinygent.runtime.tool_catalog import GlobalToolCatalog
 from tinygent.types.base import TinyModel
 from tinygent.utils.schema_validator import validate_schema
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar('T', bound=TinyModel)
 R = TypeVar('R')
@@ -90,6 +93,8 @@ class Tool(AbstractTool, Generic[T, R]):
             if callable(clear):
                 clear()
 
+            logger.debug('Clearing cache for tool: %s', self.info.name)
+
     def cache_info(self) -> Any:
         if self._cached_fn:
             info = getattr(self._cached_fn, 'cache_info', None)
@@ -112,6 +117,13 @@ class Tool(AbstractTool, Generic[T, R]):
             elif not parsed_args and kwargs:
                 parsed_args = [validate_schema(kwargs, input_model_cls)]
                 kwargs = {}
+
+        logger.debug(
+            'Running tool: %s with args: %s, kwargs: %s',
+            self.info.name,
+            parsed_args,
+            kwargs,
+        )
 
         if self.info.is_async_generator:
 

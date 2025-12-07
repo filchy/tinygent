@@ -165,6 +165,9 @@ class TinyReActAgent(TinyBaseAgent):
                 'agent.reasoning.content': result.content,
             }
         )
+        logger.debug(
+            '[REASONING] - for task %s was created reasoning: %s', task, result.content
+        )
 
         return TinyReasoningMessage(content=result.content)
 
@@ -172,6 +175,7 @@ class TinyReActAgent(TinyBaseAgent):
     async def _stream_action(
         self, run_id: str, reasoning: str
     ) -> AsyncGenerator[TinyLLMResultChunk, None]:
+        logger.debug('[ACTION STREAM] started with reasoning: %s', reasoning)
         messages = TinyLLMInput(
             messages=[
                 *self.memory.copy_chat_messages(),
@@ -198,6 +202,8 @@ class TinyReActAgent(TinyBaseAgent):
     async def _stream_fallback(
         self, run_id: str, task: str
     ) -> AsyncGenerator[str, None]:
+        logger.debug('[FALLBACK] started with task: %s', task)
+
         messages = TinyLLMInput(
             messages=[
                 *self.memory.copy_chat_messages(),
@@ -238,6 +244,7 @@ class TinyReActAgent(TinyBaseAgent):
                 'agent.input_text': input_text,
             }
         )
+        logger.debug('Running agent with task: %s', input_text)
 
         self._iteration_number = 1
         returned_final_answer: bool = False
@@ -346,6 +353,7 @@ class TinyReActAgent(TinyBaseAgent):
                             )
                         )
                 except Exception as e:
+                    logger.warning('Error happen during main react loop %s', e)
                     self.on_error(run_id=run_id, e=e)
                     raise e
                 finally:

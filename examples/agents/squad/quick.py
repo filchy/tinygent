@@ -17,8 +17,8 @@ def main():
 
     result = agent.run('What is the weather like in Paris?')
 
-    logger.info(f'[RESULT] {result}')
-    logger.info(f'[AGENT SUMMARY] {str(agent)}')
+    logger.info('[RESULT] %s', result)
+    logger.info('[AGENT SUMMARY] %s', str(agent))
 
 
 if __name__ == '__main__':

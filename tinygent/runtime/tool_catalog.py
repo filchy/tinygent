@@ -29,7 +29,7 @@ class ToolCatalog:
         )
         name = tool_info.name
 
-        logger.debug(f'Registering tool {name} (hidden={hidden})')
+        logger.debug('Registering tool %s (hidden=%s)', name, hidden)
 
         if name in self._tools or name in self._hidden_tools:
             raise ValueError(f'Tool {name} already registered.')
