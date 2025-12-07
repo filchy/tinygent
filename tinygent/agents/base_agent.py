@@ -79,12 +79,26 @@ class TinyBaseAgent(AbstractAgent):
         return self._tools
 
     def get_tool(self, name: str) -> AbstractTool | None:
-        return next((tool for tool in self.tools if tool.info.name == name), None)
+        logger.debug('Looking for tool: %s', name)
+        tool = next((tool for tool in self.tools if tool.info.name == name), None)
+        if tool:
+            logger.debug('Tool %s founded => %s', name, tool)
+        else:
+            logger.warning('Tool %s not found.', name)
+        return tool
 
     def get_tool_from_list(
         self, tools: list[AbstractTool], name: str
     ) -> AbstractTool | None:
-        return next((tool for tool in tools if tool.info.name == name), None)
+        logger.debug(
+            'Looking for tool: %s amongst %s', name, [t.info.name for t in tools]
+        )
+        tool = next((tool for tool in tools if tool.info.name == name), None)
+        if tool:
+            logger.debug('Tool %s founded => %s', name, tool)
+        else:
+            logger.warning('Tool %s not found.', name)
+        return tool
 
     @tiny_trace('run_llm')
     def run_llm(
@@ -105,6 +119,7 @@ class TinyBaseAgent(AbstractAgent):
             self.on_after_llm_call(run_id=run_id, llm_input=llm_input, result=result)
             return result
         except Exception as e:
+            logger.warning('Error during llm call: %s', e)
             self.on_error(run_id=run_id, e=e)
             raise
 
@@ -144,6 +159,7 @@ class TinyBaseAgent(AbstractAgent):
 
             self.on_after_llm_call(run_id=run_id, llm_input=llm_input, result=None)
         except Exception as e:
+            logger.warning('Error during llm stream call: %s', e)
             self.on_error(run_id=run_id, e=e)
             raise
 
@@ -157,6 +173,7 @@ class TinyBaseAgent(AbstractAgent):
                 'tool.arguments': str(call.arguments),
             }
         )
+        logger.debug('Running tool %s(%s)', tool.info.name, call.arguments)
 
         self.on_before_tool_call(run_id=run_id, tool=tool, args=call.arguments)
         try:
@@ -173,9 +190,16 @@ class TinyBaseAgent(AbstractAgent):
             )
 
             set_tiny_attribute('tool.result', str(result))
+            logger.debug(
+                'Tool %s(%s) => %s', tool.info.name, call.arguments, str(result)
+            )
+
             tool_result.raw = tool
             return tool_result
         except Exception as e:
+            logger.warning(
+                'Error during tool call %s(%s)', tool.info.name, call.arguments
+            )
             self.on_error(run_id=run_id, e=e)
             raise
 

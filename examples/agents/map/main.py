@@ -27,9 +27,9 @@ async def main():
         'Will the Albany in Georgia reach a hundred thousand occupants before the one in New York?'
     )
 
-    logger.info(f'[RESULT] {result}')
-    logger.info(f'[MEMORY] {agent.memory.load_variables()}')
-    logger.info(f'[AGENT] {str(agent)}')
+    logger.info('[RESULT] %s', result)
+    logger.info('[MEMORY] %s', agent.memory.load_variables())
+    logger.info('[AGENT] %s', str(agent))
 
 
 if __name__ == '__main__':

@@ -79,7 +79,7 @@ class TinyBraveClient:
 
                 except httpx.HTTPStatusError as e:
                     logger.error(
-                        'HTTP error calling %s: %s (status %d) – not retrying',
+                        'HTTP error calling %s: %s (status %d) - not retrying',
                         url,
                         e,
                         e.response.status_code,

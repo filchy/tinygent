@@ -65,9 +65,9 @@ def main():
         'What is the best travel destination and what is the weather like there?'
     )
 
-    logger.info(f'[RESULT] {result}')
-    logger.info(f'[MEMORY] {multi_step_agent.memory.load_variables()}')
-    logger.info(f'[AGENT SUMMARY] {str(multi_step_agent)}')
+    logger.info('[RESULT] %s', result)
+    logger.info('[MEMORY] %s', multi_step_agent.memory.load_variables())
+    logger.info('[AGENT SUMMARY] %s', str(multi_step_agent))
 
 
 if __name__ == '__main__':

@@ -62,7 +62,7 @@ class Registry:
         config_class: type[AbstractAgentConfig],
         agent_class: type[AbstractAgent],
     ) -> None:
-        logger.debug(f'Registering agent {name}')
+        logger.debug('Registering agent %s', name)
         if name in self._registered_agents:
             raise ValueError(f'Agent {name} already registered.')
 
@@ -72,7 +72,7 @@ class Registry:
     def get_agent(
         self, name: str
     ) -> tuple[type[AbstractAgentConfig], type[AbstractAgent]]:
-        logger.debug(f'Getting agent {name}')
+        logger.debug('Getting agent %s', name)
         if name not in self._registered_agents:
             raise ValueError(f'Agent {name} not registered.')
 
@@ -91,7 +91,7 @@ class Registry:
         config_class: type[AbstractLLMConfig],
         llm_class: type[AbstractLLM],
     ) -> None:
-        logger.debug(f'Registering LLM {name}')
+        logger.debug('Registering LLM %s', name)
         if name in self._registered_llms:
             raise ValueError(f'LLM {name} already registered.')
 
@@ -99,7 +99,7 @@ class Registry:
         self._registration_changed()
 
     def get_llm(self, name: str) -> tuple[type[AbstractLLMConfig], type[AbstractLLM]]:
-        logger.debug(f'Getting LLM {name}')
+        logger.debug('Getting LLM %s', name)
         if name not in self._registered_llms:
             raise ValueError(f'LLM {name} not registered.')
 
@@ -116,7 +116,7 @@ class Registry:
         config_class: type[AbstractMemoryConfig],
         memory_class: type[AbstractMemory],
     ) -> None:
-        logger.debug(f'Registering memory {name}')
+        logger.debug('Registering memory %s', name)
         if name in self._registered_memories:
             raise ValueError(f'Memory {name} already registered.')
 
@@ -126,7 +126,7 @@ class Registry:
     def get_memory(
         self, name: str
     ) -> tuple[type[AbstractMemoryConfig], type[AbstractMemory]]:
-        logger.debug(f'Getting memory {name}')
+        logger.debug('Getting memory %s', name)
         if name not in self._registered_memories:
             raise ValueError(f'Memory {name} not registered.')
 
@@ -145,7 +145,7 @@ class Registry:
         config_class: type[AbstractToolConfig],
         tool_class: type[AbstractTool],
     ) -> None:
-        logger.debug(f'Registering tool {name}')
+        logger.debug('Registering tool %s', name)
         if name in self._registered_tools:
             raise ValueError(f'Tool {name} already registered.')
 
@@ -153,7 +153,7 @@ class Registry:
         self._registration_changed()
 
     def get_tool(self, name: str) -> tuple[type[AbstractToolConfig], type[AbstractTool]]:
-        logger.debug(f'Getting tool {name}')
+        logger.debug('Getting tool %s', name)
         if name not in self._registered_tools:
             raise ValueError(f'Tool {name} not registered.')
 

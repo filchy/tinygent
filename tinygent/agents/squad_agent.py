@@ -143,17 +143,22 @@ class TinySquadAgent(TinyBaseAgent):
         return member
 
     def _get_squad_member(self, name: str) -> AgentSquadMember:
+        logger.debug('Getting squad member: %s', name)
         selected_member = next(
             (member for member in self._squad if member.name == name), None
         )
 
         if selected_member is None:
+            logger.warning('Could not get member %s', name)
             raise ValueError(f'Squad member "{name}" not found.')
 
+        logger.debug('Squad member(%s) succesfully found', name)
         return selected_member
 
     @tiny_trace('classify_query')
     def _classify_query(self, run_id: str, input_text: str) -> ClassificationQueryResult:
+        logger.debug('[CLASSIFY QUERY] classifying query: %s', input_text)
+
         _ValidMemberNames = Literal[tuple([member.name for member in self._squad])]  # type: ignore
 
         class _ClassificationQueryResult(TinyModel):
@@ -199,6 +204,13 @@ class TinySquadAgent(TinyBaseAgent):
                 'agent.classifier.reasoning': response.reasoning,
             }
         )
+        logger.debug(
+            '[CLASSIFY QUERY] query: %s selected member: %s task: %s reasoning: %s',
+            input_text,
+            response.selected_member,
+            response.task,
+            response.reasoning,
+        )
 
         return cast(ClassificationQueryResult, response)
 
@@ -217,6 +229,7 @@ class TinySquadAgent(TinyBaseAgent):
                 ),
             }
         )
+        logger.debug('Running agent with task: %s', input_text)
 
         final_answer = ''
         self.memory.save_context(TinyHumanMessage(content=input_text))

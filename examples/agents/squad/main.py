@@ -109,9 +109,9 @@ def main():
         'What is the best travel destination and what is the weather like there?'
     )
 
-    logger.info(f'[RESULT] {result}')
-    logger.info(f'[MEMORY] {squad_agent.memory.load_variables()}')
-    logger.info(f'[AGENT SUMMARY] {str(squad_agent)}')
+    logger.info('[RESULT] %s', result)
+    logger.info('[MEMORY] %s', squad_agent.memory.load_variables())
+    logger.info('[AGENT SUMMARY] %s', str(squad_agent))
 
 
 if __name__ == '__main__':
