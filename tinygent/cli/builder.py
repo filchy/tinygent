@@ -57,8 +57,9 @@ def _check_modules() -> None:
     """Check if modules were already discovered or not. If not discovers them."""
     if _discovered_modules:
         return
-    
+
     from tinygent.cli.utils import discover_and_register_components
+
     discover_and_register_components()
 
 

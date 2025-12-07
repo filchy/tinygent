@@ -13,7 +13,7 @@ def main():
 
     discover_and_register_components(str(parent_path / 'main.py'))
 
-    agent = build_agent(tiny_yaml_load(str(parent_path/ 'agent.yaml')))
+    agent = build_agent(tiny_yaml_load(str(parent_path / 'agent.yaml')))
 
     result = agent.run('What is the weather like in Paris?')
 

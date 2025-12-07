@@ -102,7 +102,7 @@ def main():
             ),
         ],
         memory=BufferChatMemory(),
-        tools=[calculate_sum]
+        tools=[calculate_sum],
     )
 
     result = squad_agent.run(

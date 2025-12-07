@@ -11,8 +11,9 @@ logger = logging.getLogger(__name__)
 
 def _path_to_import_path(path: str) -> str:
     """Convert 'path-like' path to 'import-like' path."""
-    import sys
     from pathlib import Path
+    import sys
+
     p = Path(path).resolve()
 
     if p.is_dir():
@@ -70,26 +71,28 @@ def discover_entry_points(
     return discovered
 
 
-def create_entry_point_from_path(
-    path: str
-) -> importlib.metadata.EntryPoint:
+def create_entry_point_from_path(path: str) -> importlib.metadata.EntryPoint:
     """Create new entry point from 'folder-like' path."""
     import_path = _path_to_import_path(path)
 
     return importlib.metadata.EntryPoint(
-        name=import_path.replace('.', '_'),
-        value=import_path,
-        group='manual'
+        name=import_path.replace('.', '_'), value=import_path, group='manual'
     )
 
 
 def discover_and_register_components(additional_paths: list[str] | str = []) -> None:
     """Discover and register components from the 'tinygent' package."""
     entry_points = discover_entry_points(['components', 'functions'])
-    entry_points.extend([
-        create_entry_point_from_path(p)
-        for p in (additional_paths if isinstance(additional_paths, list) else [additional_paths])
-    ])
+    entry_points.extend(
+        [
+            create_entry_point_from_path(p)
+            for p in (
+                additional_paths
+                if isinstance(additional_paths, list)
+                else [additional_paths]
+            )
+        ]
+    )
 
     count = 0
     for entry_point in entry_points:
