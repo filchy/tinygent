@@ -87,15 +87,10 @@ Before you begin using tinygent, ensure that you meet the following software pre
 3. [Combined Memory](examples/memory/combined-memory)
 
 ### Tools
+
 1. [Basic Tools](examples/tool-usage/main.py)
 2. [Reasoning Tools](examples/tool-usage/main.py)
 3. [JIT Tools](examples/tool-usage/main.py)
-4. [Brave Tools](packages/tiny_brave/)
-
-### LLMs
-1. [OpenAI](packages/tiny_openai/)
-2. [MistralAI](packages/tiny_mistralai/)
-3. [Gemini](packages/tiny_gemini/)
 
 ### Agents
 
@@ -104,6 +99,14 @@ Before you begin using tinygent, ensure that you meet the following software pre
 3. [Multi-Step Agent](examples/agents/multi-step/)
 4. [Squad Agent](examples/agents/squad/)
 5. [Modual Agentic Planner Agent](examples/agents/map/)
+
+### Packages
+
+1. [Brave Tools](packages/tiny_brave/)
+2. [Tiny Chat](packages/tiny_chat)
+3. [Tiny OpenAI](packages/tiny_openai)
+4. [Tiny MistralAI](packages/tiny_mistralai)
+5. [Tiny Gemini](packages/tiny_gemini)
 
 ## Linting & Formatting
 
