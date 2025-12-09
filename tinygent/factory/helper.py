@@ -6,10 +6,14 @@ from typing import TypeVar
 from typing import Union
 
 from pydantic import Field
+from pydantic import TypeAdapter
 
+from tinygent.types.base import TinyModel
 from tinygent.types.discriminator import HasDiscriminatorField
 
 T = TypeVar('T', bound=HasDiscriminatorField)
+
+_discovered_modules: bool = False
 
 
 def make_union(getter: Callable[[], Mapping[str, tuple[type[T], Any]]]):
@@ -25,3 +29,26 @@ def make_union(getter: Callable[[], Mapping[str, tuple[type[T], Any]]]):
         raise ValueError('Inconsistent discriminator fields.')
 
     return Annotated[Union[tuple(config_classes)], Field(discriminator=first)]
+
+
+def parse_config(
+    config: dict | TinyModel,
+    getter: Callable[[], Mapping[str, tuple[type[T], Any]]],
+) -> T:
+    """Generic parser: returns the validated config model instance."""
+    if isinstance(config, TinyModel):
+        config = config.model_dump()
+
+    ConfigUnion = make_union(getter)
+    adapter = TypeAdapter(ConfigUnion)
+    return adapter.validate_python(config)
+
+
+def check_modules() -> None:
+    """Check if modules were already discovered or not. If not discovers them."""
+    if _discovered_modules:
+        return
+
+    from tinygent.cli.utils import discover_and_register_components
+
+    discover_and_register_components()

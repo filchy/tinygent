@@ -43,9 +43,11 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
 
     type: Any = 'base'
 
-    llm: AbstractLLMConfig
-    tools: Sequence[AbstractToolConfig] = Field(default_factory=list)
-    memory: AbstractMemoryConfig = Field(default_factory=BufferChatMemoryConfig)
+    llm: AbstractLLMConfig | AbstractLLM
+    tools: Sequence[AbstractToolConfig | AbstractTool] = Field(default_factory=list)
+    memory: AbstractMemoryConfig | AbstractMemory = Field(
+        default_factory=BufferChatMemoryConfig
+    )
 
     def build(self) -> T:
         """Build the BaseAgent instance from the configuration."""

@@ -9,7 +9,7 @@ from tinygent.agents.react_agent import TinyReActAgent
 from tinygent.agents.squad_agent import AgentSquadMember
 from tinygent.agents.squad_agent import SquadPromptTemplate
 from tinygent.agents.squad_agent import TinySquadAgent
-from tinygent.llms.base import init_llm
+from tinygent.factory import build_llm
 from tinygent.logging import setup_logger
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.memory.buffer_window_chat_memory import BufferWindowChatMemory
@@ -62,7 +62,7 @@ def calculate_sum(data: SumInput) -> int:
 
 def main():
     squad_agent = TinySquadAgent(
-        llm=init_llm('openai:gpt-4o', temperature=0.1),
+        llm=build_llm('openai:gpt-4o', temperature=0.1),
         prompt_template=SquadPromptTemplate(
             **tiny_yaml_load(str(Path(__file__).parent / 'prompts.yaml'))
         ),
@@ -71,7 +71,7 @@ def main():
                 name='weather_agent',
                 description='An agent that provides weather information.',
                 agent=TinyReActAgent(
-                    llm=init_llm('openai:gpt-4o', temperature=0.1),
+                    llm=build_llm('openai:gpt-4o', temperature=0.1),
                     max_iterations=3,
                     memory=BufferChatMemory(),
                     tools=[get_weather],
@@ -86,7 +86,7 @@ def main():
                 name='geoghraphic_agent',
                 description='An agent that provides geographic information.',
                 agent=TinyMultiStepAgent(
-                    llm=init_llm('openai:gpt-4o', temperature=0.1),
+                    llm=build_llm('openai:gpt-4o', temperature=0.1),
                     memory=BufferWindowChatMemory(k=3),
                     tools=[get_best_destination],
                     prompt_template=MultiStepPromptTemplate(

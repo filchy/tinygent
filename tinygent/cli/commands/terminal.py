@@ -10,7 +10,7 @@ from typing import Annotated
 from click import Path
 import typer
 
-from tinygent.cli.builder import build_agent
+from tinygent.factory import build_agent
 from tinygent.utils.yaml import tiny_yaml_load
 
 logger = logging.getLogger(__name__)

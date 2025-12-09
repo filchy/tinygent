@@ -2,32 +2,29 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import typing
 from typing import AsyncGenerator
 from typing import Literal
 import uuid
 
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
-from tinygent.cli.builder import build_llm
-from tinygent.cli.builder import build_memory
-from tinygent.cli.builder import build_tool
+from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinySystemMessage
+from tinygent.datamodels.tool import AbstractTool
+from tinygent.factory.llm import build_llm
+from tinygent.factory.memory import build_memory
+from tinygent.factory.tool import build_tool
 from tinygent.runtime.executors import run_async_in_executor
 from tinygent.telemetry.decorators import tiny_trace
 from tinygent.telemetry.otel import set_tiny_attributes
 from tinygent.types.base import TinyModel
 from tinygent.types.prompt_template import TinyPromptTemplate
 from tinygent.utils.jinja_utils import render_template
-
-if typing.TYPE_CHECKING:
-    from tinygent.datamodels.llm import AbstractLLM
-    from tinygent.datamodels.tool import AbstractTool
 
 logger = logging.getLogger(__name__)
 
@@ -104,12 +101,6 @@ class OrchestratorPromptTemplate(TinyPromptTemplate, TinyPromptTemplate.UserSyst
     _template_fields = {'user': {'question', 'answer'}}
 
 
-class EvaluatorPromptTemplate(TinyPromptTemplate, TinyPromptTemplate.UserSystem):
-    """Used to define evaluator prompt template."""
-
-    _template_fields = {'user': {'state', 'subgoal'}}
-
-
 class MonitorPrompTemplate(TinyPromptTemplate):
     """Used to define monitor prompt template."""
 
@@ -134,7 +125,7 @@ class ActorPromptTemplate(TinyPromptTemplate):
 
     continuos_fixer: TinyPromptTemplate.UserSystem
 
-    evaluator: EvaluatorPromptTemplate
+    evaluator: TinyPromptTemplate.UserSystem
 
     _template_fields = {
         'init.user': {'question'},
@@ -182,22 +173,34 @@ class TinyMAPAgentConfig(TinyBaseAgentConfig['TinyMAPAgent']):
 
     type: Literal['map'] = 'map'
 
-    prompt_template: MapPromptTemplate
+    prompt_template: MapPromptTemplate | None = None
 
-    max_plan_length: int
+    max_plan_length: int = 4
 
-    max_branches_per_layer: int
+    max_branches_per_layer: int = 3
 
-    max_layer_depth: int
+    max_layer_depth: int = 2
 
     max_recurrsion: int = 5
 
     def build(self) -> TinyMAPAgent:
+        if not self.prompt_template:
+            from .prompts.map import get_prompt_template
+
+            self.prompt_template = get_prompt_template()
+
         return TinyMAPAgent(
             prompt_template=self.prompt_template,
-            llm=build_llm(self.llm),
-            memory=build_memory(self.memory),
-            tools=[build_tool(tool) for tool in self.tools],
+            llm=self.llm if isinstance(self.llm, AbstractLLM) else build_llm(self.llm),
+            tools=[
+                tool if isinstance(tool, AbstractTool) else build_tool(tool)
+                for tool in self.tools
+            ],
+            memory=(
+                self.memory
+                if isinstance(self.memory, AbstractMemory)
+                else build_memory(self.memory)
+            ),
             max_plan_length=self.max_plan_length,
             max_branches_per_layer=self.max_branches_per_layer,
             max_layer_depth=self.max_layer_depth,
@@ -210,8 +213,8 @@ class TinyMAPAgent(TinyBaseAgent):
 
     def __init__(
         self,
-        llm: AbstractLLM,
         prompt_template: MapPromptTemplate,
+        llm: AbstractLLM,
         memory: AbstractMemory,
         max_plan_length: int,
         max_branches_per_layer: int,
@@ -226,7 +229,9 @@ class TinyMAPAgent(TinyBaseAgent):
         self.max_branches_per_layer = max_branches_per_layer
         self.max_recurrsion = max_recurrsion
         self.max_layer_depth = max_layer_depth
-        self.prompt_template = prompt_template
+        self.prompt_template = (
+            prompt_template if prompt_template else self.default_prompt_template()
+        )
 
     @tiny_trace('map_agent_task_decomposer')
     def _task_decomposer(self, run_id: str, input_txt: str) -> list[str]:

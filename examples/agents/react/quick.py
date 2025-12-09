@@ -1,9 +1,8 @@
 from pathlib import Path
 
-from tinygent.cli.builder import build_agent
 from tinygent.cli.utils import discover_and_register_components
+from tinygent.factory import build_agent
 from tinygent.logging import setup_logger
-from tinygent.utils.yaml import tiny_yaml_load
 
 logger = setup_logger('debug')
 
@@ -13,7 +12,12 @@ def main():
 
     discover_and_register_components(str(parent_path / 'main.py'))
 
-    agent = build_agent(tiny_yaml_load(str(parent_path / 'agent.yaml')))
+    agent = build_agent(
+        'react',
+        llm='openai:gpt-4o-mini',
+        tools=['get_best_destination'],
+        memory='buffer',
+    )
 
     result = agent.run('What is the weather like in Paris?')
 

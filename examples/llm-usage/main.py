@@ -2,7 +2,7 @@ from pydantic import Field
 
 from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.messages import TinyHumanMessage
-from tinygent.llms.base import init_llm
+from tinygent.factory import build_llm
 from tinygent.tools import reasoning_tool
 from tinygent.tools import tool
 from tinygent.types.base import TinyModel
@@ -32,7 +32,7 @@ class SummaryResponse(TinyModel):
 
 
 def basic_generation():
-    llm = init_llm('openai:gpt-4o')
+    llm = build_llm('openai:gpt-4o')
 
     result = llm.generate_text(
         llm_input=TinyLLMInput(
@@ -45,7 +45,7 @@ def basic_generation():
 
 
 def structured_generation():
-    llm = init_llm('openai:gpt-4o')
+    llm = build_llm('openai:gpt-4o')
 
     result = llm.generate_structured(
         llm_input=TinyLLMInput(
@@ -62,7 +62,7 @@ def structured_generation():
 
 
 def generation_with_tools():
-    llm = init_llm('openai:gpt-4o')
+    llm = build_llm('openai:gpt-4o')
 
     tools_list = [add, capitalize]
     tools = {tool.info.name: tool for tool in tools_list}
@@ -87,7 +87,7 @@ def generation_with_tools():
 
 
 async def async_generation():
-    llm = init_llm('openai:gpt-4o')
+    llm = build_llm('openai:gpt-4o')
 
     result = await llm.agenerate_text(
         llm_input=TinyLLMInput(
@@ -100,7 +100,7 @@ async def async_generation():
 
 
 async def text_streaming():
-    llm = init_llm('openai:gpt-4o')
+    llm = build_llm('openai:gpt-4o')
 
     async for chunk in llm.stream_text(
         llm_input=TinyLLMInput(
@@ -113,7 +113,7 @@ async def text_streaming():
 
 
 async def tool_call_streaming():
-    llm = init_llm('openai:gpt-4o')
+    llm = build_llm('openai:gpt-4o')
 
     tools = [add, capitalize]
 
