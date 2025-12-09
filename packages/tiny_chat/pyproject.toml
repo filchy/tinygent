@@ -7,6 +7,7 @@ name = "tiny-chat"
 version = "0.1.0"
 dependencies = [
     "fastapi>=0.120.2",
+    "hatchling>=1.28.0",
     "pydantic>=2.11.7",
     "tinygent",
     "uvicorn[standard]>=0.38.0",
@@ -17,8 +18,17 @@ include = [
     "src/tiny_chat/frontend/dist/**/*"
 ]
 
+[tool.hatch.build.targets.sdist]
+include = [
+    "build_frontend.py",
+    "src/**"
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/tiny_chat"]
+
+[tool.hatch.build.hooks.custom]
+path = "build_frontend.py"
 
 [tool.uv.sources]
 tinygent = { workspace = true }
