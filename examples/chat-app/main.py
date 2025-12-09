@@ -12,7 +12,7 @@ from tinygent.agents.react_agent import ReActPromptTemplate
 from tinygent.agents.react_agent import TinyReActAgent
 from tinygent.cli.utils import discover_and_register_components
 from tinygent.datamodels.tool import AbstractTool
-from tinygent.llms.base import init_llm
+from tinygent.factory import build_llm
 from tinygent.logging import setup_logger
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.tools.tool import register_tool
@@ -76,7 +76,7 @@ async def tool_call_hook(
 
 
 agent = TinyReActAgent(
-    llm=init_llm('openai:gpt-4o'),
+    llm=build_llm('openai:gpt-4o'),
     tools=[brave_news],
     memory=BufferChatMemory(),
     prompt_template=ReActPromptTemplate(

@@ -3,17 +3,17 @@ from io import StringIO
 import textwrap
 from typing import Literal
 
-from tinygent.cli.builder import build_memory
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.memory import AbstractMemoryConfig
 from tinygent.datamodels.messages import AllTinyMessages
+from tinygent.factory.memory import build_memory
 from tinygent.memory.base_chat_memory import BaseChatMemory
 
 
 class CombinedMemoryConfig(AbstractMemoryConfig['CombinedMemory']):
     type: Literal['combined'] = 'combined'
 
-    memory_list: list[AbstractMemoryConfig]
+    memory_list: list[AbstractMemoryConfig] = []
 
     def build(self) -> 'CombinedMemory':
         memories = [build_memory(cfg) for cfg in self.memory_list]

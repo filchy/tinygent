@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import logging
-import typing
 from typing import AsyncGenerator
 from typing import Literal
 from typing import Self
@@ -14,18 +13,20 @@ from pydantic import model_validator
 
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
-from tinygent.cli.builder import build_agent
-from tinygent.cli.builder import build_llm
-from tinygent.cli.builder import build_memory
-from tinygent.cli.builder import build_tool
 from tinygent.datamodels.agent import AbstractAgent
 from tinygent.datamodels.agent import AbstractAgentConfig
+from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinySquadMemberMessage
 from tinygent.datamodels.messages import TinySystemMessage
+from tinygent.datamodels.tool import AbstractTool
+from tinygent.factory.agent import build_agent
+from tinygent.factory.llm import build_llm
+from tinygent.factory.memory import build_memory
+from tinygent.factory.tool import build_tool
 from tinygent.runtime.executors import run_async_in_executor
 from tinygent.telemetry.decorators import tiny_trace
 from tinygent.telemetry.otel import set_tiny_attributes
@@ -33,10 +34,6 @@ from tinygent.telemetry.otel import tiny_trace_span
 from tinygent.types.base import TinyModel
 from tinygent.types.prompt_template import TinyPromptTemplate
 from tinygent.utils.jinja_utils import render_template
-
-if typing.TYPE_CHECKING:
-    from tinygent.datamodels.llm import AbstractLLM
-    from tinygent.datamodels.tool import AbstractTool
 
 logger = logging.getLogger(__name__)
 
@@ -98,15 +95,27 @@ class TinySquadAgentConfig(TinyBaseAgentConfig['TinySquadAgent']):
 
     type: Literal['squad'] = 'squad'
 
-    prompt_template: SquadPromptTemplate
+    prompt_template: SquadPromptTemplate | None = None
     squad: list[AgentSquadMemberConfig]
 
     def build(self) -> TinySquadAgent:
+        if not self.prompt_template:
+            from .prompts.squad import get_prompt_template
+
+            self.prompt_template = get_prompt_template()
+
         return TinySquadAgent(
             prompt_template=self.prompt_template,
-            llm=build_llm(self.llm),
-            memory=build_memory(self.memory),
-            tools=[build_tool(tool_cfg) for tool_cfg in self.tools],
+            llm=self.llm if isinstance(self.llm, AbstractLLM) else build_llm(self.llm),
+            tools=[
+                tool if isinstance(tool, AbstractTool) else build_tool(tool)
+                for tool in self.tools
+            ],
+            memory=(
+                self.memory
+                if isinstance(self.memory, AbstractMemory)
+                else build_memory(self.memory)
+            ),
             squad=[AgentSquadMember.from_config(agent_cfg) for agent_cfg in self.squad],
         )
 

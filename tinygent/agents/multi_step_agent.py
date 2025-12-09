@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Generator
 import logging
-import typing
 from typing import Any
 from typing import AsyncGenerator
 from typing import Literal
@@ -10,9 +9,7 @@ import uuid
 
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
-from tinygent.cli.builder import build_llm
-from tinygent.cli.builder import build_memory
-from tinygent.cli.builder import build_tool
+from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
@@ -24,6 +21,10 @@ from tinygent.datamodels.messages import TinyPlanMessage
 from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
+from tinygent.datamodels.tool import AbstractTool
+from tinygent.factory.llm import build_llm
+from tinygent.factory.memory import build_memory
+from tinygent.factory.tool import build_tool
 from tinygent.runtime.executors import run_async_in_executor
 from tinygent.telemetry.decorators import tiny_trace
 from tinygent.telemetry.otel import set_tiny_attributes
@@ -32,10 +33,6 @@ from tinygent.tools.reasoning_tool import ReasoningTool
 from tinygent.types.base import TinyModel
 from tinygent.types.prompt_template import TinyPromptTemplate
 from tinygent.utils import render_template
-
-if typing.TYPE_CHECKING:
-    from tinygent.datamodels.llm import AbstractLLM
-    from tinygent.datamodels.tool import AbstractTool
 
 logger = logging.getLogger(__name__)
 
@@ -86,15 +83,27 @@ class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
 
     type: Literal['multistep'] = 'multistep'
 
-    prompt_template: MultiStepPromptTemplate
+    prompt_template: MultiStepPromptTemplate | None = None
     max_iterations: int = 15
     plan_interval: int = 5
 
     def build(self) -> TinyMultiStepAgent:
+        if not self.prompt_template:
+            from .prompts.multi import get_prompt_template
+
+            self.prompt_template = get_prompt_template()
+
         return TinyMultiStepAgent(
-            llm=build_llm(self.llm),
-            tools=[build_tool(tool) for tool in self.tools],
-            memory=build_memory(self.memory),
+            llm=self.llm if isinstance(self.llm, AbstractLLM) else build_llm(self.llm),
+            tools=[
+                tool if isinstance(tool, AbstractTool) else build_tool(tool)
+                for tool in self.tools
+            ],
+            memory=(
+                self.memory
+                if isinstance(self.memory, AbstractMemory)
+                else build_memory(self.memory)
+            ),
             prompt_template=self.prompt_template,
             max_iterations=self.max_iterations,
             plan_interval=self.plan_interval,

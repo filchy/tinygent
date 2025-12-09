@@ -2,7 +2,7 @@ from pydantic import Field
 
 from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.messages import TinyHumanMessage
-from tinygent.llms.base import init_llm
+from tinygent.factory import build_llm
 from tinygent.tools.tool import tool
 from tinygent.types.base import TinyModel
 
@@ -32,7 +32,7 @@ def get_time(data: GetTimeInput) -> str:
 if __name__ == '__main__':
     my_tools = [get_weather, get_time]
 
-    openai_llm = init_llm('openai:gpt-4o-mini', temperature=0.1)
+    openai_llm = build_llm('openai:gpt-4o-mini', temperature=0.1)
 
     response = openai_llm.generate_with_tools(
         llm_input=TinyLLMInput(

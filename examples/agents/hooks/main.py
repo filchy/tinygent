@@ -5,7 +5,7 @@ from tinygent.agents.multi_step_agent import FallbackAnswerPromptTemplate
 from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
 from tinygent.agents.multi_step_agent import PlanPromptTemplate
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
-from tinygent.llms.base import init_llm
+from tinygent.factory import build_llm
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.tools import reasoning_tool
 from tinygent.types.base import TinyModel
@@ -98,7 +98,7 @@ prompt_template = MultiStepPromptTemplate(
 
 def main():
     agent = TinyMultiStepAgent(
-        llm=init_llm('openai:gpt-4o'),
+        llm=build_llm('openai:gpt-4o'),
         prompt_template=prompt_template,
         tools=[greet],
         max_iterations=3,

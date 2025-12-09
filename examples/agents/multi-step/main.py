@@ -4,7 +4,7 @@ from pydantic import Field
 
 from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
-from tinygent.llms.base import init_llm
+from tinygent.factory import build_llm
 from tinygent.logging import setup_logger
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.memory.buffer_window_chat_memory import BufferWindowChatMemory
@@ -50,7 +50,7 @@ def main():
     multi_step_agent_prompt = tiny_yaml_load(str(Path(__file__).parent / 'prompts.yaml'))
 
     multi_step_agent = TinyMultiStepAgent(
-        llm=init_llm('openai:gpt-4o', temperature=0.1),
+        llm=build_llm('openai:gpt-4o', temperature=0.1),
         prompt_template=MultiStepPromptTemplate(**multi_step_agent_prompt),
         memory=CombinedMemory(
             memory_list=[
