@@ -4,8 +4,6 @@ from abc import ABC
 from io import StringIO
 import typing
 
-from pydantic import PrivateAttr
-
 from tinygent.core.chat_history import BaseChatHistory
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.utils.pydantic_utils import tiny_deep_copy
@@ -15,7 +13,8 @@ if typing.TYPE_CHECKING:
 
 
 class BaseChatMemory(AbstractMemory, ABC):
-    _chat_history: BaseChatHistory = PrivateAttr(default_factory=BaseChatHistory)
+    def __init__(self) -> None:
+        self._chat_history: BaseChatHistory = BaseChatHistory()
 
     def copy_chat_messages(self) -> list[AllTinyMessages]:
         return [tiny_deep_copy(msg) for msg in self._chat_history.messages]  # type: ignore

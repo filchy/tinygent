@@ -21,7 +21,10 @@ class CombinedMemoryConfig(AbstractMemoryConfig['CombinedMemory']):
 
 
 class CombinedMemory(BaseChatMemory):
-    memory_list: list[AbstractMemory]
+    def __init__(self, memory_list: list[AbstractMemory]) -> None:
+        super().__init__()
+
+        self.memory_list: list[AbstractMemory] = memory_list
 
     @property
     def memory_keys(self) -> list[str]:

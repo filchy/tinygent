@@ -16,7 +16,10 @@ class BufferWindowChatMemoryConfig(AbstractMemoryConfig['BufferWindowChatMemory'
 
 
 class BufferWindowChatMemory(BaseChatMemory):
-    k: int = 5
+    def __init__(self, k: int = 5) -> None:
+        super().__init__()
+
+        self.k = k
 
     @property
     def _memory_key(self) -> str:

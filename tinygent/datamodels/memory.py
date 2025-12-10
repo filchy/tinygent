@@ -5,7 +5,6 @@ from typing import TypeVar
 
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.runtime.executors import run_sync_in_executor
-from tinygent.types.base import TinyModel
 from tinygent.types.builder import TinyModelBuildable
 
 T = TypeVar('T', bound='AbstractMemory')
@@ -19,7 +18,7 @@ class AbstractMemoryConfig(TinyModelBuildable[T], Generic[T]):
         raise NotImplementedError('Subclasses must implement this method.')
 
 
-class AbstractMemory(TinyModel, ABC):
+class AbstractMemory(ABC):
     """Abstract base class for memory modules."""
 
     @abstractmethod
