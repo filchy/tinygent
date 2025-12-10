@@ -15,6 +15,7 @@ class BufferChatMemoryConfig(AbstractMemoryConfig['BufferChatMemory']):
 class BufferChatMemory(BaseChatMemory):
     def __init__(self) -> None:
         super().__init__()
+
         self._memory_key: str = 'full_chat_history'
 
     @property
