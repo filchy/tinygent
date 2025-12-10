@@ -8,6 +8,7 @@ from typing import Callable
 from typing import Generic
 from typing import TypeVar
 
+from tinygent.types.base import TinyModel
 from tinygent.types.builder import TinyModelBuildable
 
 if typing.TYPE_CHECKING:
