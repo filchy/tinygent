@@ -1,5 +1,3 @@
-from typing import overload
-
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.factory.helper import check_modules
@@ -20,16 +18,12 @@ def parse_model(model: str, model_provider: str | None = None) -> tuple[str, str
     return model_provider, model
 
 
-@overload
-def build_llm(llm: dict | AbstractLLMConfig) -> AbstractLLM: ...
-
-
-@overload
-def build_llm(llm: str, *, provider: str | None = None, **kwargs) -> AbstractLLM: ...
-
-
 def build_llm(
-    llm: dict | AbstractLLMConfig | str, *, provider: str | None = None, **kwargs
+    llm: str | dict | AbstractLLMConfig,
+    *,
+    provider: str | None = None,
+    temperature: float | None = None,
+    **kwargs,
 ) -> AbstractLLM:
     """Build tiny llm."""
     check_modules()
@@ -37,18 +31,23 @@ def build_llm(
     if isinstance(llm, str):
         model_provider, model_name = parse_model(llm, provider)
 
+        llm_dict = {'model': model_name, **kwargs}
+
+        if temperature:
+            llm_dict['temperature'] = temperature
+
         if model_provider == 'openai':
             from tiny_openai import OpenAIConfig
 
-            return OpenAIConfig(model=model_name, **kwargs).build()
+            return OpenAIConfig(**llm_dict).build()
         elif model_provider == 'mistralai':
             from tiny_mistralai import MistralAIConfig
 
-            return MistralAIConfig(model=model_name, **kwargs).build()
+            return MistralAIConfig(**llm_dict).build()
         elif model_provider == 'gemini':
             from tiny_gemini import GeminiConfig
 
-            return GeminiConfig(model=model_name, **kwargs).build()
+            return GeminiConfig(**llm_dict).build()
         else:
             raise ValueError(f'Unsupported model provider: {model_provider}')
 
