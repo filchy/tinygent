@@ -6,6 +6,7 @@ members = [
     "tiny-brave",
     "tiny-chat",
     "tiny-gemini",
+    "tiny-graph",
     "tiny-mistralai",
     "tiny-openai",
     "tinygent",
@@ -1196,6 +1197,17 @@ requires-dist = [
 ]
 
 [[package]]
+name = "tiny-graph"
+version = "0.1.0"
+source = { editable = "packages/tiny_graph" }
+dependencies = [
+    { name = "tinygent" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "tinygent", editable = "." }]
+
+[[package]]
 name = "tiny-mistralai"
 version = "0.1.0"
 source = { editable = "packages/tiny_mistralai" }
@@ -1259,6 +1271,9 @@ dev = [
 gemini = [
     { name = "tiny-gemini" },
 ]
+graph = [
+    { name = "tiny-graph" },
+]
 mistralai = [
     { name = "tiny-mistralai" },
 ]
@@ -1281,6 +1296,7 @@ requires-dist = [
     { name = "tiny-brave", marker = "extra == 'brave'", editable = "packages/tiny_brave" },
     { name = "tiny-chat", marker = "extra == 'chat'", editable = "packages/tiny_chat" },
     { name = "tiny-gemini", marker = "extra == 'gemini'", editable = "packages/tiny_gemini" },
+    { name = "tiny-graph", marker = "extra == 'graph'", editable = "packages/tiny_graph" },
     { name = "tiny-mistralai", marker = "extra == 'mistralai'", editable = "packages/tiny_mistralai" },
     { name = "tiny-openai", marker = "extra == 'openai'", editable = "packages/tiny_openai" },
     { name = "typer", specifier = ">=0.19.2" },

@@ -33,6 +33,7 @@ openai = ["tiny-openai"]
 mistralai = ["tiny-mistralai"]
 gemini = ["tiny-gemini"]
 chat = ["tiny-chat"]
+graph = ["tiny-graph"]
 
 [project.scripts]
 tiny = "tinygent.cli.main:run_cli"
@@ -56,6 +57,7 @@ tiny-openai = { workspace = true }
 tiny-mistralai = { workspace = true }
 tiny-gemini = { workspace = true }
 tiny-chat = { workspace = true }
+tiny-graph = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["tinygent"]
