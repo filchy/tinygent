@@ -56,7 +56,7 @@ def get_time(data: GetTimeInput) -> str:
 Ask the model a question and provide a list of tools it can choose from. The model may return plain chat content or one or more tool calls.
 
 ```python
-from tinygent.datamodels.llm_io_input import TinyLLMInput
+from tinygent.types.io.llm_io_input import TinyLLMInput
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.llms import OpenAILLM
 

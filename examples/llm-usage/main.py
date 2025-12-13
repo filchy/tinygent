@@ -1,11 +1,11 @@
 from pydantic import Field
 
-from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.factory import build_llm
 from tinygent.tools import reasoning_tool
 from tinygent.tools import tool
 from tinygent.types.base import TinyModel
+from tinygent.types.io.llm_io_input import TinyLLMInput
 
 
 class AddInput(TinyModel):

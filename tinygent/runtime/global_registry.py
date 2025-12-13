@@ -6,6 +6,8 @@ import typing
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.agent import AbstractAgent
     from tinygent.datamodels.agent import AbstractAgentConfig
+    from tinygent.datamodels.embedder import AbstractEmbedder
+    from tinygent.datamodels.embedder import AbstractEmbedderConfig
     from tinygent.datamodels.llm import AbstractLLM
     from tinygent.datamodels.llm import AbstractLLMConfig
     from tinygent.datamodels.memory import AbstractMemory
@@ -28,6 +30,11 @@ class Registry:
             str, tuple[type[AbstractLLMConfig], type[AbstractLLM]]
         ] = {}
 
+        # embedders
+        self._registered_embedders: dict[
+            str, tuple[type[AbstractEmbedderConfig], type[AbstractEmbedder]]
+        ] = {}
+
         # memories
         self._registered_memories: dict[
             str, tuple[type[AbstractMemoryConfig], type[AbstractMemory]]
@@ -44,6 +51,7 @@ class Registry:
         configs: list[type[TinyModelBuildable]] = []
         configs.extend(cfg for cfg, _ in self._registered_agents.values())
         configs.extend(cfg for cfg, _ in self._registered_llms.values())
+        configs.extend(cfg for cfg, _ in self._registered_embedders.values())
         configs.extend(cfg for cfg, _ in self._registered_memories.values())
         configs.extend(cfg for cfg, _ in self._registered_tools.values())
 
@@ -108,6 +116,35 @@ class Registry:
     def get_llms(self) -> dict[str, tuple[type[AbstractLLMConfig], type[AbstractLLM]]]:
         logger.debug('Getting all registered LLMs')
         return self._registered_llms
+
+    # embedders
+    def register_embedder(
+        self,
+        name: str,
+        config_class: type[AbstractEmbedderConfig],
+        embedder_class: type[AbstractEmbedder],
+    ) -> None:
+        logger.debug('Registering Embedder %s', name)
+        if name in self._registered_embedders:
+            raise ValueError(f'Embedder {name} already registered.')
+
+        self._registered_embedders[name] = (config_class, embedder_class)
+        self._registration_changed()
+
+    def get_embedder(
+        self, name: str
+    ) -> tuple[type[AbstractEmbedderConfig], type[AbstractEmbedder]]:
+        logger.debug('Getting Embedder %s', name)
+        if name not in self._registered_embedders:
+            raise ValueError(f'Embedder {name} not registered.')
+
+        return self._registered_embedders[name]
+
+    def get_embedders(
+        self,
+    ) -> dict[str, tuple[type[AbstractEmbedderConfig], type[AbstractEmbedder]]]:
+        logger.debug('Getting all registered Embedders.')
+        return self._registered_embedders
 
     # memories
     def register_memory(

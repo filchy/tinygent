@@ -1,7 +1,11 @@
-from .openai import OpenAIConfig
-from .openai import OpenAILLM
+from .embedder import OpenAIEmbedder
+from .embedder import OpenAIEmbedderConfig
+from .llm import OpenAILLM
+from .llm import OpenAILLMConfig
 
 __all__ = [
+    'OpenAIEmbedder',
+    'OpenAIEmbedderConfig',
     'OpenAILLM',
-    'OpenAIConfig',
+    'OpenAILLMConfig',
 ]

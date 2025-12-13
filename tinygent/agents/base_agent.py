@@ -19,8 +19,6 @@ from tinygent.datamodels.agent import AbstractAgent
 from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
-from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
-from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.memory import AbstractMemoryConfig
 from tinygent.datamodels.messages import TinyToolCall
@@ -31,6 +29,8 @@ from tinygent.memory.buffer_chat_memory import BufferChatMemoryConfig
 from tinygent.telemetry.decorators import tiny_trace
 from tinygent.telemetry.otel import set_tiny_attribute
 from tinygent.telemetry.otel import set_tiny_attributes
+from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
+from tinygent.types.io.llm_io_input import TinyLLMInput
 
 T = TypeVar('T', bound='AbstractAgent')
 
