@@ -5,8 +5,8 @@ import os
 import typing
 from typing import Literal
 
-from google.genai.client import Client
 from google.genai.client import AsyncClient
+from google.genai.client import Client
 from google.genai.types import FunctionDeclarationDict
 from google.genai.types import SchemaDict
 from google.genai.types import ToolDict
@@ -22,9 +22,9 @@ from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm import LLMStructuredT
+    from tinygent.datamodels.tool import AbstractTool
     from tinygent.types.io.llm_io_input import TinyLLMInput
     from tinygent.types.io.llm_io_result import TinyLLMResult
-    from tinygent.datamodels.tool import AbstractTool
 
 
 class GeminiConfig(AbstractLLMConfig['GeminiLLM']):

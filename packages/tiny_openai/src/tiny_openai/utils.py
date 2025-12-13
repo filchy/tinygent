@@ -17,8 +17,6 @@ from openai.types.chat import ChatCompletionSystemMessageParam
 from openai.types.chat import ChatCompletionToolMessageParam
 from openai.types.chat import ChatCompletionUserMessageParam
 
-from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
-from tinygent.types.io.llm_io_result import TinyLLMResult
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyChatMessageChunk
 from tinygent.datamodels.messages import TinyHumanMessage
@@ -28,6 +26,8 @@ from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.messages import TinyToolCallChunk
 from tinygent.datamodels.messages import TinyToolResult
+from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
+from tinygent.types.io.llm_io_result import TinyLLMResult
 
 if typing.TYPE_CHECKING:
     from tinygent.types.io.llm_io_input import TinyLLMInput

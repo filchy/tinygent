@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from typing import Literal
+
 from openai import AsyncOpenAI
 from openai import OpenAI
 

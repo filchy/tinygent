@@ -1,8 +1,8 @@
 from tinygent.datamodels.embedder import AbstractEmbedder
 from tinygent.datamodels.embedder import AbstractEmbedderConfig
 from tinygent.factory.helper import check_modules
-from tinygent.factory.helper import parse_model
 from tinygent.factory.helper import parse_config
+from tinygent.factory.helper import parse_model
 from tinygent.runtime.global_registry import GlobalRegistry
 
 
@@ -10,7 +10,7 @@ def build_embedder(
     embedder: str | dict | AbstractEmbedderConfig,
     *,
     provider: str | None = None,
-    **kwargs
+    **kwargs,
 ) -> AbstractEmbedder:
     """Builc tiny embedder."""
     check_modules()
@@ -30,5 +30,7 @@ def build_embedder(
     if isinstance(embedder, AbstractEmbedderConfig):
         embedder = embedder.model_dump()
 
-    embedder_cfg = parse_config(embedder, lambda: GlobalRegistry.get_registry().get_embedders())
+    embedder_cfg = parse_config(
+        embedder, lambda: GlobalRegistry.get_registry().get_embedders()
+    )
     return embedder_cfg.build()

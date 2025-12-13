@@ -3,8 +3,8 @@ import json
 from typing import Any
 from typing import AsyncIterator
 
-from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 from tinygent.datamodels.messages import TinyToolCall
+from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 
 
 def accumulate_llm_chunks(

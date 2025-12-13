@@ -18,14 +18,14 @@ from tiny_mistralai.utils import mistralai_result_to_tiny_result
 from tiny_mistralai.utils import tiny_prompt_to_mistralai_params
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
-from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 from tinygent.llms.utils import accumulate_llm_chunks
+from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm import LLMStructuredT
+    from tinygent.datamodels.tool import AbstractTool
     from tinygent.types.io.llm_io_input import TinyLLMInput
     from tinygent.types.io.llm_io_result import TinyLLMResult
-    from tinygent.datamodels.tool import AbstractTool
 
 
 class MistralAIConfig(AbstractLLMConfig['MistralAILLM']):
@@ -86,7 +86,7 @@ class MistralAILLM(AbstractLLM[MistralAIConfig]):
     @property
     def supports_tool_calls(self) -> bool:
         return True  # INFO: Not all models may support tool calls, but mistralai api error if not.
-    
+
     def __get_client(self) -> Mistral:
         if self._client:
             return self._client

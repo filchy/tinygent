@@ -18,14 +18,14 @@ from tiny_openai.utils import openai_result_to_tiny_result
 from tiny_openai.utils import tiny_prompt_to_openai_params
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
-from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 from tinygent.llms.utils import accumulate_llm_chunks
+from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm import LLMStructuredT
+    from tinygent.datamodels.tool import AbstractTool
     from tinygent.types.io.llm_io_input import TinyLLMInput
     from tinygent.types.io.llm_io_result import TinyLLMResult
-    from tinygent.datamodels.tool import AbstractTool
 
 
 class OpenAILLMConfig(AbstractLLMConfig['OpenAILLM']):

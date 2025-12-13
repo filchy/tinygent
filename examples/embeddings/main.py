@@ -10,7 +10,9 @@ def _print_res(embeddings: list[float], n: int = 3) -> str:
 def single_embed():
     embedder = build_embedder('openai:text-embedding-3-small')
 
-    embs = embedder.embed('TinyGent is the greatest and tyniest framework in the whole world!')
+    embs = embedder.embed(
+        'TinyGent is the greatest and tyniest framework in the whole world!'
+    )
     print(f'[SINGLE EMBEDDING] len: {len(embs)} | embeddings: {_print_res(embs)}')
 
 

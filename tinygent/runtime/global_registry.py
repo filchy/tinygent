@@ -122,7 +122,7 @@ class Registry:
         self,
         name: str,
         config_class: type[AbstractEmbedderConfig],
-        embedder_class: type[AbstractEmbedder]
+        embedder_class: type[AbstractEmbedder],
     ) -> None:
         logger.debug('Registering Embedder %s', name)
         if name in self._registered_embedders:
@@ -131,14 +131,18 @@ class Registry:
         self._registered_embedders[name] = (config_class, embedder_class)
         self._registration_changed()
 
-    def get_embedder(self, name: str) -> tuple[type[AbstractEmbedderConfig], type[AbstractEmbedder]]:
+    def get_embedder(
+        self, name: str
+    ) -> tuple[type[AbstractEmbedderConfig], type[AbstractEmbedder]]:
         logger.debug('Getting Embedder %s', name)
         if name not in self._registered_embedders:
             raise ValueError(f'Embedder {name} not registered.')
 
         return self._registered_embedders[name]
 
-    def get_embedders(self) -> dict[str, tuple[type[AbstractEmbedderConfig], type[AbstractEmbedder]]]:
+    def get_embedders(
+        self,
+    ) -> dict[str, tuple[type[AbstractEmbedderConfig], type[AbstractEmbedder]]]:
         logger.debug('Getting all registered Embedders.')
         return self._registered_embedders
 

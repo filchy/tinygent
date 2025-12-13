@@ -1,7 +1,9 @@
-from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
-from tinygent.types.builder import TinyModelBuildable
+from abc import ABC
+from abc import abstractmethod
+from typing import Generic
+from typing import TypeVar
 
+from tinygent.types.builder import TinyModelBuildable
 
 T = TypeVar('T', bound='AbstractEmbedder')
 

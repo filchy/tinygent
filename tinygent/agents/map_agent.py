@@ -9,7 +9,6 @@ import uuid
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
 from tinygent.datamodels.llm import AbstractLLM
-from tinygent.types.io.llm_io_input import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyChatMessage
@@ -23,6 +22,7 @@ from tinygent.runtime.executors import run_async_in_executor
 from tinygent.telemetry.decorators import tiny_trace
 from tinygent.telemetry.otel import set_tiny_attributes
 from tinygent.types.base import TinyModel
+from tinygent.types.io.llm_io_input import TinyLLMInput
 from tinygent.types.prompt_template import TinyPromptTemplate
 from tinygent.utils.jinja_utils import render_template
 

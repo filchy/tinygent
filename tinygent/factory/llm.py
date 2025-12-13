@@ -1,8 +1,8 @@
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.factory.helper import check_modules
-from tinygent.factory.helper import parse_model
 from tinygent.factory.helper import parse_config
+from tinygent.factory.helper import parse_model
 from tinygent.runtime.global_registry import GlobalRegistry
 
 

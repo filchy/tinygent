@@ -1,8 +1,8 @@
 from typing import Any
 from typing import Protocol
 
-from tinygent.types.io.llm_io_input import TinyLLMInput
 from tinygent.datamodels.tool import AbstractTool
+from tinygent.types.io.llm_io_input import TinyLLMInput
 
 
 class HookBeforeLLMCall(Protocol):
