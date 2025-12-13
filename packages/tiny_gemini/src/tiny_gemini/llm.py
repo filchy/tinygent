@@ -5,7 +5,8 @@ import os
 import typing
 from typing import Literal
 
-from google import genai
+from google.genai.client import AsyncClient
+from google.genai.client import Client
 from google.genai.types import FunctionDeclarationDict
 from google.genai.types import SchemaDict
 from google.genai.types import ToolDict
@@ -17,16 +18,16 @@ from tiny_gemini.utils import tiny_attributes_to_gemini_config
 from tiny_gemini.utils import tiny_prompt_to_gemini_params
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
-from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
+from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm import LLMStructuredT
-    from tinygent.datamodels.llm_io_input import TinyLLMInput
-    from tinygent.datamodels.llm_io_result import TinyLLMResult
     from tinygent.datamodels.tool import AbstractTool
+    from tinygent.types.io.llm_io_input import TinyLLMInput
+    from tinygent.types.io.llm_io_result import TinyLLMResult
 
 
-class GeminiConfig(AbstractLLMConfig['GeminiLLM']):
+class GeminiLLMConfig(AbstractLLMConfig['GeminiLLM']):
     type: Literal['gemini'] = 'gemini'
 
     model: str = 'gemini-2.5-flash'
@@ -43,7 +44,7 @@ class GeminiConfig(AbstractLLMConfig['GeminiLLM']):
         )
 
 
-class GeminiLLM(AbstractLLM[GeminiConfig]):
+class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
     def __init__(
         self,
         model_name: str = 'gemini-2.5-flash',
@@ -56,16 +57,15 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
                 " or 'GEMINI_API_KEY' env variable.",
             )
 
-        self._sync_client = genai.Client(api_key=api_key)
-
-        self._async_client = self._sync_client.aio
+        self._sync_client: Client | None = Client(api_key=api_key)
 
         self.model_name = model_name
         self.temperature = temperature
+        self.api_key = api_key
 
     @property
-    def config(self) -> GeminiConfig:
-        return GeminiConfig(
+    def config(self) -> GeminiLLMConfig:
+        return GeminiLLMConfig(
             model=self.model_name,
             temperature=self.temperature,
         )
@@ -73,6 +73,17 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
     @property
     def supports_tool_calls(self) -> bool:
         return True
+
+    def __get_sync_client(self) -> Client:
+        if self._sync_client:
+            return self._sync_client
+
+        self._sync_client = Client(api_key=self.api_key)
+        return self._sync_client
+
+    def __get_async_client(self) -> AsyncClient:
+        cli = self.__get_sync_client()
+        return cli.aio
 
     def _tool_convertor(self, tool: AbstractTool) -> ToolDict:
         info = tool.info
@@ -119,7 +130,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
         params = tiny_prompt_to_gemini_params(llm_input)
         config = tiny_attributes_to_gemini_config(llm_input, self.temperature)
 
-        chat = self._sync_client.chats.create(
+        chat = self.__get_sync_client().chats.create(
             model=self.model_name,
             config=config,
             history=params['history'],
@@ -135,7 +146,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
         params = tiny_prompt_to_gemini_params(llm_input)
         config = tiny_attributes_to_gemini_config(llm_input, self.temperature)
 
-        chat = self._async_client.chats.create(
+        chat = self.__get_async_client().chats.create(
             model=self.model_name,
             config=config,
             history=params['history'],
@@ -150,7 +161,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
         params = tiny_prompt_to_gemini_params(llm_input)
         config = tiny_attributes_to_gemini_config(llm_input, self.temperature)
 
-        chat = self._async_client.chats.create(
+        chat = self.__get_async_client().chats.create(
             model=self.model_name,
             config=config,
             history=params['history'],
@@ -170,7 +181,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
             structured_output=output_schema,
         )
 
-        chat = self._sync_client.chats.create(
+        chat = self.__get_sync_client().chats.create(
             model=self.model_name,
             config=config,
             history=params['history'],
@@ -196,7 +207,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
             structured_output=output_schema,
         )
 
-        chat = self._async_client.chats.create(
+        chat = self.__get_async_client().chats.create(
             model=self.model_name,
             config=config,
             history=params['history'],
@@ -224,7 +235,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
             tools=gemini_tools,  # type: ignore
         )
 
-        chat = self._sync_client.chats.create(
+        chat = self.__get_sync_client().chats.create(
             model=self.model_name,
             config=config,
             history=params['history'],
@@ -245,7 +256,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
             tools=gemini_tools,  # type: ignore
         )
 
-        chat = self._async_client.chats.create(
+        chat = self.__get_async_client().chats.create(
             model=self.model_name,
             config=config,
             history=params['history'],
@@ -266,7 +277,7 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
             tools=gemini_tools,  # type: ignore
         )
 
-        chat = self._async_client.chats.create(
+        chat = self.__get_async_client().chats.create(
             model=self.model_name,
             config=config,
             history=params['history'],

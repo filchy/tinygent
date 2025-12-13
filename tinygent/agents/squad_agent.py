@@ -16,7 +16,6 @@ from tinygent.agents.base_agent import TinyBaseAgentConfig
 from tinygent.datamodels.agent import AbstractAgent
 from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.llm import AbstractLLM
-from tinygent.datamodels.llm_io_input import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyHumanMessage
@@ -32,6 +31,7 @@ from tinygent.telemetry.decorators import tiny_trace
 from tinygent.telemetry.otel import set_tiny_attributes
 from tinygent.telemetry.otel import tiny_trace_span
 from tinygent.types.base import TinyModel
+from tinygent.types.io.llm_io_input import TinyLLMInput
 from tinygent.types.prompt_template import TinyPromptTemplate
 from tinygent.utils.jinja_utils import render_template
 

@@ -18,17 +18,17 @@ from tiny_openai.utils import openai_result_to_tiny_result
 from tiny_openai.utils import tiny_prompt_to_openai_params
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
-from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
 from tinygent.llms.utils import accumulate_llm_chunks
+from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm import LLMStructuredT
-    from tinygent.datamodels.llm_io_input import TinyLLMInput
-    from tinygent.datamodels.llm_io_result import TinyLLMResult
     from tinygent.datamodels.tool import AbstractTool
+    from tinygent.types.io.llm_io_input import TinyLLMInput
+    from tinygent.types.io.llm_io_result import TinyLLMResult
 
 
-class OpenAIConfig(AbstractLLMConfig['OpenAILLM']):
+class OpenAILLMConfig(AbstractLLMConfig['OpenAILLM']):
     type: Literal['openai'] = 'openai'
 
     model: str = 'gpt-4o'
@@ -51,7 +51,7 @@ class OpenAIConfig(AbstractLLMConfig['OpenAILLM']):
         )
 
 
-class OpenAILLM(AbstractLLM[OpenAIConfig]):
+class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
     def __init__(
         self,
         model_name: str = 'gpt-4o',
@@ -66,18 +66,18 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
                 " or 'OPENAI_API_KEY' env variable.",
             )
 
-        self._sync_client = OpenAI(api_key=api_key, base_url=base_url)
-
-        self._async_client = AsyncOpenAI(api_key=api_key, base_url=base_url)
-
         self.model_name = model_name
+        self.api_key = api_key
         self.base_url = base_url
         self.temperature = temperature
         self.timeout = timeout
 
+        self.__sync_client: OpenAI | None = None
+        self.__async_client: AsyncOpenAI | None = None
+
     @property
-    def config(self) -> OpenAIConfig:
-        return OpenAIConfig(
+    def config(self) -> OpenAILLMConfig:
+        return OpenAILLMConfig(
             model=self.model_name,
             base_url=self.base_url,
             temperature=self.temperature,
@@ -133,13 +133,27 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
             },
         )
 
+    def __get_sync_client(self) -> OpenAI:
+        if self.__sync_client:
+            return self.__sync_client
+
+        self.__sync_client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+        return self.__sync_client
+
+    def __get_async_client(self) -> AsyncOpenAI:
+        if self.__async_client:
+            return self.__async_client
+
+        self.__async_client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
+        return self.__async_client
+
     def generate_text(
         self,
         llm_input: TinyLLMInput,
     ) -> TinyLLMResult:
         messages = tiny_prompt_to_openai_params(llm_input)
 
-        res = self._sync_client.chat.completions.create(
+        res = self.__get_sync_client().chat.completions.create(
             model=self.model_name,
             messages=messages,
             temperature=self.temperature,
@@ -151,7 +165,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
     async def agenerate_text(self, llm_input: TinyLLMInput) -> TinyLLMResult:
         messages = tiny_prompt_to_openai_params(llm_input)
 
-        res = await self._async_client.chat.completions.create(
+        res = await self.__get_async_client().chat.completions.create(
             model=self.model_name,
             messages=messages,
             temperature=self.temperature,
@@ -165,7 +179,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
     ) -> AsyncIterator[TinyLLMResultChunk]:
         messages = tiny_prompt_to_openai_params(llm_input)
 
-        async with self._async_client.chat.completions.stream(
+        async with self.__get_async_client().chat.completions.stream(
             model=self.model_name,
             messages=messages,
             temperature=self.temperature,
@@ -180,7 +194,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
     ) -> LLMStructuredT:
         messages = tiny_prompt_to_openai_params(llm_input)
 
-        res = self._sync_client.chat.completions.parse(
+        res = self.__get_sync_client().chat.completions.parse(
             model=self.model_name,
             messages=messages,
             temperature=self.temperature,
@@ -199,7 +213,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
     ) -> LLMStructuredT:
         messages = tiny_prompt_to_openai_params(llm_input)
 
-        res = await self._async_client.chat.completions.parse(
+        res = await self.__get_async_client().chat.completions.parse(
             model=self.model_name,
             messages=messages,
             temperature=self.temperature,
@@ -219,7 +233,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         functions = [self._tool_convertor(tool) for tool in tools]
         messages = tiny_prompt_to_openai_params(llm_input)
 
-        res = self._sync_client.chat.completions.create(
+        res = self.__get_sync_client().chat.completions.create(
             model=self.model_name,
             messages=messages,
             tools=functions,
@@ -236,7 +250,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         functions = [self._tool_convertor(tool) for tool in tools]
         messages = tiny_prompt_to_openai_params(llm_input)
 
-        res = await self._async_client.chat.completions.create(
+        res = await self.__get_async_client().chat.completions.create(
             model=self.model_name,
             messages=messages,
             tools=functions,
@@ -253,7 +267,7 @@ class OpenAILLM(AbstractLLM[OpenAIConfig]):
         functions = [self._tool_convertor(tool) for tool in tools]
         messages = tiny_prompt_to_openai_params(llm_input)
 
-        async with self._async_client.chat.completions.stream(
+        async with self.__get_async_client().chat.completions.stream(
             model=self.model_name,
             messages=messages,
             tools=functions,

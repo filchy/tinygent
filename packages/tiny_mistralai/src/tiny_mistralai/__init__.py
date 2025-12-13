@@ -1,7 +1,7 @@
-from .mistralai import MistralAIConfig
-from .mistralai import MistralAILLM
+from .llm import MistralAILLM
+from .llm import MistralAILLMConfig
 
 __all__ = [
-    'MistralAIConfig',
+    'MistralAILLMConfig',
     'MistralAILLM',
 ]
