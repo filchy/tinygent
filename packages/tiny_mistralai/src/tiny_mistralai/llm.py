@@ -28,7 +28,7 @@ if typing.TYPE_CHECKING:
     from tinygent.types.io.llm_io_result import TinyLLMResult
 
 
-class MistralAIConfig(AbstractLLMConfig['MistralAILLM']):
+class MistralAILLMConfig(AbstractLLMConfig['MistralAILLM']):
     type: Literal['mistralai'] = 'mistralai'
 
     model: str = 'mistral-medium-latest'
@@ -51,7 +51,7 @@ class MistralAIConfig(AbstractLLMConfig['MistralAILLM']):
         )
 
 
-class MistralAILLM(AbstractLLM[MistralAIConfig]):
+class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
     def __init__(
         self,
         model_name: str,
@@ -75,8 +75,8 @@ class MistralAILLM(AbstractLLM[MistralAIConfig]):
         self.timeout = timeout
 
     @property
-    def config(self) -> MistralAIConfig:
-        return MistralAIConfig(
+    def config(self) -> MistralAILLMConfig:
+        return MistralAILLMConfig(
             model=self.model_name,
             safe_prompt=self.safe_prompt,
             temperature=self.temperature,

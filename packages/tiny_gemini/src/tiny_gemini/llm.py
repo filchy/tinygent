@@ -27,7 +27,7 @@ if typing.TYPE_CHECKING:
     from tinygent.types.io.llm_io_result import TinyLLMResult
 
 
-class GeminiConfig(AbstractLLMConfig['GeminiLLM']):
+class GeminiLLMConfig(AbstractLLMConfig['GeminiLLM']):
     type: Literal['gemini'] = 'gemini'
 
     model: str = 'gemini-2.5-flash'
@@ -44,7 +44,7 @@ class GeminiConfig(AbstractLLMConfig['GeminiLLM']):
         )
 
 
-class GeminiLLM(AbstractLLM[GeminiConfig]):
+class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
     def __init__(
         self,
         model_name: str = 'gemini-2.5-flash',
@@ -64,8 +64,8 @@ class GeminiLLM(AbstractLLM[GeminiConfig]):
         self.api_key = api_key
 
     @property
-    def config(self) -> GeminiConfig:
-        return GeminiConfig(
+    def config(self) -> GeminiLLMConfig:
+        return GeminiLLMConfig(
             model=self.model_name,
             temperature=self.temperature,
         )

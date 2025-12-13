@@ -1,7 +1,7 @@
-from .gemini import GeminiConfig
-from .gemini import GeminiLLM
+from .llm import GeminiLLM
+from .llm import GeminiLLMConfig
 
 __all__ = [
-    'GeminiConfig',
+    'GeminiLLMConfig',
     'GeminiLLM',
 ]

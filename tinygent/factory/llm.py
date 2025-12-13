@@ -29,13 +29,13 @@ def build_llm(
 
             return OpenAILLMConfig(**llm_dict).build()
         elif model_provider == 'mistralai':
-            from tiny_mistralai import MistralAIConfig
+            from tiny_mistralai import MistralAILLMConfig
 
-            return MistralAIConfig(**llm_dict).build()
+            return MistralAILLMConfig(**llm_dict).build()
         elif model_provider == 'gemini':
-            from tiny_gemini import GeminiConfig
+            from tiny_gemini import GeminiLLMConfig
 
-            return GeminiConfig(**llm_dict).build()
+            return GeminiLLMConfig(**llm_dict).build()
         else:
             raise ValueError(f'Unsupported model provider: {model_provider}')
 
