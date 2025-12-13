@@ -18,13 +18,13 @@ from tiny_mistralai.utils import mistralai_result_to_tiny_result
 from tiny_mistralai.utils import tiny_prompt_to_mistralai_params
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
-from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
+from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 from tinygent.llms.utils import accumulate_llm_chunks
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm import LLMStructuredT
-    from tinygent.datamodels.llm_io_input import TinyLLMInput
-    from tinygent.datamodels.llm_io_result import TinyLLMResult
+    from tinygent.types.io.llm_io_input import TinyLLMInput
+    from tinygent.types.io.llm_io_result import TinyLLMResult
     from tinygent.datamodels.tool import AbstractTool
 
 
@@ -66,7 +66,7 @@ class MistralAILLM(AbstractLLM[MistralAIConfig]):
                 "or 'MISTRALAI_API_KEY' env variable."
             )
 
-        self._client = Mistral(api_key=api_key)
+        self._client: Mistral | None = None
 
         self.model_name = model_name
         self.api_key = api_key
@@ -86,6 +86,13 @@ class MistralAILLM(AbstractLLM[MistralAIConfig]):
     @property
     def supports_tool_calls(self) -> bool:
         return True  # INFO: Not all models may support tool calls, but mistralai api error if not.
+    
+    def __get_client(self) -> Mistral:
+        if self._client:
+            return self._client
+
+        self._client = Mistral(api_key=self.api_key)
+        return self._client
 
     @override
     def _tool_convertor(self, tool: AbstractTool) -> Tool:
@@ -136,7 +143,7 @@ class MistralAILLM(AbstractLLM[MistralAIConfig]):
     ) -> TinyLLMResult:
         messages = tiny_prompt_to_mistralai_params(llm_input)
 
-        res = self._client.chat.complete(
+        res = self.__get_client().chat.complete(
             model=self.model_name,
             messages=messages,
             safe_prompt=self.safe_prompt,
@@ -152,7 +159,7 @@ class MistralAILLM(AbstractLLM[MistralAIConfig]):
     ) -> TinyLLMResult:
         messages = tiny_prompt_to_mistralai_params(llm_input)
 
-        res = await self._client.chat.complete_async(
+        res = await self.__get_client().chat.complete_async(
             model=self.model_name,
             messages=messages,
             safe_prompt=self.safe_prompt,
@@ -167,7 +174,7 @@ class MistralAILLM(AbstractLLM[MistralAIConfig]):
     ) -> AsyncIterator[TinyLLMResultChunk]:
         messages = tiny_prompt_to_mistralai_params(llm_input)
 
-        res = await self._client.chat.stream_async(
+        res = await self.__get_client().chat.stream_async(
             model=self.model_name,
             messages=messages,
             safe_prompt=self.safe_prompt,
@@ -184,7 +191,7 @@ class MistralAILLM(AbstractLLM[MistralAIConfig]):
     ) -> LLMStructuredT:
         messages = tiny_prompt_to_mistralai_params(llm_input)
 
-        res = self._client.chat.parse(
+        res = self.__get_client().chat.parse(
             model=self.model_name,
             messages=messages,
             safe_prompt=self.safe_prompt,
@@ -203,7 +210,7 @@ class MistralAILLM(AbstractLLM[MistralAIConfig]):
     ) -> LLMStructuredT:
         messages = tiny_prompt_to_mistralai_params(llm_input)
 
-        res = await self._client.chat.parse_async(
+        res = await self.__get_client().chat.parse_async(
             model=self.model_name,
             messages=messages,
             safe_prompt=self.safe_prompt,
@@ -223,7 +230,7 @@ class MistralAILLM(AbstractLLM[MistralAIConfig]):
         functions = [self._tool_convertor(tool) for tool in tools]
         messages = tiny_prompt_to_mistralai_params(llm_input)
 
-        res = self._client.chat.complete(
+        res = self.__get_client().chat.complete(
             model=self.model_name,
             messages=messages,
             tools=functions,
@@ -241,7 +248,7 @@ class MistralAILLM(AbstractLLM[MistralAIConfig]):
         functions = [self._tool_convertor(tool) for tool in tools]
         messages = tiny_prompt_to_mistralai_params(llm_input)
 
-        res = await self._client.chat.complete_async(
+        res = await self.__get_client().chat.complete_async(
             model=self.model_name,
             messages=messages,
             tools=functions,
@@ -259,7 +266,7 @@ class MistralAILLM(AbstractLLM[MistralAIConfig]):
         functions = [self._tool_convertor(tool) for tool in tools]
         messages = tiny_prompt_to_mistralai_params(llm_input)
 
-        res = await self._client.chat.stream_async(
+        res = await self.__get_client().chat.stream_async(
             model=self.model_name,
             messages=messages,
             tools=functions,

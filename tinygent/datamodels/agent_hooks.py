@@ -1,7 +1,7 @@
 from typing import Any
 from typing import Protocol
 
-from tinygent.datamodels.llm_io_input import TinyLLMInput
+from tinygent.types.io.llm_io_input import TinyLLMInput
 from tinygent.datamodels.tool import AbstractTool
 
 

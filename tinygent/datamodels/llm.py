@@ -11,9 +11,9 @@ from tinygent.types.base import TinyModel
 from tinygent.types.builder import TinyModelBuildable
 
 if typing.TYPE_CHECKING:
-    from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
-    from tinygent.datamodels.llm_io_input import TinyLLMInput
-    from tinygent.datamodels.llm_io_result import TinyLLMResult
+    from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
+    from tinygent.types.io.llm_io_input import TinyLLMInput
+    from tinygent.types.io.llm_io_result import TinyLLMResult
     from tinygent.datamodels.tool import AbstractTool
 
 T = TypeVar('T', bound='AbstractLLM')

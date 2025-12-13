@@ -8,8 +8,8 @@ import uuid
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
 from tinygent.datamodels.llm import AbstractLLM
-from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
-from tinygent.datamodels.llm_io_input import TinyLLMInput
+from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
+from tinygent.types.io.llm_io_input import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyChatMessage

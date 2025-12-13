@@ -44,6 +44,20 @@ def parse_config(
     return adapter.validate_python(config)
 
 
+def parse_model(model: str, model_provider: str | None = None) -> tuple[str, str]:
+    """Parse model and its provider."""
+    if ':' not in model and model_provider is None:
+        raise ValueError(
+            'Model string must be in the format "model_provider:model_name" '
+            'or a model_provider must be specified.'
+        )
+
+    if model_provider is None:
+        model_provider, model = model.split(':')
+
+    return model_provider, model
+
+
 def check_modules() -> None:
     """Check if modules were already discovered or not. If not discovers them."""
     if _discovered_modules:

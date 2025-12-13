@@ -17,9 +17,9 @@ from mistralai import ToolMessage
 from mistralai import UserMessage
 
 from tiny_mistralai.types import ChatCompletionMessageParams
-from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
-from tinygent.datamodels.llm_io_chunks import TinyToolCallChunk
-from tinygent.datamodels.llm_io_result import TinyLLMResult
+from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
+from tinygent.types.io.llm_io_chunks import TinyToolCallChunk
+from tinygent.types.io.llm_io_result import TinyLLMResult
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyChatMessageChunk
 from tinygent.datamodels.messages import TinyHumanMessage
@@ -30,7 +30,7 @@ from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.messages import TinyToolResult
 
 if typing.TYPE_CHECKING:
-    from tinygent.datamodels.llm_io_input import TinyLLMInput
+    from tinygent.types.io.llm_io_input import TinyLLMInput
 
 
 def _normalize_content(content: Content) -> str:

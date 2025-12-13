@@ -19,8 +19,8 @@ from tinygent.datamodels.agent import AbstractAgent
 from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
-from tinygent.datamodels.llm_io_chunks import TinyLLMResultChunk
-from tinygent.datamodels.llm_io_input import TinyLLMInput
+from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
+from tinygent.types.io.llm_io_input import TinyLLMInput
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.memory import AbstractMemoryConfig
 from tinygent.datamodels.messages import TinyToolCall
