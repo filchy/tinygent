@@ -1,3 +1,4 @@
+import os
 import asyncio
 from collections.abc import Coroutine
 from concurrent.futures import Future
@@ -12,6 +13,8 @@ T = typing.TypeVar('T')
 _bg_loop = None
 _bg_thread = None
 
+SEMAPHORE_LIMIT = int(os.getenv('TINY_SEMPATHORE_LIMIT', 5))
+
 
 def _ensure_background_loop():
     global _bg_loop, _bg_thread
@@ -20,6 +23,19 @@ def _ensure_background_loop():
         _bg_thread = threading.Thread(target=_bg_loop.run_forever, daemon=True)
         _bg_thread.start()
     return _bg_loop
+
+
+async def run_in_semaphore(
+    *coroutines: Coroutine,
+    max_coroutines: int | None = None,
+):
+    semaphore = asyncio.Semaphore(max_coroutines or SEMAPHORE_LIMIT)
+
+    async def _wrap_coroutine(coroutine: Coroutine) -> Any:
+        async with semaphore:
+            return await coroutine
+
+    return await asyncio.gather(*(_wrap_coroutine(coroutine) for coroutine in coroutines))
 
 
 async def run_sync_in_executor(

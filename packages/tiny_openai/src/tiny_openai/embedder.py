@@ -9,6 +9,13 @@ from openai import OpenAI
 from tinygent.datamodels.embedder import AbstractEmbedder
 from tinygent.datamodels.embedder import AbstractEmbedderConfig
 
+# all supported models with its output embeddings size
+_SUPPORTED_MODELS: dict[str, int] = {
+    'text-embedding-3-small': 1536,
+    'text-embedding-3-large': 3072,
+    'text-embedding-ada-002': 1536,
+}
+
 
 class OpenAIEmbedderConfig(AbstractEmbedderConfig['OpenAIEmbedder']):
     type: Literal['openai'] = 'openai'
@@ -40,12 +47,30 @@ class OpenAIEmbedder(AbstractEmbedder):
                 " or 'OPENAI_API_KEY' env variable.",
             )
 
-        self.model_name = model_name
+        if model_name not in _SUPPORTED_MODELS:
+            raise ValueError(
+                f'Provided model name: {model_name} not in supported model names: {', '.join(_SUPPORTED_MODELS.keys())}'
+            )
+
         self.api_key = api_key
         self.base_url = base_url
+        self._model_name = model_name
 
         self.__sync_client: OpenAI | None = None
         self.__async_client: AsyncOpenAI | None = None
+
+    @property
+    def model_name(self) -> str:
+        return self._model_name
+
+    @property
+    def embedding_dim(self) -> int:
+        v = _SUPPORTED_MODELS.get(self.model_name)
+        if not v:
+            raise ValueError(
+                f'Provided model name: {self.model_name} not in supported model names: {', '.join(_SUPPORTED_MODELS.keys())}'
+            )
+        return v
 
     def __get_sync_client(self) -> OpenAI:
         if self.__sync_client:

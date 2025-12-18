@@ -6,6 +6,7 @@ build-backend = "hatchling.build"
 name = "tiny-graph"
 version = "0.1.0"
 dependencies = [
+    "neo4j>=6.0.3",
     "tinygent",
 ]
 

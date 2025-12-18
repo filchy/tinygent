@@ -1,6 +1,7 @@
 from abc import ABC
 from abc import abstractmethod
 import logging
+from typing import Annotated
 from typing import Any
 from typing import Generic
 from typing import Literal
@@ -252,7 +253,19 @@ TinyAIMessage = (
     | TinySquadMemberMessage
 )
 
-AllTinyMessages = TinyAIMessage | TinyHumanMessage | TinySystemMessage | TinyToolResult
+AllTinyMessages = Annotated[
+    (
+        TinyPlanMessage
+        | TinyReasoningMessage
+        | TinyChatMessage
+        | TinyToolCall
+        | TinySquadMemberMessage
+        | TinyHumanMessage
+        | TinySystemMessage
+        | TinyToolResult
+    ),
+    Field(discriminator='type'),
+]
 
 TinyAIMessageChunk = TinyChatMessageChunk | TinyToolCallChunk
 
