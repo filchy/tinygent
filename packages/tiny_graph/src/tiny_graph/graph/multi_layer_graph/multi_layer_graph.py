@@ -22,7 +22,6 @@ from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEventNode
 from tiny_graph.graph.multi_layer_graph.ops.graph_operations import build_indices
 from tiny_graph.graph.multi_layer_graph.ops.node_operations import retrieve_events
-from tiny_graph.graph.multi_layer_graph.queries.node_queries import get_last_n_event_nodes
 from tiny_graph.graph.multi_layer_graph.types import DataType
 from tiny_graph.helper import generate_uuid
 from tiny_graph.helper import get_default_subgraph_id

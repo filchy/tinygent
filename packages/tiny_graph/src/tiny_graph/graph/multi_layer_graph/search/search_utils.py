@@ -95,3 +95,10 @@ async def entity_fulltext_search(
     raise ValueError(
         f'Unknown provider was given: {provider}, available providers: {", ".join(provider.__members__)}'
     )
+
+
+async def entity_bfs_search(
+    clients: TinyGraphClients,
+) -> list[TinyEntityNode]:
+    # TODO: implement after edges will be implemented and created
+    return []

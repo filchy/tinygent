@@ -3,9 +3,12 @@ from __future__ import annotations
 import logging
 import typing
 
+
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.agent import AbstractAgent
     from tinygent.datamodels.agent import AbstractAgentConfig
+    from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
+    from tinygent.datamodels.cross_encoder import AbstractCrossEncoderConfig
     from tinygent.datamodels.embedder import AbstractEmbedder
     from tinygent.datamodels.embedder import AbstractEmbedderConfig
     from tinygent.datamodels.llm import AbstractLLM
@@ -35,6 +38,11 @@ class Registry:
             str, tuple[type[AbstractEmbedderConfig], type[AbstractEmbedder]]
         ] = {}
 
+        # cross-encoders
+        self._registered_crossencoders: dict[
+            str, tuple[type[AbstractCrossEncoderConfig], type[AbstractCrossEncoder]]
+        ] = {}
+
         # memories
         self._registered_memories: dict[
             str, tuple[type[AbstractMemoryConfig], type[AbstractMemory]]
@@ -52,6 +60,7 @@ class Registry:
         configs.extend(cfg for cfg, _ in self._registered_agents.values())
         configs.extend(cfg for cfg, _ in self._registered_llms.values())
         configs.extend(cfg for cfg, _ in self._registered_embedders.values())
+        configs.extend(cfg for cfg, _ in self._registered_crossencoders.values())
         configs.extend(cfg for cfg, _ in self._registered_memories.values())
         configs.extend(cfg for cfg, _ in self._registered_tools.values())
 
@@ -145,6 +154,33 @@ class Registry:
     ) -> dict[str, tuple[type[AbstractEmbedderConfig], type[AbstractEmbedder]]]:
         logger.debug('Getting all registered Embedders.')
         return self._registered_embedders
+
+    # cross-encoders
+    def register_crossencoder(
+        self,
+        name: str,
+        config_class: type[AbstractCrossEncoderConfig],
+        crossencoder_class: type[AbstractCrossEncoder],
+    ) -> None:
+        logger.debug('Registering cross-encoder %s', name)
+        if name in self._registered_crossencoders:
+            raise ValueError(f'Cross-encoder {name} already registered.')
+
+        self._registered_crossencoders[name] = (config_class, crossencoder_class)
+        self._registration_changed()
+
+    def get_crossencoder(
+        self, name: str
+    ) -> tuple[type[AbstractCrossEncoderConfig], type[AbstractCrossEncoder]]:
+        logger.debug('Getting cross-encoder %s', name)
+        if name not in self._registered_crossencoders:
+            raise ValueError(f'Cross-encoder {name} not registered.')
+
+        return self._registered_crossencoders[name]
+
+    def get_crossencoders(self) -> dict[str, tuple[type[AbstractCrossEncoderConfig], type[AbstractCrossEncoder]]]:
+        logger.debug('Gettings all registered cross-encoders')
+        return self._registered_crossencoders
 
     # memories
     def register_memory(

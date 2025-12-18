@@ -1,9 +1,18 @@
 from datetime import datetime
 
 from tiny_graph.driver.base import BaseDriver
+from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClients
+from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEventNode
 from tiny_graph.graph.multi_layer_graph.queries.node_queries import get_last_n_event_nodes
 from tiny_graph.types.provider import GraphProvider
+
+
+async def _find_entity_duplicite_candidates(
+    clients: TinyGraphClients,
+    extracted_entities: TinyEntityNode,
+):
+    search_result = []
 
 
 async def retrieve_events(
@@ -27,3 +36,11 @@ async def retrieve_events(
     raise ValueError(
         f'Unknown provider was given: {provider}, available providers: {", ".join(provider.__members__)}'
     )
+
+
+async def resolve_duplicite_entity_nodes(
+    clients: TinyGraphClients,
+    extracted_entities: list[TinyEntityNode],
+    event_node: TinyEventNode,
+):
+    pass

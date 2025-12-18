@@ -89,7 +89,7 @@ class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
 
     def build(self) -> TinyMultiStepAgent:
         if not self.prompt_template:
-            from .prompts.multi import get_prompt_template
+            from ..prompts.agents.multi_agent import get_prompt_template
 
             self.prompt_template = get_prompt_template()
 
