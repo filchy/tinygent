@@ -98,7 +98,7 @@ Before you begin using tinygent, ensure that you meet the following software pre
 2. [ReAct Agent](examples/agents/react/)
 3. [Multi-Step Agent](examples/agents/multi-step/)
 4. [Squad Agent](examples/agents/squad/)
-5. [Modual Agentic Planner Agent](examples/agents/map/)
+5. [Modular Agentic Planner Agent](examples/agents/map/)
 
 ### Packages
 
@@ -107,6 +107,7 @@ Before you begin using tinygent, ensure that you meet the following software pre
 3. [Tiny OpenAI](packages/tiny_openai)
 4. [Tiny MistralAI](packages/tiny_mistralai)
 5. [Tiny Gemini](packages/tiny_gemini)
+6. [Tiny Graph](packages/tiny_graph)
 
 ## Linting & Formatting
 

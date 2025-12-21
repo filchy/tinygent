@@ -2,6 +2,7 @@ from datetime import datetime
 import logging
 
 from tinygent.datamodels.embedder import AbstractEmbedder
+from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.telemetry.decorators import tiny_trace
 from tinygent.datamodels.messages import BaseMessage
@@ -21,7 +22,7 @@ from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import MissedEn
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEventNode
 from tiny_graph.graph.multi_layer_graph.ops.graph_operations import build_indices
-from tiny_graph.graph.multi_layer_graph.ops.node_operations import retrieve_events
+from tiny_graph.graph.multi_layer_graph.ops.node_operations import resolve_duplicite_entity_nodes, retrieve_events
 from tiny_graph.graph.multi_layer_graph.types import DataType
 from tiny_graph.helper import generate_uuid
 from tiny_graph.helper import get_default_subgraph_id
@@ -68,6 +69,7 @@ class TinyMultiLayerGraph(BaseGraph):
         self,
         llm: AbstractLLM,
         embedder: AbstractEmbedder,
+        cross_encoder: AbstractCrossEncoder,
         driver: BaseDriver,
         prompt_template: TinyMultiLayerGraphTemplate | None = None,
         *,
@@ -84,6 +86,7 @@ class TinyMultiLayerGraph(BaseGraph):
             driver=driver,
             llm=llm,
             embedder=embedder,
+            cross_encoder=cross_encoder,
         )
 
         if prompt_template is None:
@@ -135,17 +138,17 @@ class TinyMultiLayerGraph(BaseGraph):
         entities = self._extract_entities(event, prev_events, entity_types)
         logger.info('extracted entities: %s', entities)
 
-        self._deduplicate_extracted_nodes(entities, event, prev_events)
+        await self._deduplicate_extracted_nodes(entities, event, prev_events)
 
     @tiny_trace('deduplicate_extracted_nodes')
-    def _deduplicate_extracted_nodes(
+    async def _deduplicate_extracted_nodes(
         self,
         extracted_entities: list[TinyEntityNode],
         current_event: TinyEventNode,
         previous_events: list[TinyEventNode],
         entity_types: dict[str, type[TinyModel]] = {},
     ):
-        pass
+        await resolve_duplicite_entity_nodes(self.clients, extracted_entities, current_event)
 
     @tiny_trace('extract_entities')
     def _extract_entities(

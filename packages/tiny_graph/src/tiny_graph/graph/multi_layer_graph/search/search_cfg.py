@@ -29,5 +29,10 @@ class TinySearchConfig(TinyModel):
 
 class TinySearchResult(TinyModel):
     events: list[TinyEventNode] = Field(default_factory=list)
+    event_reranker_scores: list[float] = Field(default_factory=list)
+
     entities: list[TinyEntityNode] = Field(default_factory=list)
+    entity_reranker_scores: list[float] = Field(default_factory=list)
+
     clusters: list[TinyClusterNode] = Field(default_factory=list)
+    cluster_reranker_scores: list[float] = Field(default_factory=list)
