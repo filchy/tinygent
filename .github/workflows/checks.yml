@@ -1,4 +1,4 @@
-name: Ruff
+name: Lint & Typecheck
 
 on:
   push:
@@ -7,6 +7,15 @@ on:
 jobs:
   ruff:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        check:
+          - name: mypy
+            run: uv run mypy
+          - name: ruff
+            run: rv run ruff check .
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,5 +34,5 @@ jobs:
           source .venv/bin/activate
           uv sync --all-groups --all-extras
 
-      - name: Run Ruff
-        run: uv run ruff check .
+      - name: Run ${{ matrix.check.name }}
+        run: ${{ matrix.check.run }}
