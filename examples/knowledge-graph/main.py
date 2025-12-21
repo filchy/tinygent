@@ -3,11 +3,6 @@ from datetime import timezone
 import os
 from tiny_graph import TinyMultiLayerGraph
 from tiny_graph.driver import Neo4jDriver
-from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClients
-from tiny_graph.graph.multi_layer_graph.search.search import search
-from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinyEntitySearchConfig
-from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinySearchConfig
-from tiny_graph.graph.multi_layer_graph.search.search_cfg import EntitySearchMethods
 
 from tinygent.factory.cross_encoder import build_cross_encoder
 from tinygent.factory.embedder import build_embedder
@@ -15,7 +10,6 @@ from tinygent.factory.llm import build_llm
 from tinygent.logging import setup_logger
 
 logger = setup_logger('debug')
-
 
 neo4j_uri = os.environ.get('NEO4J_URI', 'bolt://localhost:7687')
 neo4j_user = os.environ.get('NEO4J_USER', 'neo4j')
@@ -33,27 +27,6 @@ async def main():
     llm = build_llm('openai:gpt-4o-mini')
     embedder = build_embedder('openai:text-embedding-3-small')
     cross_encoder = build_cross_encoder('llm', llm='openai:gpt-4o-mini')
-
-    # all_clients = TinyGraphClients(
-    #     driver=driver,
-    #     llm=llm,
-    #     embedder=embedder,
-    #     cross_encoder=cross_encoder,
-    # )
-    #
-    # results = await search(
-    #     'What is sleeper agent?',
-    #     clients=all_clients,
-    #     config=TinySearchConfig(
-    #         entity_search=TinyEntitySearchConfig(
-    #             search_methods=[
-    #                 EntitySearchMethods.COSINE_SIM,
-    #                 EntitySearchMethods.BM_25
-    #             ]
-    #         )
-    #     )
-    # )
-    # logger.info(results)
 
     graph = TinyMultiLayerGraph(
         llm=llm,
@@ -98,8 +71,6 @@ async def main():
             text['description'],
             reference_time=datetime.now(timezone.utc)
         )
-
-        break
 
     await graph.close()
 
