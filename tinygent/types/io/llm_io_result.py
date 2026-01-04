@@ -25,6 +25,13 @@ class TinyLLMResult(LLMResult):
             for part in content
         )
 
+    def to_string(self) -> str:
+        return '\n'.join(
+            msg.content
+            for msg in self.tiny_iter()
+            if isinstance(msg, TinyChatMessage)
+        )
+
     def tiny_iter(self) -> Iterator[TinyAIMessage]:
         """Iterate over the messages and tool calls in the LLM result."""
         for generation in chain.from_iterable(self.generations):

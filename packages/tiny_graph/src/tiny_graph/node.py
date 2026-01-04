@@ -26,6 +26,13 @@ class TinyNode(TinyModel, ABC):
 
     created_at: datetime = Field(default_factory=get_current_timestamp)
 
+    attributes: dict[str, Any] = Field(default_factory=dict, description='Additional attributes of the node.')
+
+    @classmethod
+    @abstractmethod
+    def from_record(cls, record: dict) -> Any:
+        raise NotImplementedError('Subclasses must implement this method.')
+
     @abstractmethod
     async def save(self, driver: BaseDriver) -> Any:
         raise NotImplementedError('Subclasses must implement this method.')

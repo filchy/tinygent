@@ -51,6 +51,32 @@ def create_event_node(provider: GraphProvider) -> str:
     )
 
 
+def create_cluster_node(provider: GraphProvider) -> str:
+    if provider == GraphProvider.NEO4J:
+        return f'''
+            MERGE (e:{NodeType.CLUSTER.value} {{ uuid: $uuid }})
+            SET e = {{
+                uuid: $uuid,
+                name: $name,
+                subgraph_id: $subgraph_id,
+                created_at: $created_at,
+                summary: $summary,
+            }}
+            WITH e
+            WHERE $name_embedding IS NOT NULL
+            CALL db.create.setNodeVectorProperty(
+                e,
+                "name_embedding",
+                $name_embedding
+            )
+            RETURN e.uuid AS uuid
+        '''
+
+    raise ValueError(
+        f'Unknown provider was given: {provider}, available providers: {", ".join(provider.__members__)}'
+    )
+
+
 def get_last_n_event_nodes(provider: GraphProvider) -> str:
     if provider == GraphProvider.NEO4J:
         return f'''

@@ -12,6 +12,7 @@ from tinygent.datamodels.messages import BaseMessage
 from tiny_graph.driver.base import BaseDriver
 from tiny_graph.graph.multi_layer_graph.types import DataType
 from tiny_graph.graph.multi_layer_graph.types import NodeType
+from tiny_graph.graph.multi_layer_graph.utils.model_repr import compact_model_repr
 from tiny_graph.helper import parse_db_date
 from tiny_graph.node import TinyNode
 
@@ -120,6 +121,7 @@ class TinyEntityNode(TinyNode):
             created_at=parse_db_date(record['created_at']),
             summary=record['summary'],
             labels=record['labels'],
+            name_embedding=record.get('name_embedding', None)
         )
 
     async def save(self, driver: BaseDriver) -> str:
@@ -143,6 +145,40 @@ class TinyEntityNode(TinyNode):
         self.name_embedding = await embedder.aembed(self.name)
         return self.name_embedding
 
+    def __repr__(self) -> str:
+        return compact_model_repr(self)
+
 
 class TinyClusterNode(TinyNode):
     type = NodeType.CLUSTER
+
+    summary: str
+
+    name_embedding: list[float] | None = None
+
+    @classmethod
+    def from_record(cls, record: dict) -> TinyClusterNode:
+        return TinyClusterNode(
+            uuid=record['uuid'],
+            subgraph_id=record['subgraph_id'],
+            name=record['name'],
+            created_at=parse_db_date(record['created_at']),
+            summary=record['summary'],
+            name_embedding=record.get('name_embedding', None)
+        )
+
+    async def save(self, driver: BaseDriver) -> str:
+        from tiny_graph.graph.multi_layer_graph.queries.node_queries import create_cluster_node
+        args = {
+            'uuid': self.uuid,
+            'name': self.name,
+            'subgraph_id': self.subgraph_id,
+            'created_at': self.created_at,
+            'summary': self.summary,
+            'name_embedding': self.name_embedding,
+        }
+
+        return await driver.execute_query(
+            query=create_cluster_node(driver.provider),
+            **args,
+        )

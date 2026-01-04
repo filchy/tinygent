@@ -19,12 +19,20 @@ from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClien
 from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import ExtractedEntities
 from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import ExtractedEntity
 from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import MissedEntities
+from tiny_graph.graph.multi_layer_graph.edges import TinyEntityEdge
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEventNode
+from tiny_graph.graph.multi_layer_graph.ops.cluster_operations import resolve_and_extract_clusters
+from tiny_graph.graph.multi_layer_graph.ops.edge_operations import extract_edges
+from tiny_graph.graph.multi_layer_graph.ops.edge_operations import resolve_edge_pointers
+from tiny_graph.graph.multi_layer_graph.ops.edge_operations import resolve_extracted_edges
 from tiny_graph.graph.multi_layer_graph.ops.graph_operations import build_indices
-from tiny_graph.graph.multi_layer_graph.ops.node_operations import resolve_duplicite_entity_nodes, retrieve_events
-from tiny_graph.graph.multi_layer_graph.types import DataType
-from tiny_graph.helper import generate_uuid
+from tiny_graph.graph.multi_layer_graph.ops.node_operations import extract_attributes_from_nodes
+from tiny_graph.graph.multi_layer_graph.ops.node_operations import resolve_extracted_entity_nodes
+from tiny_graph.graph.multi_layer_graph.ops.node_operations import retrieve_events
+from tiny_graph.graph.multi_layer_graph.types import DataType, NodeType
+from tiny_graph.graph.multi_layer_graph.utils.custom_types import validate_custom_entity_types
+from tiny_graph.helper import generate_uuid, get_current_timestamp
 from tiny_graph.helper import get_default_subgraph_id
 
 logger = logging.getLogger(__name__)
@@ -107,23 +115,31 @@ class TinyMultiLayerGraph(BaseGraph):
         data: str | dict | BaseMessage,
         description: str,
         *,
-        reference_time: datetime,
+        reference_time: datetime | None = None,
         uuid: str | None = None,
         subgraph_id: str | None = None,
-        entity_types: dict[str, type[TinyModel]] = {},
+        entity_types: dict[str, type[TinyModel]] | None = None,
+        edge_types: dict[str, type[TinyModel]] | None = None,
+        edge_type_map: dict[tuple[str, str], list[str]] | None = None,
         **kwargs
     ) -> None:
+        validate_custom_entity_types(entity_types)
+
+        # resolve optional values
         uuid = uuid or generate_uuid()
         subgraph_id = subgraph_id or get_default_subgraph_id()
+        reference_time = reference_time or get_current_timestamp()
+        entity_types = entity_types or {}
 
+        # Gather last-n previous events
         prev_events = await retrieve_events(
             self.driver,
             reference_time,
             last_n=self.last_relevant_events_num,
             subgraph_ids=[subgraph_id]
         )
-        logger.info('prev event: %s', prev_events)
 
+        # Create new event
         event = TinyEventNode(
             uuid=uuid,
             name=name,
@@ -133,22 +149,93 @@ class TinyMultiLayerGraph(BaseGraph):
             data_type=_get_event_data_type(data),
             valid_at=reference_time,
         )
-        logger.info('event: %s', event)
 
+        # Extract & resolve entities
         entities = self._extract_entities(event, prev_events, entity_types)
-        logger.info('extracted entities: %s', entities)
 
-        await self._deduplicate_extracted_nodes(entities, event, prev_events)
+        entities, uuid_map = await resolve_extracted_entity_nodes(
+            self.clients,
+            entities,
+            event,
+            prev_events,
+            entity_types=entity_types,
+        )
 
-    @tiny_trace('deduplicate_extracted_nodes')
-    async def _deduplicate_extracted_nodes(
+        # Create default edge type map
+        edge_type_map_default = (
+            {(NodeType.ENTITY.value, NodeType.ENTITY.value): list(edge_types.keys())}
+            if edge_types is not None
+            else {(NodeType.ENTITY.value, NodeType.ENTITY.value): []}
+        )
+
+        # Extract & resolve edges
+        resolved_edges, invalidated_edges = await self._extract_edges(
+            event,
+            prev_events,
+            edge_types,
+            edge_type_map or edge_type_map_default,
+            entities,
+            uuid_map,
+            subgraph_id,
+        )
+
+        logger.info('entities: %s', entities)
+        logger.info('edges: %s', resolved_edges)
+        logger.info('invalidated edges: %s', invalidated_edges)
+
+        # Extract node attributes
+        entities_with_attributes: list[TinyEntityNode] = await extract_attributes_from_nodes(
+            self.clients.llm,
+            entities,
+            event,
+            prev_events,
+            entity_types=entity_types,
+        )
+
+        logger.info('entities with attributes: %s', entities_with_attributes)
+
+        # Extract & resolve clusters
+        clusters = await resolve_and_extract_clusters(
+            self.clients.driver,
+            self.clients.llm,
+            self.clients.embedder,
+            entities_with_attributes,
+        )
+
+        # Process and save data
+
+    @tiny_trace('extract_edges')
+    async def _extract_edges(
         self,
-        extracted_entities: list[TinyEntityNode],
         current_event: TinyEventNode,
         previous_events: list[TinyEventNode],
-        entity_types: dict[str, type[TinyModel]] = {},
-    ):
-        await resolve_duplicite_entity_nodes(self.clients, extracted_entities, current_event)
+        edge_types: dict[str, type[TinyModel]] | None,
+        edge_type_map: dict[tuple[str, str], list[str]],
+        entities: list[TinyEntityNode],
+        entity_uuid_map: dict[str, str],
+        subgraph_id: str,
+    ) -> tuple[list[TinyEntityEdge], list[TinyEntityEdge]]:
+        extraced_edges = extract_edges(
+            self.clients.llm,
+            entities,
+            current_event,
+            previous_events,
+            edge_types,
+            edge_type_map,
+            subgraph_id,
+        )
+
+        edges = resolve_edge_pointers(extraced_edges, entity_uuid_map)
+
+        resolved_edges, invalidated_edges = await resolve_extracted_edges(
+            self.clients,
+            edges,
+            current_event,
+            entities,
+            edge_types or {},
+            edge_type_map,
+        )
+        return resolved_edges, invalidated_edges
 
     @tiny_trace('extract_entities')
     def _extract_entities(
@@ -165,7 +252,7 @@ class TinyMultiLayerGraph(BaseGraph):
         entity_types_context = [
             {
                 'entity_type_id': 0,
-                'entity_type_name': 'Entity',
+                'entity_type_name': NodeType.ENTITY.value,
                 'entity_type_description': 'Default entity classification. Use this entity type if the entity is not one of the other listed types.',
             }
         ]
@@ -173,7 +260,7 @@ class TinyMultiLayerGraph(BaseGraph):
             {
                 'entity_type_id': i + 1,
                 'entity_type_name': type_name,
-                'entity_type_description': type_model.__doc__ or 'No description provided'
+                'entity_type_description': type_model.doc or 'No description provided'
             } for i, (type_name, type_model) in enumerate(entity_types.items())
         ])
 
@@ -248,10 +335,10 @@ class TinyMultiLayerGraph(BaseGraph):
                     e.get('entity_type_name')
                     for e in entity_types_context
                     if e.get('entity_type_id') == extracted_entity.entity_type_id
-                ), 'Entity'
+                ), NodeType.ENTITY.value
             )
 
-            labels: list[str] = list({'Entity', str(entity_type_name)})
+            labels: list[str] = list({NodeType.ENTITY.value, str(entity_type_name)})
             new_entity = TinyEntityNode(
                 subgraph_id=current_event.subgraph_id,
                 name=extracted_entity.name,

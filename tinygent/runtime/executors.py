@@ -13,7 +13,7 @@ T = typing.TypeVar('T')
 _bg_loop = None
 _bg_thread = None
 
-SEMAPHORE_LIMIT = int(os.getenv('TINY_SEMPATHORE_LIMIT', 5))
+_DEFAULT_SEMAPHORE_LIMIT = int(os.getenv('TINY_SEMPATHORE_DEFAULT_LIMIT', 5))
 
 
 def _ensure_background_loop():
@@ -29,7 +29,7 @@ async def run_in_semaphore(
     *coroutines: Coroutine,
     max_coroutines: int | None = None,
 ):
-    semaphore = asyncio.Semaphore(max_coroutines or SEMAPHORE_LIMIT)
+    semaphore = asyncio.Semaphore(max_coroutines or _DEFAULT_SEMAPHORE_LIMIT)
 
     async def _wrap_coroutine(coroutine: Coroutine) -> Any:
         async with semaphore:

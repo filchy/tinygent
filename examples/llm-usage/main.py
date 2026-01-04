@@ -43,6 +43,8 @@ def basic_generation():
     for msg in result.tiny_iter():
         print(f'[BASIC TEXT GENERATION] {msg}')
 
+    print(f'[TEXT GENERATION - to_string()] {result.to_string()}')
+
 
 def structured_generation():
     llm = build_llm('openai:gpt-4o')

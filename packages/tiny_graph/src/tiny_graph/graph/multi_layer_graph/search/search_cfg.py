@@ -2,9 +2,16 @@ from enum import Enum
 from pydantic import Field
 from tinygent.types.base import TinyModel
 
+from tiny_graph.graph.multi_layer_graph.edges import TinyEntityEdge
 from tiny_graph.graph.multi_layer_graph.nodes import TinyClusterNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEventNode
+from tiny_graph.types.provider import GraphProvider
+
+
+class EdgeSearchMethods(Enum):
+    COSINE_SIM = 'cosine_similarity'
+    BM_25 = 'bm_25'
 
 
 class EntitySearchMethods(Enum):
@@ -12,8 +19,46 @@ class EntitySearchMethods(Enum):
     BM_25 = 'bm_25'
 
 
-class EntityReranker(Enum):
+class EdgeReranker(Enum):
+    RRF = 'rrf'
     CROSS_ENCODER = 'cross_encoder'
+
+
+class EntityReranker(Enum):
+    RRF = 'rrf'
+    CROSS_ENCODER = 'cross_encoder'
+
+
+class TinySearchFilters(TinyModel):
+    entity_uuids: list[str] | None = None
+    edge_uuids: list[str] | None = None
+
+    def build_query(self, provider: GraphProvider, *use_fields: str) -> str:
+        clauses: list[str] = []
+
+        if 'entity_uuids' in use_fields and self.entity_uuids:
+            clauses.append(self._in_clause(provider, 'e.uuid', 'entity_uuids'))
+
+        if 'edge_uuids' in use_fields and self.edge_uuids:
+            clauses.append(self._in_clause(provider, 'e.uuid', 'edge_uuids'))
+
+        if not clauses:
+            return ''
+
+        return 'AND ' + '\nAND '.join(clauses)
+
+    def _in_clause(self, provider: GraphProvider, field: str, param: str) -> str:
+        match provider:
+            case GraphProvider.NEO4J:
+                return f'''
+                (
+                    ${param} IS NULL
+                    OR size(${param}) = 0
+                    OR {field} IN ${param}
+                )
+                '''
+            case _:
+                raise NotImplementedError(f'Provider not supported: {provider}')
 
 
 class TinyEntitySearchConfig(TinyModel):
@@ -21,10 +66,16 @@ class TinyEntitySearchConfig(TinyModel):
     reranker: EntityReranker = Field(default=EntityReranker.CROSS_ENCODER)
 
 
+class TinyEdgeSearchConfig(TinyModel):
+    search_methods: list[EdgeSearchMethods] = Field(default=[EdgeSearchMethods.COSINE_SIM])
+    reranker: EdgeReranker = Field(default=EdgeReranker.CROSS_ENCODER)
+
+
 class TinySearchConfig(TinyModel):
     limit: int = Field(default=5)
 
-    entity_search: TinyEntitySearchConfig = Field(default_factory=TinyEntitySearchConfig)
+    entity_search: TinyEntitySearchConfig | None = Field(default=None)
+    edge_search: TinyEdgeSearchConfig | None = Field(default=None)
 
 
 class TinySearchResult(TinyModel):
@@ -33,6 +84,9 @@ class TinySearchResult(TinyModel):
 
     entities: list[TinyEntityNode] = Field(default_factory=list)
     entity_reranker_scores: list[float] = Field(default_factory=list)
+
+    edges: list[TinyEntityEdge] = Field(default_factory=list)
+    edge_reranker_scores: list[float] = Field(default_factory=list)
 
     clusters: list[TinyClusterNode] = Field(default_factory=list)
     cluster_reranker_scores: list[float] = Field(default_factory=list)

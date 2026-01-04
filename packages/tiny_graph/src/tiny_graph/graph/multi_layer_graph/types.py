@@ -7,6 +7,10 @@ class NodeType(Enum):
     CLUSTER = 'Cluster'
 
 
+class EdgeType(Enum):
+    HAS_MEMBER = 'HasMember'
+
+
 class DataType(Enum):
     TEXT = 'text'
     JSON = 'json'
