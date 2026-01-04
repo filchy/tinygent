@@ -4,10 +4,13 @@ from tiny_graph.types.provider import GraphProvider
 
 
 def build_indices_and_constraints(
-    provider: GraphProvider,
-    clients: TinyGraphClients
+    provider: GraphProvider, clients: TinyGraphClients
 ) -> list[str]:
-    return get_constraints(provider) + get_fulltext_indices(provider) + get_vector_indices(provider, clients)
+    return (
+        get_constraints(provider)
+        + get_fulltext_indices(provider)
+        + get_vector_indices(provider, clients)
+    )
 
 
 def get_constraints(
@@ -15,23 +18,21 @@ def get_constraints(
 ) -> list[str]:
     if provider == GraphProvider.NEO4J:
         return [
-            f'''
+            f"""
             CREATE CONSTRAINT {NodeType.EVENT.value}_uuid_unique IF NOT EXISTS
             FOR (e:{NodeType.EVENT.value})
             REQUIRE e.uuid IS UNIQUE;
-            ''',
-
-            f'''
+            """,
+            f"""
             CREATE CONSTRAINT {NodeType.ENTITY.value}_uuid_unique IF NOT EXISTS
             FOR (e:{NodeType.ENTITY.value})
             REQUIRE e.uuid IS UNIQUE;
-            ''',
-
-            f'''
+            """,
+            f"""
             CREATE CONSTRAINT {NodeType.CLUSTER.value}_uuid_unique IF NOT EXISTS
             FOR (c:{NodeType.CLUSTER.value})
             REQUIRE c.uuid IS UNIQUE;
-            ''',
+            """,
         ]
 
     raise ValueError(
@@ -44,7 +45,7 @@ def get_fulltext_indices(
 ) -> list[str]:
     if provider == GraphProvider.NEO4J:
         return [
-            f'''
+            f"""
             CREATE FULLTEXT INDEX `{NodeType.ENTITY.value}_fulltext_index`
             IF NOT EXISTS
             FOR (e:{NodeType.ENTITY.value})
@@ -52,16 +53,15 @@ def get_fulltext_indices(
                 e.name,
                 e.summary
             ];
-            ''',
-
-            '''
+            """,
+            """
             CREATE FULLTEXT INDEX edge_name_and_fact IF NOT EXISTS
             FOR ()-[e:RELATES_TO]-()
             ON EACH [
                 e.name,
                 e.fact
             ]
-            '''
+            """,
         ]
 
     raise ValueError(
@@ -75,7 +75,7 @@ def get_vector_indices(
 ) -> list[str]:
     if provider == GraphProvider.NEO4J:
         return [
-            f'''
+            f"""
             CREATE VECTOR INDEX `{NodeType.ENTITY.value}_{clients.safe_embed_model}_name_embedding_index`
             IF NOT EXISTS
             FOR (e:{NodeType.ENTITY.value})
@@ -86,9 +86,8 @@ def get_vector_indices(
                     `vector.similarity_function`: 'cosine'
                 }}
             }};
-            ''',
-
-            f'''
+            """,
+            f"""
             CREATE VECTOR INDEX `RELATES_TO_{clients.safe_embed_model}_fact_embedding_index`
             IF NOT EXISTS
             FOR ()-[r:RELATES_TO]-()
@@ -99,7 +98,7 @@ def get_vector_indices(
                     `vector.similarity_function`: 'cosine'
                 }}
             }};
-            ''',
+            """,
         ]
 
     raise ValueError(

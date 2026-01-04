@@ -4,7 +4,7 @@ from tiny_graph.types.provider import GraphProvider
 
 def create_entity_edge(provider: GraphProvider) -> str:
     if provider == GraphProvider.NEO4J:
-        return f'''
+        return f"""
             MATCH (source:{NodeType.ENTITY.value} {{ uuid: $source_node_uuid }})
             MATCH (target:{NodeType.ENTITY.value} {{ uuid: $target_node_uuid }})
             MERGE (source)-[e:RELATES_TO {{ uuid: $edge_uuid}}]->(target)
@@ -23,8 +23,8 @@ def create_entity_edge(provider: GraphProvider) -> str:
                 invalid_at: $invalid_at,
                 attributes: $attributes
             }}
-        '''
-    
+        """
+
     raise ValueError(
         f'Unknown provider was given: {provider}, available providers: {", ".join(provider.__members__)}'
     )
@@ -32,7 +32,7 @@ def create_entity_edge(provider: GraphProvider) -> str:
 
 def find_entity_edge_by_targets(provider: GraphProvider) -> str:
     if provider == GraphProvider.NEO4J:
-        return f'''
+        return f"""
             MATCH (source:{NodeType.ENTITY.value} {{ uuid: $source_uuid }})-[e:RELATES_TO]->(target:{NodeType.ENTITY.value} {{ uuid: $target_uuid }})
             RETURN
                 e.uuid AS uuid,
@@ -48,7 +48,7 @@ def find_entity_edge_by_targets(provider: GraphProvider) -> str:
                 e.valid_at AS valid_at,
                 e.invalid_at AS invalid_at,
                 e.attributes AS attributes
-        '''
+        """
 
     raise ValueError(
         f'Unknown provider was given: {provider}, available providers: {", ".join(provider.__members__)}'

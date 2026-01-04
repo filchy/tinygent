@@ -13,13 +13,11 @@ class ExtractedEntity(TinyModel):
 
 class ExtractedEntities(TinyModel):
     extracted_entities: list[ExtractedEntity] = Field(
-        ...,
-        description='List of extracted entities'
+        ..., description='List of extracted entities'
     )
 
 
 class MissedEntities(TinyModel):
     missed_entities: list[str] = Field(
-        ...,
-        description='Names of entities that weren\'t extracted'
+        ..., description="Names of entities that weren't extracted"
     )

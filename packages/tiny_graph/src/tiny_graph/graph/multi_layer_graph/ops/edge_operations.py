@@ -1,15 +1,9 @@
 from datetime import datetime
 import logging
 import os
+from typing import Any
 
 from pydantic import Field
-from tinygent.datamodels.llm import AbstractLLM
-from tinygent.datamodels.messages import TinyHumanMessage
-from tinygent.datamodels.messages import TinySystemMessage
-from tinygent.runtime.executors import run_in_semaphore
-from tinygent.types.base import TinyModel
-from tinygent.types.io.llm_io_input import TinyLLMInput
-from tinygent.utils.jinja_utils import render_template
 
 from tiny_graph.graph.multi_layer_graph.core.edge import entity_edge_batch_embeddings
 from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClients
@@ -19,11 +13,23 @@ from tiny_graph.graph.multi_layer_graph.nodes import TinyEventNode
 from tiny_graph.graph.multi_layer_graph.search.search import search
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinySearchFilters
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinySearchResult
-from tiny_graph.graph.multi_layer_graph.search.search_presets import EDGE_HYBRID_SEARCH_RRF
+from tiny_graph.graph.multi_layer_graph.search.search_presets import (
+    EDGE_HYBRID_SEARCH_RRF,
+)
 from tiny_graph.graph.multi_layer_graph.types import NodeType
-from tiny_graph.graph.multi_layer_graph.utils.text_similarity import normalize_string_exact
-from tiny_graph.helper import ensure_utc, parse_timestamp
+from tiny_graph.graph.multi_layer_graph.utils.text_similarity import (
+    normalize_string_exact,
+)
+from tiny_graph.helper import ensure_utc
 from tiny_graph.helper import get_current_timestamp
+from tiny_graph.helper import parse_timestamp
+from tinygent.datamodels.llm import AbstractLLM
+from tinygent.datamodels.messages import TinyHumanMessage
+from tinygent.datamodels.messages import TinySystemMessage
+from tinygent.runtime.executors import run_in_semaphore
+from tinygent.types.base import TinyModel
+from tinygent.types.io.llm_io_input import TinyLLMInput
+from tinygent.utils.jinja_utils import render_template
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +88,6 @@ def extract_edges(
     edge_type_map: dict[tuple[str, str], list[str]],
     subgraph_id: str,
 ) -> list[TinyEntityEdge]:
-
     edge_type_signature_map: dict[str, tuple[str, str]] = {
         edge_type: signature
         for signature, edge_types in edge_type_map.items()
@@ -93,7 +98,9 @@ def extract_edges(
         [
             {
                 'fact_type_name': type_name,
-                'fact_type_signature': edge_type_signature_map.get(type_name, (NodeType.ENTITY.value, NodeType.ENTITY.value)),
+                'fact_type_signature': edge_type_signature_map.get(
+                    type_name, (NodeType.ENTITY.value, NodeType.ENTITY.value)
+                ),
                 'fact_type_description': type_model.doc_cls(),
             }
             for type_name, type_model in edge_types.items()
@@ -103,7 +110,7 @@ def extract_edges(
     )
 
     # Prepare context for LLM
-    context = {
+    context: dict[str, Any] = {
         'event_content': event_node.serialized_data,
         'entities': [
             {'id': idx, 'name': node.name, 'entity_types': node.labels}
@@ -120,7 +127,10 @@ def extract_edges(
     reflexion_iterations = 0
     edges_data: list[Edge] | None = None
 
-    from tiny_graph.graph.multi_layer_graph.prompts.edges import get_edge_extraction_prompt
+    from tiny_graph.graph.multi_layer_graph.prompts.edges import (
+        get_edge_extraction_prompt,
+    )
+
     edge_prompt = get_edge_extraction_prompt()
 
     # extract edges & check all missing facts using reflexion
@@ -147,7 +157,9 @@ def extract_edges(
 
         reflexion_iterations += 1
         if reflexion_iterations < MAX_REFLEXION_ITERATIONS:
-            from tiny_graph.graph.multi_layer_graph.prompts.edges import get_edge_extract_reflextion_prompt
+            from tiny_graph.graph.multi_layer_graph.prompts.edges import (
+                get_edge_extract_reflextion_prompt,
+            )
 
             reflex_prompt = get_edge_extract_reflextion_prompt()
             reflexion_result = llm.generate_structured(
@@ -159,14 +171,16 @@ def extract_edges(
                                 reflex_prompt.user,
                                 context,
                             )
-                        )
+                        ),
                     ]
                 ),
                 output_schema=MissingFacts,
             )
 
             if reflexion_result.missing_facts:
-                context['custom_prompt'] = f'The following facts were missed in a previous extraction: {'\n'.join(reflexion_result.missing_facts)}'
+                context['custom_prompt'] = (
+                    f'The following facts were missed in a previous extraction: {"\n".join(reflexion_result.missing_facts)}'
+                )
 
             facts_missed = bool(reflexion_result.missing_facts)
 
@@ -193,7 +207,9 @@ def extract_edges(
             logger.warning('No entities provided for edge extraction')
             continue
 
-        if not (0 <= source_node_idx < len(entities) and 0 <= target_node_idx < len(entities)):
+        if not (
+            0 <= source_node_idx < len(entities) and 0 <= target_node_idx < len(entities)
+        ):
             logger.warning(
                 f'Invalid entity IDs in edge extraction for {edge_data.relation_type}. '
                 f'source_entity_id: {source_node_idx}, target_entity_id: {target_node_idx}, '
@@ -210,7 +226,9 @@ def extract_edges(
                     datetime.fromisoformat(valid_at.replace('Z', '+00:00'))
                 )
             except ValueError as e:
-                logger.warning(f'WARNING: Error parsing valid_at date: {e}. Input: {valid_at}')
+                logger.warning(
+                    f'WARNING: Error parsing valid_at date: {e}. Input: {valid_at}'
+                )
 
         if invalid_at:
             try:
@@ -218,7 +236,9 @@ def extract_edges(
                     datetime.fromisoformat(invalid_at.replace('Z', '+00:00'))
                 )
             except ValueError as e:
-                logger.warning(f'WARNING: Error parsing invalid_at date: {e}. Input: {invalid_at}')
+                logger.warning(
+                    f'WARNING: Error parsing invalid_at date: {e}. Input: {invalid_at}'
+                )
 
         edge = TinyEntityEdge(
             source_node_uuid=source_node_uuid,
@@ -243,7 +263,9 @@ def extract_edges(
     return edges
 
 
-def resolve_edge_pointers(edges: list[TinyEntityEdge], entity_uuid_map: dict[str, str]) -> list[TinyEntityEdge]:
+def resolve_edge_pointers(
+    edges: list[TinyEntityEdge], entity_uuid_map: dict[str, str]
+) -> list[TinyEntityEdge]:
     for e in edges:
         e.source_node_uuid = entity_uuid_map.get(e.source_node_uuid, e.source_node_uuid)
         e.target_node_uuid = entity_uuid_map.get(e.target_node_uuid, e.target_node_uuid)
@@ -292,7 +314,11 @@ def resolve_edge_contradictions(
             and edge_valid_at_utc <= resolved_edge_valid_at_utc
         ):
             edge.invalid_at = resolved_edge.valid_at
-            edge.expired_at = edge.expired_at if edge.expired_at is not None else get_current_timestamp()
+            edge.expired_at = (
+                edge.expired_at
+                if edge.expired_at is not None
+                else get_current_timestamp()
+            )
             invalidated_edges.append(edge)
 
     return invalidated_edges
@@ -324,10 +350,13 @@ async def resolve_extracted_edge(
             return resolved, [], []
 
     # Prepare context for LLM
-    related_edges_context = [{'idx': i, 'fact': edge.fact} for i, edge in enumerate(related_edges)]
+    related_edges_context = [
+        {'idx': i, 'fact': edge.fact} for i, edge in enumerate(related_edges)
+    ]
 
     invalidation_edge_candidates_context = [
-        {'idx': i, 'fact': existing_edge.fact} for i, existing_edge in enumerate(existing_edges)
+        {'idx': i, 'fact': existing_edge.fact}
+        for i, existing_edge in enumerate(existing_edges)
     ]
 
     edge_types_context = (
@@ -356,10 +385,12 @@ async def resolve_extracted_edge(
         llm_input=TinyLLMInput(
             messages=[
                 TinySystemMessage(content=resolve_dup_prompt.system),
-                TinyHumanMessage(content=render_template(
-                    resolve_dup_prompt.user,
-                    context,
-                )),
+                TinyHumanMessage(
+                    content=render_template(
+                        resolve_dup_prompt.user,
+                        context,
+                    )
+                ),
             ]
         ),
         output_schema=EdgeDuplicate,
@@ -376,7 +407,9 @@ async def resolve_extracted_edge(
     duplicate_facts = duplicate_result.duplicate_facts
 
     # Validate duplicate_facts are in valid range for EXISTING FACTS
-    duplicate_fact_ids: list[int] = [i for i in duplicate_facts if 0 <= i < len(related_edges)]
+    duplicate_fact_ids: list[int] = [
+        i for i in duplicate_facts if 0 <= i < len(related_edges)
+    ]
 
     resolved_edge = extracted_edge
     for duplicate_fact_id in duplicate_fact_ids:
@@ -412,19 +445,26 @@ async def resolve_extracted_edge(
             'fact': resolved_edge.fact,
         }
 
-        edge_model = edge_type_candidates.get(fact_type) if edge_type_candidates else None
+        edge_model = (
+            edge_type_candidates.get(fact_type) if edge_type_candidates else None
+        )
         if edge_model is not None and len(edge_model.model_fields) != 0:
-            from tiny_graph.graph.multi_layer_graph.prompts.edges import get_extract_edge_attributes
+            from tiny_graph.graph.multi_layer_graph.prompts.edges import (
+                get_extract_edge_attributes,
+            )
+
             edge_attrs_promp = get_extract_edge_attributes()
 
             edge_attributes_response = llm.generate_structured(
                 llm_input=TinyLLMInput(
                     messages=[
                         TinySystemMessage(content=edge_attrs_promp.system),
-                        TinyHumanMessage(content=render_template(
-                            edge_attrs_promp.user,
-                            edge_attributes_context,
-                        )),
+                        TinyHumanMessage(
+                            content=render_template(
+                                edge_attrs_promp.user,
+                                edge_attributes_context,
+                            )
+                        ),
                     ]
                 ),
                 output_schema=edge_model,
@@ -449,7 +489,9 @@ async def resolve_extracted_edge(
 
     # Determine if the new_edge needs to be expired
     if resolved_edge.expired_at is None:
-        invalidation_candidates.sort(key=lambda c: (c.valid_at is None, ensure_utc(c.valid_at)))
+        invalidation_candidates.sort(
+            key=lambda c: (c.valid_at is None, ensure_utc(c.valid_at))
+        )
         for candidate in invalidation_candidates:
             candidate_valid_at_utc = ensure_utc(candidate.valid_at)
             resolved_edge_valid_at_utc = ensure_utc(resolved_edge.valid_at)
@@ -467,7 +509,9 @@ async def resolve_extracted_edge(
     invalidated_edges: list[TinyEntityEdge] = resolve_edge_contradictions(
         resolved_edge, invalidation_candidates
     )
-    duplicate_edges: list[TinyEntityEdge] = [related_edges[idx] for idx in duplicate_fact_ids]
+    duplicate_edges: list[TinyEntityEdge] = [
+        related_edges[idx] for idx in duplicate_fact_ids
+    ]
 
     return resolved_edge, invalidated_edges, duplicate_edges
 
@@ -485,7 +529,11 @@ async def resolve_extracted_edges(
     seen: set[tuple[str, str, str]] = set()
 
     for e in extracted_edges:
-        signature = (e.source_node_uuid, e.target_node_uuid, normalize_string_exact(e.fact))
+        signature = (
+            e.source_node_uuid,
+            e.target_node_uuid,
+            normalize_string_exact(e.fact),
+        )
         if signature in seen:
             continue
         seen.add(signature)
@@ -500,12 +548,16 @@ async def resolve_extracted_edges(
     # used for deduplication
     all_already_existing_edges: list[list[TinyEntityEdge]] = await run_in_semaphore(
         *[
-            TinyEntityEdge.find_by_targets(clients.driver, edge.source_node_uuid, edge.target_node_uuid)
+            TinyEntityEdge.find_by_targets(
+                clients.driver, edge.source_node_uuid, edge.target_node_uuid
+            )
             for edge in extracted_edges
         ]
     )
 
-    for extracted_edge, existing in zip(extracted_edges, all_already_existing_edges, strict=True):
+    for extracted_edge, existing in zip(
+        extracted_edges, all_already_existing_edges, strict=True
+    ):
         logger.debug(
             'DB edges for (%s -> %s): %s',
             extracted_edge.source_node_uuid,
@@ -523,27 +575,38 @@ async def resolve_extracted_edges(
                 config=EDGE_HYBRID_SEARCH_RRF,
                 filters=TinySearchFilters(edge_uuids=[e.uuid for e in valid_edges]),
             )
-            for extracted_edge, valid_edges in zip(extracted_edges, all_already_existing_edges, strict=True)
+            for extracted_edge, valid_edges in zip(
+                extracted_edges, all_already_existing_edges, strict=True
+            )
         ]
     )
 
-    semantic_similar_edges: list[list[TinyEntityEdge]] = [r.edges for r in similar_edges_search_result]
+    semantic_similar_edges: list[list[TinyEntityEdge]] = [
+        r.edges for r in similar_edges_search_result
+    ]
 
     # getting semantically similar/related edges as potential candidates for same/contradict older edges for invalidation
-    edge_invalidation_candidates_search_result: list[TinySearchResult] = await run_in_semaphore(
+    edge_invalidation_candidates_search_result: list[
+        TinySearchResult
+    ] = await run_in_semaphore(
         *[
             search(
                 query=extracted_edge.fact,
                 clients=clients,
                 subgraph_ids=[extracted_edge.subgraph_id],
                 config=EDGE_HYBRID_SEARCH_RRF,
-            ) for extracted_edge in extracted_edges
+            )
+            for extracted_edge in extracted_edges
         ]
     )
 
-    edge_invalidation_candidates: list[list[TinyEntityEdge]] = [r.edges for r in edge_invalidation_candidates_search_result]
+    edge_invalidation_candidates: list[list[TinyEntityEdge]] = [
+        r.edges for r in edge_invalidation_candidates_search_result
+    ]
 
-    for extracted_edge, candidates in zip(extracted_edges, edge_invalidation_candidates, strict=True):
+    for extracted_edge, candidates in zip(
+        extracted_edges, edge_invalidation_candidates, strict=True
+    ):
         logger.debug(
             'INVALIDATION candidates for new fact [%s]: %s',
             extracted_edge.fact,
@@ -551,7 +614,9 @@ async def resolve_extracted_edges(
         )
 
     # Build entity hash table
-    uuid_entity_map: dict[str, TinyEntityNode] = {entity.uuid: entity for entity in entities}
+    uuid_entity_map: dict[str, TinyEntityNode] = {
+        entity.uuid: entity for entity in entities
+    }
 
     # Determine which edge types are relevant for each edge.
     # `edge_types_lst` stores the subset of custom edge definitions whose
@@ -565,10 +630,14 @@ async def resolve_extracted_edges(
         target_node = uuid_entity_map.get(extracted_edge.target_node_uuid)
 
         source_node_labels: list[str] = (
-            source_node.labels + [NodeType.ENTITY.value] if source_node is not None else [NodeType.ENTITY.value]
+            source_node.labels + [NodeType.ENTITY.value]
+            if source_node is not None
+            else [NodeType.ENTITY.value]
         )
         target_node_labels: list[str] = (
-            target_node.labels + [NodeType.ENTITY.value] if target_node is not None else [NodeType.ENTITY.value]
+            target_node.labels + [NodeType.ENTITY.value]
+            if target_node is not None
+            else [NodeType.ENTITY.value]
         )
         label_tuples: list[tuple[str, str]] = [
             (source_label, target_label)
@@ -589,26 +658,28 @@ async def resolve_extracted_edges(
         edge_types_lst.append(extracted_edge_types)
 
     # resolve edges with related edges in the graph and find invalidation candidates
-    results: list[tuple[TinyEntityEdge, list[TinyEntityEdge], list[TinyEntityEdge]]] = list(
-        await run_in_semaphore(
-            *[
-                resolve_extracted_edge(
-                    clients.llm,
-                    extracted_edge,
-                    related_edges,
-                    existing_edges,
-                    event,
-                    extracted_edge_types,
-                    custom_type_names,
-                )
-                for extracted_edge, related_edges, existing_edges, extracted_edge_types in zip(
-                    extracted_edges,
-                    semantic_similar_edges,
-                    edge_invalidation_candidates,
-                    edge_types_lst,
-                    strict=True,
-                )
-            ]
+    results: list[tuple[TinyEntityEdge, list[TinyEntityEdge], list[TinyEntityEdge]]] = (
+        list(
+            await run_in_semaphore(
+                *[
+                    resolve_extracted_edge(
+                        clients.llm,
+                        extracted_edge,
+                        related_edges,
+                        existing_edges,
+                        event,
+                        extracted_edge_types,
+                        custom_type_names,
+                    )
+                    for extracted_edge, related_edges, existing_edges, extracted_edge_types in zip(
+                        extracted_edges,
+                        semantic_similar_edges,
+                        edge_invalidation_candidates,
+                        edge_types_lst,
+                        strict=True,
+                    )
+                ]
+            )
         )
     )
 

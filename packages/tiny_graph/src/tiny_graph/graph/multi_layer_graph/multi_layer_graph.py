@@ -1,39 +1,49 @@
 from datetime import datetime
 import logging
 
-from tinygent.datamodels.embedder import AbstractEmbedder
-from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
-from tinygent.datamodels.llm import AbstractLLM
-from tinygent.telemetry.decorators import tiny_trace
-from tinygent.datamodels.messages import BaseMessage
-from tinygent.datamodels.messages import TinyHumanMessage
-from tinygent.datamodels.messages import TinySystemMessage
-from tinygent.types.base import TinyModel
-from tinygent.types.io.llm_io_input import TinyLLMInput
-from tinygent.types.prompt_template import TinyPromptTemplate
-from tinygent.utils import render_template
-
 from tiny_graph.driver.base import BaseDriver
 from tiny_graph.graph.base import BaseGraph
 from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClients
-from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import ExtractedEntities
+from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import (
+    ExtractedEntities,
+)
 from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import ExtractedEntity
 from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import MissedEntities
 from tiny_graph.graph.multi_layer_graph.edges import TinyEntityEdge
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEventNode
-from tiny_graph.graph.multi_layer_graph.ops.cluster_operations import resolve_and_extract_clusters
 from tiny_graph.graph.multi_layer_graph.ops.edge_operations import extract_edges
 from tiny_graph.graph.multi_layer_graph.ops.edge_operations import resolve_edge_pointers
-from tiny_graph.graph.multi_layer_graph.ops.edge_operations import resolve_extracted_edges
+from tiny_graph.graph.multi_layer_graph.ops.edge_operations import (
+    resolve_extracted_edges,
+)
 from tiny_graph.graph.multi_layer_graph.ops.graph_operations import build_indices
-from tiny_graph.graph.multi_layer_graph.ops.node_operations import extract_attributes_from_nodes
-from tiny_graph.graph.multi_layer_graph.ops.node_operations import resolve_extracted_entity_nodes
+from tiny_graph.graph.multi_layer_graph.ops.node_operations import (
+    extract_attributes_from_nodes,
+)
+from tiny_graph.graph.multi_layer_graph.ops.node_operations import (
+    resolve_extracted_entity_nodes,
+)
 from tiny_graph.graph.multi_layer_graph.ops.node_operations import retrieve_events
-from tiny_graph.graph.multi_layer_graph.types import DataType, NodeType
-from tiny_graph.graph.multi_layer_graph.utils.custom_types import validate_custom_entity_types
-from tiny_graph.helper import generate_uuid, get_current_timestamp
+from tiny_graph.graph.multi_layer_graph.types import DataType
+from tiny_graph.graph.multi_layer_graph.types import NodeType
+from tiny_graph.graph.multi_layer_graph.utils.custom_types import (
+    validate_custom_entity_types,
+)
+from tiny_graph.helper import generate_uuid
+from tiny_graph.helper import get_current_timestamp
 from tiny_graph.helper import get_default_subgraph_id
+from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
+from tinygent.datamodels.embedder import AbstractEmbedder
+from tinygent.datamodels.llm import AbstractLLM
+from tinygent.datamodels.messages import BaseMessage
+from tinygent.datamodels.messages import TinyHumanMessage
+from tinygent.datamodels.messages import TinySystemMessage
+from tinygent.telemetry.decorators import tiny_trace
+from tinygent.types.base import TinyModel
+from tinygent.types.io.llm_io_input import TinyLLMInput
+from tinygent.types.prompt_template import TinyPromptTemplate
+from tinygent.utils import render_template
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +109,7 @@ class TinyMultiLayerGraph(BaseGraph):
 
         if prompt_template is None:
             from .prompts.default_prompts import get_prompt_template
+
             prompt_template = get_prompt_template()
         self.prompt_template: TinyMultiLayerGraphTemplate = prompt_template
 
@@ -121,7 +132,7 @@ class TinyMultiLayerGraph(BaseGraph):
         entity_types: dict[str, type[TinyModel]] | None = None,
         edge_types: dict[str, type[TinyModel]] | None = None,
         edge_type_map: dict[tuple[str, str], list[str]] | None = None,
-        **kwargs
+        **kwargs,
     ) -> None:
         validate_custom_entity_types(entity_types)
 
@@ -136,7 +147,7 @@ class TinyMultiLayerGraph(BaseGraph):
             self.driver,
             reference_time,
             last_n=self.last_relevant_events_num,
-            subgraph_ids=[subgraph_id]
+            subgraph_ids=[subgraph_id],
         )
 
         # Create new event
@@ -184,7 +195,9 @@ class TinyMultiLayerGraph(BaseGraph):
         logger.info('invalidated edges: %s', invalidated_edges)
 
         # Extract node attributes
-        entities_with_attributes: list[TinyEntityNode] = await extract_attributes_from_nodes(
+        entities_with_attributes: list[
+            TinyEntityNode
+        ] = await extract_attributes_from_nodes(
             self.clients.llm,
             entities,
             event,
@@ -195,12 +208,12 @@ class TinyMultiLayerGraph(BaseGraph):
         logger.info('entities with attributes: %s', entities_with_attributes)
 
         # Extract & resolve clusters
-        clusters = await resolve_and_extract_clusters(
-            self.clients.driver,
-            self.clients.llm,
-            self.clients.embedder,
-            entities_with_attributes,
-        )
+        # clusters = await resolve_and_extract_clusters(
+        #     self.clients.driver,
+        #     self.clients.llm,
+        #     self.clients.embedder,
+        #     entities_with_attributes,
+        # )
 
         # Process and save data
 
@@ -256,20 +269,26 @@ class TinyMultiLayerGraph(BaseGraph):
                 'entity_type_description': 'Default entity classification. Use this entity type if the entity is not one of the other listed types.',
             }
         ]
-        entity_types_context.extend([
-            {
-                'entity_type_id': i + 1,
-                'entity_type_name': type_name,
-                'entity_type_description': type_model.doc or 'No description provided'
-            } for i, (type_name, type_model) in enumerate(entity_types.items())
-        ])
+        entity_types_context.extend(
+            [
+                {
+                    'entity_type_id': i + 1,
+                    'entity_type_name': type_name,
+                    'entity_type_description': type_model.doc,
+                }
+                for i, (type_name, type_model) in enumerate(entity_types.items())
+            ]
+        )
 
         def _info_data(x: TinyEventNode) -> str | dict:
             if isinstance(x.data, BaseMessage):
                 return x.data.tiny_str
             return x.data
 
-        while need_revision and reflexion_iteration_count < self.max_reflexion_iterations_num:
+        while (
+            need_revision
+            and reflexion_iteration_count < self.max_reflexion_iterations_num
+        ):
             reflexion_iteration_count += 1
 
             match current_event.data_type:
@@ -280,22 +299,29 @@ class TinyMultiLayerGraph(BaseGraph):
                 case DataType.JSON:
                     prompt = self.prompt_template.entity_extractor.extract_json
                 case _:
-                    raise ValueError(f'Unknown node datatype: {current_event.data_type}, available types: {', '.join(DataType.__members__)}')
+                    raise ValueError(
+                        f'Unknown node datatype: {current_event.data_type}, available types: {", ".join(DataType.__members__)}'
+                    )
 
             extracted_entities = self.llm.generate_structured(
                 llm_input=TinyLLMInput(
                     messages=[
                         TinySystemMessage(content=prompt.system),
-                        TinyHumanMessage(content=render_template(
-                            prompt.user,
-                            {
-                                'event_content': _info_data(current_event),
-                                'source_description': current_event.description,
-                                'previous_events': [_info_data(prev_event) for prev_event in previous_events],
-                                'entity_types': entity_types_context,
-                                'custom_prompt': custom_prompt,
-                            },
-                        )),
+                        TinyHumanMessage(
+                            content=render_template(
+                                prompt.user,
+                                {
+                                    'event_content': _info_data(current_event),
+                                    'source_description': current_event.description,
+                                    'previous_events': [
+                                        _info_data(prev_event)
+                                        for prev_event in previous_events
+                                    ],
+                                    'entity_types': entity_types_context,
+                                    'custom_prompt': custom_prompt,
+                                },
+                            )
+                        ),
                     ]
                 ),
                 output_schema=ExtractedEntities,
@@ -304,16 +330,26 @@ class TinyMultiLayerGraph(BaseGraph):
             missed_entities = self.llm.generate_structured(
                 llm_input=TinyLLMInput(
                     messages=[
-                        TinySystemMessage(content=self.prompt_template.entity_extractor.reflexion.system),
-                        TinyHumanMessage(content=render_template(
-                            self.prompt_template.entity_extractor.reflexion.user,
-                            {
-                                'event_content': _info_data(current_event),
-                                'previous_events': [_info_data(prev_event) for prev_event in previous_events],
-                                'extracted_entities': [e.name for e in extracted_entities.extracted_entities],
-                                'custom_prompt': custom_prompt,
-                            },
-                        )),
+                        TinySystemMessage(
+                            content=self.prompt_template.entity_extractor.reflexion.system
+                        ),
+                        TinyHumanMessage(
+                            content=render_template(
+                                self.prompt_template.entity_extractor.reflexion.user,
+                                {
+                                    'event_content': _info_data(current_event),
+                                    'previous_events': [
+                                        _info_data(prev_event)
+                                        for prev_event in previous_events
+                                    ],
+                                    'extracted_entities': [
+                                        e.name
+                                        for e in extracted_entities.extracted_entities
+                                    ],
+                                    'custom_prompt': custom_prompt,
+                                },
+                            )
+                        ),
                     ]
                 ),
                 output_schema=MissedEntities,
@@ -321,13 +357,15 @@ class TinyMultiLayerGraph(BaseGraph):
 
             need_revision = len(missed_entities.missed_entities) > 0
 
-            custom_prompt = f'Make sure that the following entities are extracted: {'\n'.join(missed_entities.missed_entities)}'
+            custom_prompt = f'Make sure that the following entities are extracted: {"\n".join(missed_entities.missed_entities)}'
         if not extracted_entities:
             logger.warning('No entities extracted.')
             return []
 
         extracted_entity_nodes: list[TinyEntityNode] = []
-        extracted_entities_proc: list[ExtractedEntity] = [e for e in extracted_entities.extracted_entities]
+        extracted_entities_proc: list[ExtractedEntity] = [
+            e for e in extracted_entities.extracted_entities
+        ]
 
         for extracted_entity in extracted_entities_proc:
             entity_type_name = next(
@@ -335,7 +373,8 @@ class TinyMultiLayerGraph(BaseGraph):
                     e.get('entity_type_name')
                     for e in entity_types_context
                     if e.get('entity_type_id') == extracted_entity.entity_type_id
-                ), NodeType.ENTITY.value
+                ),
+                NodeType.ENTITY.value,
             )
 
             labels: list[str] = list({NodeType.ENTITY.value, str(entity_type_name)})

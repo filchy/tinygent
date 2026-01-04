@@ -1,14 +1,16 @@
-import re
+from hashlib import blake2b
 import math
 import os
-from hashlib import blake2b
+import re
 
 _TINY_MINHASH_PERMUTATIONS = int(os.getenv('TINY_GRAPH_MINHASH_PERMUTATIONS', 32))
 _TINY_MINHASH_BAND_SIZE = int(os.getenv('TINY_GRAPH_MINHASH_BAND_SIZE', 4))
 _TINY_MIN_NAME_LENGTH = int(os.getenv('TINY_GRAPH_MIN_NAME_LENGTH', 6))
 _TINY_MIN_TOKEN_COUNT = int(os.getenv('TINY_GRAPH_MIN_TOKEN_COUNT', 2))
 _TINY_NAME_ENTROPY_THRESHOLD = float(os.getenv('TINY_GRAPH_NAME_ENTROPY_THRESHOLD', 1.5))
-_TINY_FUZZY_JACCARD_THRESHOLD = float(os.getenv('TINY_GRAPH_FUZZY_JACCARD_THRESHOLD', 0.8))
+_TINY_FUZZY_JACCARD_THRESHOLD = float(
+    os.getenv('TINY_GRAPH_FUZZY_JACCARD_THRESHOLD', 0.8)
+)
 
 
 __all__ = [
@@ -59,7 +61,10 @@ def _name_entropy(normalized_name: str) -> float:
 def has_high_entropy(normalized_name: str) -> bool:
     """Filter out very short or low-entropy names that are unreliable for fuzzy matching."""
     token_count = len(normalized_name.split())
-    if len(normalized_name) < _TINY_MIN_NAME_LENGTH and token_count < _TINY_MIN_TOKEN_COUNT:
+    if (
+        len(normalized_name) < _TINY_MIN_NAME_LENGTH
+        and token_count < _TINY_MIN_TOKEN_COUNT
+    ):
         return False
 
     return _name_entropy(normalized_name) >= _TINY_NAME_ENTROPY_THRESHOLD
@@ -87,7 +92,7 @@ def shingles(normalized_name: str, n: int = 3) -> set[str]:
     if len(cleaned) < n:
         return {cleaned} if cleaned else set()
 
-    return {cleaned[i: i + n] for i in range(len(cleaned) - 2)}
+    return {cleaned[i : i + n] for i in range(len(cleaned) - 2)}
 
 
 def minhash_signature(shingles: set[str]) -> list[int]:
@@ -109,7 +114,7 @@ def lsh_bands(signature: list[int]) -> list[tuple[int, ...]]:
 
     bands: list[tuple[int, ...]] = []
     for start in range(0, len(signature_list), _TINY_MINHASH_BAND_SIZE):
-        band = tuple(signature_list[start: start + _TINY_MINHASH_BAND_SIZE])
+        band = tuple(signature_list[start : start + _TINY_MINHASH_BAND_SIZE])
         if len(band) == _TINY_MINHASH_BAND_SIZE:
             bands.append(band)
     return bands

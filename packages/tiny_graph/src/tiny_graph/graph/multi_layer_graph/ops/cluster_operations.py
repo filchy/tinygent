@@ -1,12 +1,11 @@
-from tinygent.datamodels.embedder import AbstractEmbedder
-from tinygent.datamodels.llm import AbstractLLM
-from tinygent.runtime.executors import run_in_semaphore
-
 from tiny_graph.driver.base import BaseDriver
 from tiny_graph.graph.multi_layer_graph.nodes import TinyClusterNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.types import EdgeType
 from tiny_graph.graph.multi_layer_graph.types import NodeType
+from tinygent.datamodels.embedder import AbstractEmbedder
+from tinygent.datamodels.llm import AbstractLLM
+from tinygent.runtime.executors import run_in_semaphore
 
 
 async def determine_entity_cluster(
@@ -14,7 +13,7 @@ async def determine_entity_cluster(
     entity: TinyEntityNode,
 ) -> tuple[TinyClusterNode | None, bool]:
     records, _, _ = await driver.execute_query(
-        f'''
+        f"""
         MATCH (c:{NodeType.CLUSTER.value})-[:{EdgeType.HAS_MEMBER.value}]->(n:{NodeType.ENTITY.value} {{ uuid: $entity_uuid }})
         RETURN
             c.uuid AS uuid,
@@ -23,7 +22,7 @@ async def determine_entity_cluster(
             c.created_at AS created_at,
             c.name_embedding AS name_embedding,
             c.summary AS summary
-        '''
+        """
     )
     return None, False
 
@@ -35,6 +34,7 @@ async def resolve_and_extract_cluster(
     entity: TinyEntityNode,
 ) -> TinyClusterNode | None:
     cluster, is_new = await determine_entity_cluster(driver, entity)
+    return None
 
 
 async def resolve_and_extract_clusters(

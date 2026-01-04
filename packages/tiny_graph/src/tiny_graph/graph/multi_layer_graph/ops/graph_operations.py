@@ -2,7 +2,9 @@ import logging
 
 from tiny_graph.driver.base import BaseDriver
 from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClients
-from tiny_graph.graph.multi_layer_graph.queries.graph_queries import build_indices_and_constraints
+from tiny_graph.graph.multi_layer_graph.queries.graph_queries import (
+    build_indices_and_constraints,
+)
 from tiny_graph.types.provider import GraphProvider
 
 logger = logging.getLogger(__name__)

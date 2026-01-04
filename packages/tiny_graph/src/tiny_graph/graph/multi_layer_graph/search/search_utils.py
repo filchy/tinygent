@@ -8,7 +8,9 @@ from tiny_graph.graph.multi_layer_graph.types import NodeType
 from tiny_graph.types.provider import GraphProvider
 
 
-def rrf(rank_uuid_table: list[list[str]], k: int = 1, min_score: float = 0.0) -> tuple[list[str], list[float]]:
+def rrf(
+    rank_uuid_table: list[list[str]], k: int = 1, min_score: float = 0.0
+) -> tuple[list[str], list[float]]:
     def _check_min_score(x: tuple[str, float]) -> bool:
         return x[1] >= min_score
 
@@ -39,10 +41,8 @@ async def entity_similarity_search(
     provider = clients.driver.provider
 
     if provider == GraphProvider.NEO4J:
-        filter_clause = (
-            filters.build_query(provider, 'entity_uuids') if filters else ''
-        )
-        query = f'''
+        filter_clause = filters.build_query(provider, 'entity_uuids') if filters else ''
+        query = f"""
             CALL db.index.vector.queryNodes(
                 '{NodeType.ENTITY.value}_{clients.safe_embed_model}_name_embedding_index',
                 $limit,
@@ -67,15 +67,18 @@ async def entity_similarity_search(
                 e.summary as summary
 
             ORDER BY score DESC, e.uuid
-        '''
+        """
 
-        results, _, _ = await clients.driver.execute_query(query, **{
-            'query_vector': query_vector,
-            'subgraph_ids': subgraph_ids or [],
-            'entity_uuids': filters.entity_uuids if filters else None,
-            'limit': limit,
-            'min_score': min_score,
-        })
+        results, _, _ = await clients.driver.execute_query(
+            query,
+            **{
+                'query_vector': query_vector,
+                'subgraph_ids': subgraph_ids or [],
+                'entity_uuids': filters.entity_uuids if filters else None,
+                'limit': limit,
+                'min_score': min_score,
+            },
+        )
 
         return [TinyEntityNode.from_record(r) for r in results]
 
@@ -95,10 +98,8 @@ async def entity_fulltext_search(
     provider = clients.driver.provider
 
     if provider == GraphProvider.NEO4J:
-        filter_clause = (
-            filters.build_query(provider, 'entity_uuids') if filters else ''
-        )
-        q = f'''
+        filter_clause = filters.build_query(provider, 'entity_uuids') if filters else ''
+        q = f"""
             CALL db.index.fulltext.queryNodes(
                 '{NodeType.ENTITY.value}_fulltext_index',
                 $text_query,
@@ -122,13 +123,16 @@ async def entity_fulltext_search(
                 e.name_embedding AS name_embedding,
                 e.summary as summary
             ORDER BY score DESC, e.uuid
-        '''
-        results, _, _ = await clients.driver.execute_query(q, **{
-            'text_query': query,
-            'subgraph_ids': subgraph_ids,
-            'entity_uuids': filters.entity_uuids if filters else None,
-            'limit': limit,
-        })
+        """
+        results, _, _ = await clients.driver.execute_query(
+            q,
+            **{
+                'text_query': query,
+                'subgraph_ids': subgraph_ids,
+                'entity_uuids': filters.entity_uuids if filters else None,
+                'limit': limit,
+            },
+        )
 
         return [TinyEntityNode.from_record(r) for r in results]
 
@@ -158,10 +162,8 @@ async def edge_similarity_search(
     provider = clients.driver.provider
 
     if provider == GraphProvider.NEO4J:
-        filter_clause = (
-            filters.build_query(provider, 'entity_uuids') if filters else ''
-        )
-        q = f'''
+        filter_clause = filters.build_query(provider, 'entity_uuids') if filters else ''
+        q = f"""
         CALL db.index.vector.queryRelationships(
             'RELATES_TO_{clients.safe_embed_model}_fact_embedding_index',
             $limit,
@@ -203,17 +205,20 @@ async def edge_similarity_search(
             e.attributes AS attributes
 
         ORDER BY score DESC, e.uuid
-        '''
+        """
 
-        results, _, _ = await clients.driver.execute_query(q, **{
-            'query_vector': query_vector,
-            'subgraph_ids': subgraph_ids,
-            'limit': limit,
-            'target_node_uuid': target_node_uuid,
-            'source_node_uuid': source_node_uuid,
-            'entity_uuids': filters.entity_uuids if filters else None,
-            'min_score': min_score,
-        })
+        results, _, _ = await clients.driver.execute_query(
+            q,
+            **{
+                'query_vector': query_vector,
+                'subgraph_ids': subgraph_ids,
+                'limit': limit,
+                'target_node_uuid': target_node_uuid,
+                'source_node_uuid': source_node_uuid,
+                'entity_uuids': filters.entity_uuids if filters else None,
+                'min_score': min_score,
+            },
+        )
 
         return [TinyEntityEdge.from_record(r) for r in results]
 
@@ -235,10 +240,8 @@ async def edge_fulltext_search(
     provider = clients.driver.provider
 
     if provider == GraphProvider.NEO4J:
-        filter_clause = (
-            filters.build_query(provider, 'edge_uuids') if filters else ''
-        )
-        q = f'''
+        filter_clause = filters.build_query(provider, 'edge_uuids') if filters else ''
+        q = f"""
         CALL db.index.fulltext.queryRelationships(
             'edge_name_and_fact',
             $text_query,
@@ -277,16 +280,19 @@ async def edge_fulltext_search(
             e.valid_at AS valid_at,
             e.invalid_at AS invalid_at,
             e.attributes AS attributes
-        '''
+        """
 
-        results, _, _ = await clients.driver.execute_query(q, **{
-            'text_query': query,
-            'subgraph_ids': subgraph_ids,
-            'target_node_uuid': target_node_uuid,
-            'source_node_uuid': source_node_uuid,
-            'edge_uuids': filters.edge_uuids if filters else None,
-            'limit': limit,
-        })
+        results, _, _ = await clients.driver.execute_query(
+            q,
+            **{
+                'text_query': query,
+                'subgraph_ids': subgraph_ids,
+                'target_node_uuid': target_node_uuid,
+                'source_node_uuid': source_node_uuid,
+                'edge_uuids': filters.edge_uuids if filters else None,
+                'limit': limit,
+            },
+        )
 
         return [TinyEntityEdge.from_record(r) for r in results]
 
@@ -297,11 +303,8 @@ async def edge_fulltext_search(
 
 if __name__ == '__main__':
     # docs: a, b, c
-    rank_table = [
-        ['a', 'c', 'b'],
-        ['c', 'b', 'a']
-    ]
+    rank_table = [['a', 'c', 'b'], ['c', 'b', 'a']]
 
     final_uuids, final_scores = rrf(rank_table, k=1)
     for i, (uuid, score) in enumerate(zip(final_uuids, final_scores, strict=True)):
-        print(f'{i+1}. {uuid} with score: {score}')
+        print(f'{i + 1}. {uuid} with score: {score}')

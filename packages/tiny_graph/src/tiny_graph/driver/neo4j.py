@@ -1,8 +1,10 @@
 import logging
-from typing import Any, cast
-from typing_extensions import LiteralString
+from typing import Any
+from typing import cast
+
 from neo4j import AsyncGraphDatabase
 from neo4j import EagerResult
+from typing_extensions import LiteralString
 
 from tiny_graph.driver.base import BaseDriver
 from tiny_graph.types.provider import GraphProvider
@@ -36,14 +38,18 @@ class Neo4jDriver(BaseDriver):
             logger.error('Neo4j health check failed: %s', e)
             raise e
 
-    async def execute_query(self, query: str | LiteralString, **kwargs: Any) -> EagerResult:
+    async def execute_query(
+        self, query: str | LiteralString, **kwargs: Any
+    ) -> EagerResult:
         params = kwargs.pop('params', {})
 
         if isinstance(query, str):
             query = cast(LiteralString, query)
 
         try:
-            result = await self.__client.execute_query(query, parameters_=params, **kwargs)
+            result = await self.__client.execute_query(
+                query, parameters_=params, **kwargs
+            )
         except Exception as e:
             logger.error('Neo4j failed to execute query: %s with error: %s', query, e)
             raise e

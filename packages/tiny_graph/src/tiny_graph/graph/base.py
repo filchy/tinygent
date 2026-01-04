@@ -1,10 +1,10 @@
 from abc import ABC
 from abc import abstractmethod
-from tinygent.datamodels.llm import AbstractLLM
-from tinygent.datamodels.embedder import AbstractEmbedder
-from tinygent.datamodels.messages import BaseMessage
 
 from tiny_graph.driver.base import BaseDriver
+from tinygent.datamodels.embedder import AbstractEmbedder
+from tinygent.datamodels.llm import AbstractLLM
+from tinygent.datamodels.messages import BaseMessage
 
 
 class BaseGraph(ABC):
@@ -27,7 +27,7 @@ class BaseGraph(ABC):
         *,
         uuid: str | None = None,
         subgraph_id: str | None = None,
-        **kwargs
+        **kwargs,
     ) -> None:
         pass
 

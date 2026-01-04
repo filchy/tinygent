@@ -4,15 +4,16 @@ import asyncio
 import logging
 from typing import Iterable
 from typing import Literal
-from typing_extensions import Self
 
 from pydantic import model_validator
+from typing_extensions import Self
 
 from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
 from tinygent.datamodels.cross_encoder import AbstractCrossEncoderConfig
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
-from tinygent.datamodels.messages import TinyHumanMessage, TinySystemMessage
+from tinygent.datamodels.messages import TinyHumanMessage
+from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.factory.llm import build_llm
 from tinygent.types.base import TinyModel
 from tinygent.types.io.llm_io_input import TinyLLMInput
@@ -47,9 +48,12 @@ def _validate_score_range(score_range: tuple[float, float]) -> tuple[float, floa
 
 class LLMCrossEncoderPromptTemplate(TinyPromptTemplate):
     """Prompt template for LLM Cross-encoder."""
+
     ranking: TinyPromptTemplate.UserSystem
 
-    _template_fields = {'ranking.user': {'query', 'text', 'min_range_val', 'max_range_val'}}
+    _template_fields = {
+        'ranking.user': {'query', 'text', 'min_range_val', 'max_range_val'}
+    }
 
 
 class LLMCrossEncoderConfig(AbstractCrossEncoderConfig['LLMCrossEncoder']):
@@ -98,25 +102,31 @@ class LLMCrossEncoder(AbstractCrossEncoder):
             llm_input=TinyLLMInput(
                 messages=[
                     TinySystemMessage(content=self.prompt_template.ranking.system),
-                    TinyHumanMessage(content=render_template(
-                        self.prompt_template.ranking.user,
-                        {
-                            'query': query,
-                            'text': text,
-                            'min_range_val': self.score_range[0],
-                            'max_range_val': self.score_range[1]
-                        }
-                    )),
+                    TinyHumanMessage(
+                        content=render_template(
+                            self.prompt_template.ranking.user,
+                            {
+                                'query': query,
+                                'text': text,
+                                'min_range_val': self.score_range[0],
+                                'max_range_val': self.score_range[1],
+                            },
+                        )
+                    ),
                 ]
             ),
             output_schema=CrossEncoderResult,
         )
         return ((query, text), result.score)
 
-    async def rank(self, query: str, texts: Iterable[str]) -> list[tuple[tuple[str, str], float]]:
+    async def rank(
+        self, query: str, texts: Iterable[str]
+    ) -> list[tuple[tuple[str, str], float]]:
         tasks = [self._single_rank(query, text) for text in texts]
         return await asyncio.gather(*tasks)
 
-    async def predict(self, pairs: list[tuple[str, str]]) -> list[tuple[tuple[str, str], float]]:
+    async def predict(
+        self, pairs: list[tuple[str, str]]
+    ) -> list[tuple[tuple[str, str], float]]:
         tasks = [self._single_rank(p[0], p[1]) for p in pairs]
         return await asyncio.gather(*tasks)

@@ -4,7 +4,7 @@ from tinygent.types.prompt_template import TinyPromptTemplate
 def get_llm_resolve_duplicites_prompt_template() -> TinyPromptTemplate.UserSystem:
     return TinyPromptTemplate.UserSystem(
         system='You are a helpful assistant that determines whether or not ENTITIES extracted from a conversation are duplicates of existing entities.',
-        user='''<PREVIOUS MESSAGES>
+        user="""<PREVIOUS MESSAGES>
 {{ previous_events }}
 </PREVIOUS MESSAGES>
 
@@ -60,14 +60,14 @@ For every entity, return an object with the following keys:
 
 - Only use idx values that appear in EXISTING ENTITIES.
 - Set duplicate_idx to the smallest idx you collected for that entity, or -1 if duplicates is empty.
-- Never fabricate entities or indices.''',
+- Never fabricate entities or indices.""",
     )
 
 
 def get_entity_attributes_extraction_prompt() -> TinyPromptTemplate.UserSystem:
     return TinyPromptTemplate.UserSystem(
         system='You are a helpful assistant that extracts entity properties from the provided text.',
-        user='''Given the MESSAGES and the following ENTITY, update any of its attributes based on the information provided
+        user="""Given the MESSAGES and the following ENTITY, update any of its attributes based on the information provided
 in MESSAGES. Use the provided attribute descriptions to better understand how each attribute should be determined.
 
 Guidelines:
@@ -82,14 +82,14 @@ Guidelines:
 
 <ENTITY>
 {{ entity }}
-</ENTITY>''',
+</ENTITY>""",
     )
 
 
 def get_entity_summary_creation_prompt() -> TinyPromptTemplate.UserSystem:
     return TinyPromptTemplate.UserSystem(
         system='You are a helpful assistant that extracts entity summaries from the provided text.',
-        user='''Given the MESSAGES and the ENTITY, update the summary that combines relevant information about the entity
+        user="""Given the MESSAGES and the ENTITY, update the summary that combines relevant information about the entity
 from the messages and relevant information from the existing summary.
 
 <EXISTING SUMMARY>
@@ -104,5 +104,5 @@ from the messages and relevant information from the existing summary.
 
 <ENTITY>
 {{ entity }}
-</ENTITY>''',
+</ENTITY>""",
     )

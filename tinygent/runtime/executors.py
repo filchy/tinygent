@@ -1,7 +1,7 @@
-import os
 import asyncio
 from collections.abc import Coroutine
 from concurrent.futures import Future
+import os
 import threading
 import typing
 from typing import Any
@@ -35,7 +35,9 @@ async def run_in_semaphore(
         async with semaphore:
             return await coroutine
 
-    return await asyncio.gather(*(_wrap_coroutine(coroutine) for coroutine in coroutines))
+    return await asyncio.gather(
+        *(_wrap_coroutine(coroutine) for coroutine in coroutines)
+    )
 
 
 async def run_sync_in_executor(

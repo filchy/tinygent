@@ -5,7 +5,7 @@ from tinygent.types.prompt_template import TinyPromptTemplate
 def get_prompt_template() -> LLMCrossEncoderPromptTemplate:
     return LLMCrossEncoderPromptTemplate(
         ranking=TinyPromptTemplate.UserSystem(
-            system='''You are a relevance scoring model acting as a cross-encoder.
+            system="""You are a relevance scoring model acting as a cross-encoder.
 
 Your task is to evaluate how relevant a given TEXT is to a given QUERY.
 You must consider semantic meaning, factual alignment, and implied intent.
@@ -17,8 +17,8 @@ Rules:
 - The value must lie within the provided range.
 - Higher score means higher relevance.
 - Do not include explanations, reasoning, or extra fields.
-            ''',
-            user='''QUERY:
+            """,
+            user="""QUERY:
 {{ query }}
 
 TEXT:
@@ -33,6 +33,6 @@ Scoring rules:
 
 Return the result as structured output with a single field:
 - score: a number between {{ min_range_val }} and {{ max_range_val }}
-            ''',
+            """,
         )
     )

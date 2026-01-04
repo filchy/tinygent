@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import typing
 
-
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.agent import AbstractAgent
     from tinygent.datamodels.agent import AbstractAgentConfig
@@ -178,7 +177,9 @@ class Registry:
 
         return self._registered_crossencoders[name]
 
-    def get_crossencoders(self) -> dict[str, tuple[type[AbstractCrossEncoderConfig], type[AbstractCrossEncoder]]]:
+    def get_crossencoders(
+        self,
+    ) -> dict[str, tuple[type[AbstractCrossEncoderConfig], type[AbstractCrossEncoder]]]:
         logger.debug('Gettings all registered cross-encoders')
         return self._registered_crossencoders
 

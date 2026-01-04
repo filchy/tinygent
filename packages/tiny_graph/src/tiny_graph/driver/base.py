@@ -1,6 +1,7 @@
 from abc import ABC
 from abc import abstractmethod
 from typing import Any
+
 from typing_extensions import LiteralString
 
 from tiny_graph.types.provider import GraphProvider

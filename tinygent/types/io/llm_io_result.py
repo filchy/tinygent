@@ -27,9 +27,7 @@ class TinyLLMResult(LLMResult):
 
     def to_string(self) -> str:
         return '\n'.join(
-            msg.content
-            for msg in self.tiny_iter()
-            if isinstance(msg, TinyChatMessage)
+            msg.content for msg in self.tiny_iter() if isinstance(msg, TinyChatMessage)
         )
 
     def tiny_iter(self) -> Iterator[TinyAIMessage]:

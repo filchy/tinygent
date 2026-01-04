@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 @overload
 def build_cross_encoder(
-    crossencoder: dict | AbstractCrossEncoderConfig
+    crossencoder: dict | AbstractCrossEncoderConfig,
 ) -> AbstractCrossEncoder: ...
 
 
@@ -45,7 +45,7 @@ def build_cross_encoder(
     llm: dict | AbstractLLM | AbstractLLMConfig | str | None = None,
     llm_provider: str | None = None,
     llm_temperature: float | None = None,
-    **kwargs
+    **kwargs,
 ) -> AbstractCrossEncoder:
     """Build tiny cross-encoder."""
     check_modules()

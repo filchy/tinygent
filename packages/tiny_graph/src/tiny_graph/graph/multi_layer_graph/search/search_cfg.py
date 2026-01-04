@@ -1,12 +1,13 @@
 from enum import Enum
+
 from pydantic import Field
-from tinygent.types.base import TinyModel
 
 from tiny_graph.graph.multi_layer_graph.edges import TinyEntityEdge
 from tiny_graph.graph.multi_layer_graph.nodes import TinyClusterNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEventNode
 from tiny_graph.types.provider import GraphProvider
+from tinygent.types.base import TinyModel
 
 
 class EdgeSearchMethods(Enum):
@@ -50,24 +51,28 @@ class TinySearchFilters(TinyModel):
     def _in_clause(self, provider: GraphProvider, field: str, param: str) -> str:
         match provider:
             case GraphProvider.NEO4J:
-                return f'''
+                return f"""
                 (
                     ${param} IS NULL
                     OR size(${param}) = 0
                     OR {field} IN ${param}
                 )
-                '''
+                """
             case _:
                 raise NotImplementedError(f'Provider not supported: {provider}')
 
 
 class TinyEntitySearchConfig(TinyModel):
-    search_methods: list[EntitySearchMethods] = Field(default=[EntitySearchMethods.COSINE_SIM])
+    search_methods: list[EntitySearchMethods] = Field(
+        default=[EntitySearchMethods.COSINE_SIM]
+    )
     reranker: EntityReranker = Field(default=EntityReranker.CROSS_ENCODER)
 
 
 class TinyEdgeSearchConfig(TinyModel):
-    search_methods: list[EdgeSearchMethods] = Field(default=[EdgeSearchMethods.COSINE_SIM])
+    search_methods: list[EdgeSearchMethods] = Field(
+        default=[EdgeSearchMethods.COSINE_SIM]
+    )
     reranker: EdgeReranker = Field(default=EdgeReranker.CROSS_ENCODER)
 
 

@@ -49,7 +49,7 @@ class OpenAIEmbedder(AbstractEmbedder):
 
         if model_name not in _SUPPORTED_MODELS:
             raise ValueError(
-                f'Provided model name: {model_name} not in supported model names: {', '.join(_SUPPORTED_MODELS.keys())}'
+                f'Provided model name: {model_name} not in supported model names: {", ".join(_SUPPORTED_MODELS.keys())}'
             )
 
         self.api_key = api_key
@@ -68,7 +68,7 @@ class OpenAIEmbedder(AbstractEmbedder):
         v = _SUPPORTED_MODELS.get(self.model_name)
         if not v:
             raise ValueError(
-                f'Provided model name: {self.model_name} not in supported model names: {', '.join(_SUPPORTED_MODELS.keys())}'
+                f'Provided model name: {self.model_name} not in supported model names: {", ".join(_SUPPORTED_MODELS.keys())}'
             )
         return v
 

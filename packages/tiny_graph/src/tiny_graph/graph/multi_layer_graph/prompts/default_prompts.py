@@ -1,6 +1,10 @@
+from tiny_graph.graph.multi_layer_graph.multi_layer_graph import (
+    EntityExtractorPromptTemplate,
+)
+from tiny_graph.graph.multi_layer_graph.multi_layer_graph import (
+    TinyMultiLayerGraphTemplate,
+)
 from tinygent.types.prompt_template import TinyPromptTemplate
-from tiny_graph.graph.multi_layer_graph.multi_layer_graph import EntityExtractorPromptTemplate
-from tiny_graph.graph.multi_layer_graph.multi_layer_graph import TinyMultiLayerGraphTemplate
 
 
 def get_prompt_template() -> TinyMultiLayerGraphTemplate:
@@ -111,6 +115,6 @@ Guidelines:
 Given the above previous messages, current message, and list of extracted entities; determine if any entities haven't been
 extracted.
                 """,
-            )
+            ),
         )
     )

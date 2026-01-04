@@ -4,9 +4,9 @@ from tinygent.types.prompt_template import TinyPromptTemplate
 def get_edge_extraction_prompt() -> TinyPromptTemplate.UserSystem:
     return TinyPromptTemplate.UserSystem(
         system='You are an expert fact extractor that extracts fact triples from text. '
-            '1. Extracted fact triples should also be extracted with relevant date information.'
-            '2. Treat the CURRENT TIME as the time the CURRENT MESSAGE was sent. All temporal information should be extracted relative to this time.',
-        user='''<CURRENT_DATE>
+        '1. Extracted fact triples should also be extracted with relevant date information.'
+        '2. Treat the CURRENT TIME as the time the CURRENT MESSAGE was sent. All temporal information should be extracted relative to this time.',
+        user="""<CURRENT_DATE>
 {{ current_date }}
 </CURRENT_DATE>
 
@@ -64,14 +64,14 @@ You may use information from the PREVIOUS MESSAGES only to disambiguate referenc
 - If a change/termination is expressed, set `invalid_at` to the relevant timestamp.
 - Leave both fields `null` if no explicit or resolvable time is stated.
 - If only a date is mentioned (no time), assume 00:00:00.
-- If only a year is mentioned, use January 1st at 00:00:00.''',
+- If only a year is mentioned, use January 1st at 00:00:00.""",
     )
 
 
 def get_edge_extract_reflextion_prompt() -> TinyPromptTemplate.UserSystem:
     return TinyPromptTemplate.UserSystem(
         system='You are an AI assistant that determines which facts have not been extracted from the given context',
-        user='''<PREVIOUS MESSAGES>
+        user="""<PREVIOUS MESSAGES>
 {{ previous_events }}
 </PREVIOUS MESSAGES>
 
@@ -88,14 +88,14 @@ def get_edge_extract_reflextion_prompt() -> TinyPromptTemplate.UserSystem:
 </EXTRACTED FACTS>
 
 Given the above MESSAGES, list of EXTRACTED ENTITIES entities, and list of EXTRACTED FACTS; 
-determine if any facts haven't been extracted.''',
+determine if any facts haven't been extracted.""",
     )
 
 
 def get_resolve_edge_prompt() -> TinyPromptTemplate.UserSystem:
     return TinyPromptTemplate.UserSystem(
         system='You are a helpful assistant that de-duplicates facts from fact lists and determines which existing facts are contradicted by the new fact.',
-        user='''Task:
+        user="""Task:
 You will receive TWO separate lists of facts. Each list uses 'idx' as its index field, starting from 0.
 
 1. DUPLICATE DETECTION:
@@ -136,14 +136,14 @@ Guidelines:
 
 <NEW FACT>
 {{ new_edge }}
-</NEW FACT>''',
+</NEW FACT>""",
     )
 
 
 def get_extract_edge_attributes() -> TinyPromptTemplate.UserSystem:
     return TinyPromptTemplate.UserSystem(
         system='You are a helpful assistant that extracts fact properties from the provided text.',
-        user='''<MESSAGE>
+        user="""<MESSAGE>
 {{ event_content }}
 </MESSAGE>
 <REFERENCE TIME>
@@ -159,5 +159,5 @@ Guidelines:
 
 <FACT>
 {{ fact }}
-</FACT>''',
+</FACT>""",
     )

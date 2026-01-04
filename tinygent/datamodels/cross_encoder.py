@@ -1,6 +1,8 @@
 from abc import ABC
 from abc import abstractmethod
-from typing import Generic, Iterable, TypeVar
+from typing import Generic
+from typing import Iterable
+from typing import TypeVar
 
 from tinygent.types.builder import TinyModelBuildable
 
@@ -24,11 +26,15 @@ class AbstractCrossEncoder(ABC):
         pass
 
     @abstractmethod
-    async def rank(self, query: str, texts: Iterable[str]) -> list[tuple[tuple[str, str], float]]:
+    async def rank(
+        self, query: str, texts: Iterable[str]
+    ) -> list[tuple[tuple[str, str], float]]:
         """Rank a list of texts agains given query."""
         raise NotImplementedError('Subclasses must implement this method.')
 
     @abstractmethod
-    async def predict(self, pairs: list[tuple[str, str]]) -> list[tuple[tuple[str, str], float]]:
+    async def predict(
+        self, pairs: list[tuple[str, str]]
+    ) -> list[tuple[tuple[str, str], float]]:
         """Predict scores for a pair of senteces."""
         raise NotImplementedError('Subclasses must implement this method.')

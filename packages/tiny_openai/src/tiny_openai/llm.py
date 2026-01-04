@@ -215,9 +215,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
         messages = tiny_prompt_to_openai_params(llm_input)
 
         res = await self.__get_async_client().chat.completions.parse(
-            messages=messages,
-            response_format=output_schema,
-            **self._request_args()
+            messages=messages, response_format=output_schema, **self._request_args()
         )
 
         if not (message := res.choices[0].message):

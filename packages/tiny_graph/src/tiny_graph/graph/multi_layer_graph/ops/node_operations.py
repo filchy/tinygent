@@ -1,37 +1,48 @@
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
-from collections import defaultdict
 import logging
 from typing import Any
 
 from pydantic import Field
-from tinygent.datamodels.llm import AbstractLLM
-from tinygent.types.io.llm_io_input import TinyLLMInput
-from tinygent.datamodels.messages import TinyHumanMessage
-from tinygent.datamodels.messages import TinySystemMessage
-from tinygent.runtime.executors import run_in_semaphore
-from tinygent.types.base import TinyModel
-from tinygent.utils.jinja_utils import render_template
 
 from tiny_graph.driver.base import BaseDriver
 from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClients
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEventNode
-from tiny_graph.graph.multi_layer_graph.queries.node_queries import get_last_n_event_nodes
+from tiny_graph.graph.multi_layer_graph.queries.node_queries import (
+    get_last_n_event_nodes,
+)
 from tiny_graph.graph.multi_layer_graph.search.search import search
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinySearchResult
-from tiny_graph.graph.multi_layer_graph.search.search_presets import NODE_HYBRID_SEARCH_RRF
+from tiny_graph.graph.multi_layer_graph.search.search_presets import (
+    NODE_HYBRID_SEARCH_RRF,
+)
 from tiny_graph.graph.multi_layer_graph.types import NodeType
-from tiny_graph.graph.multi_layer_graph.utils.node_formatter import entity_node_2_prompt, event_node_2_prompt
+from tiny_graph.graph.multi_layer_graph.utils.node_formatter import entity_node_2_prompt
+from tiny_graph.graph.multi_layer_graph.utils.node_formatter import event_node_2_prompt
+from tiny_graph.graph.multi_layer_graph.utils.text_similarity import (
+    _TINY_FUZZY_JACCARD_THRESHOLD,
+)
 from tiny_graph.graph.multi_layer_graph.utils.text_similarity import has_high_entropy
 from tiny_graph.graph.multi_layer_graph.utils.text_similarity import jaccard_similarity
-from tiny_graph.graph.multi_layer_graph.utils.text_similarity import normalize_string_for_fuzzy
 from tiny_graph.graph.multi_layer_graph.utils.text_similarity import lsh_bands
-from tiny_graph.graph.multi_layer_graph.utils.text_similarity import normalize_string_exact
 from tiny_graph.graph.multi_layer_graph.utils.text_similarity import minhash_signature
+from tiny_graph.graph.multi_layer_graph.utils.text_similarity import (
+    normalize_string_exact,
+)
+from tiny_graph.graph.multi_layer_graph.utils.text_similarity import (
+    normalize_string_for_fuzzy,
+)
 from tiny_graph.graph.multi_layer_graph.utils.text_similarity import shingles
-from tiny_graph.graph.multi_layer_graph.utils.text_similarity import _TINY_FUZZY_JACCARD_THRESHOLD
 from tiny_graph.types.provider import GraphProvider
+from tinygent.datamodels.llm import AbstractLLM
+from tinygent.datamodels.messages import TinyHumanMessage
+from tinygent.datamodels.messages import TinySystemMessage
+from tinygent.runtime.executors import run_in_semaphore
+from tinygent.types.base import TinyModel
+from tinygent.types.io.llm_io_input import TinyLLMInput
+from tinygent.utils.jinja_utils import render_template
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +99,9 @@ class EntityDuplicateInfo(TinyModel):
 
 
 class EntityResolution(TinyModel):
-    entity_resolutions: list[EntityDuplicateInfo] = Field(..., description='List of resolved nodes')
+    entity_resolutions: list[EntityDuplicateInfo] = Field(
+        ..., description='List of resolved nodes'
+    )
 
 
 async def _find_entity_duplicite_candidates(
@@ -107,15 +120,19 @@ async def _find_entity_duplicite_candidates(
         ]
     )
 
-    duplicite_candidates = {e.uuid: e for result in search_results for e in result.entities}
+    duplicite_candidates = {
+        e.uuid: e for result in search_results for e in result.entities
+    }
     return list(duplicite_candidates.values())
 
 
-def _create_candidates_index(existing_entities: list[TinyEntityNode]) -> EntityCandidateIndex:
+def _create_candidates_index(
+    existing_entities: list[TinyEntityNode],
+) -> EntityCandidateIndex:
     entities_by_uuid: dict[str, TinyEntityNode] = {}
-    entities_by_norm_name: dict[str, list[TinyEntityNode]] = defaultdict(list)
+    entities_by_norm_name: defaultdict[str, list[TinyEntityNode]] = defaultdict(list)
     shingles_bu_uuid: dict[str, set[str]] = {}
-    lsh_by_uuid: dict[tuple[int, tuple[int, ...]], list[str]] = defaultdict(list)
+    lsh_by_uuid: defaultdict[tuple[int, tuple[int, ...]], list[str]] = defaultdict(list)
 
     for candidate in existing_entities:
         norm_exact_name = normalize_string_exact(candidate.name)
@@ -173,12 +190,16 @@ def _resolve_with_similarity(
 
         candidates_ids: set[str] = set()
         for band_index, band_name in enumerate(lsh_bands(existing_signature)):
-            candidates_ids.update(existing_entity_index.lsh_by_uuid.get((band_index, band_name), []))
+            candidates_ids.update(
+                existing_entity_index.lsh_by_uuid.get((band_index, band_name), [])
+            )
 
         best_candidate: TinyEntityNode | None = None
         best_score: float = 0.0
         for candidate_id in candidates_ids:
-            candidate_shingles = existing_entity_index.shingles_bu_uuid.get(candidate_id, set())
+            candidate_shingles = existing_entity_index.shingles_bu_uuid.get(
+                candidate_id, set()
+            )
             score = jaccard_similarity(existing_shingles, candidate_shingles)
             if score > best_score:
                 best_score = score
@@ -203,7 +224,9 @@ def _resolve_with_llm(
     previous_events: list[TinyEventNode],
     entity_types: dict[str, type[TinyModel]] | None = None,
 ) -> None:
-    from tiny_graph.graph.multi_layer_graph.prompts.nodes import get_llm_resolve_duplicites_prompt_template
+    from tiny_graph.graph.multi_layer_graph.prompts.nodes import (
+        get_llm_resolve_duplicites_prompt_template,
+    )
 
     if not state.unresolved_indices:
         return
@@ -219,8 +242,9 @@ def _resolve_with_llm(
             'entity_type': e.labels,
             'entity_type_description': entity_types.get(
                 next((item for item in e.labels if item != NodeType.ENTITY.value), ''),
-                None
-            ).__doc__ or 'Default Entity Type'
+                None,
+            ).__doc__
+            or 'Default Entity Type',
         }
         for i, e in enumerate(unresolved_entities)
     ]
@@ -239,20 +263,20 @@ def _resolve_with_llm(
     result = llm.generate_structured(
         llm_input=TinyLLMInput(
             messages=[
-                TinySystemMessage(
-                    content=llm_in.system
-                ),
+                TinySystemMessage(content=llm_in.system),
                 TinyHumanMessage(
                     content=render_template(
                         llm_in.user,
                         {
-                            'previous_events': [event_node_2_prompt(e) for e in previous_events],
+                            'previous_events': [
+                                event_node_2_prompt(e) for e in previous_events
+                            ],
                             'current_event': event_node_2_prompt(event),
                             'extracted_entities': unresolved_entities_ctx,
                             'existing_entities': existing_entities_ctx,
-                        }
+                        },
                     )
-                )
+                ),
             ]
         ),
         output_schema=EntityResolution,
@@ -335,21 +359,32 @@ async def _extract_entity_attributes(
     if not entity_type:
         return {}
 
-    from tiny_graph.graph.multi_layer_graph.prompts.nodes import get_entity_attributes_extraction_prompt
+    from tiny_graph.graph.multi_layer_graph.prompts.nodes import (
+        get_entity_attributes_extraction_prompt,
+    )
+
     prompt = get_entity_attributes_extraction_prompt()
 
     response = await llm.agenerate_structured(
         llm_input=TinyLLMInput(
             messages=[
                 TinySystemMessage(content=prompt.system),
-                TinyHumanMessage(content=render_template(
-                    prompt.user,
-                    {
-                        'entity': entity_node_2_prompt(entity_node),
-                        'event_content': event_node_2_prompt(event_node) if event_node else None,
-                        'previous_events': [event_node_2_prompt(e) for e in previous_events] if previous_events else None,
-                    }
-                )),
+                TinyHumanMessage(
+                    content=render_template(
+                        prompt.user,
+                        {
+                            'entity': entity_node_2_prompt(entity_node),
+                            'event_content': (
+                                event_node_2_prompt(event_node) if event_node else None
+                            ),
+                            'previous_events': (
+                                [event_node_2_prompt(e) for e in previous_events]
+                                if previous_events
+                                else None
+                            ),
+                        },
+                    )
+                ),
             ]
         ),
         output_schema=entity_type,
@@ -364,22 +399,33 @@ async def _extract_entity_summary(
     event_node: TinyEventNode | None = None,
     previous_events: list[TinyEventNode] | None = None,
 ) -> str:
-    from tiny_graph.graph.multi_layer_graph.prompts.nodes import get_entity_summary_creation_prompt
+    from tiny_graph.graph.multi_layer_graph.prompts.nodes import (
+        get_entity_summary_creation_prompt,
+    )
+
     prompt = get_entity_summary_creation_prompt()
 
     response = await llm.agenerate_text(
         llm_input=TinyLLMInput(
             messages=[
                 TinySystemMessage(content=prompt.system),
-                TinyHumanMessage(content=render_template(
-                    prompt.user,
-                    {
-                        'existing_summary': entity_node.summary,
-                        'entity': entity_node_2_prompt(entity_node),
-                        'event_content': event_node_2_prompt(event_node) if event_node else None,
-                        'previous_events': [event_node_2_prompt(e) for e in previous_events] if previous_events else None,
-                    }
-                )),
+                TinyHumanMessage(
+                    content=render_template(
+                        prompt.user,
+                        {
+                            'existing_summary': entity_node.summary,
+                            'entity': entity_node_2_prompt(entity_node),
+                            'event_content': (
+                                event_node_2_prompt(event_node) if event_node else None
+                            ),
+                            'previous_events': (
+                                [event_node_2_prompt(e) for e in previous_events]
+                                if previous_events
+                                else None
+                            ),
+                        },
+                    )
+                ),
             ]
         )
     )
@@ -397,11 +443,14 @@ async def retrieve_events(
     query = get_last_n_event_nodes(provider)
 
     if provider == GraphProvider.NEO4J:
-        results, _, _ = await driver.execute_query(query, **{
-            'reference_time': reference_time,
-            'subgraph_ids': subgraph_ids,
-            'last_n': last_n,
-        })
+        results, _, _ = await driver.execute_query(
+            query,
+            **{
+                'reference_time': reference_time,
+                'subgraph_ids': subgraph_ids,
+                'last_n': last_n,
+            },
+        )
 
         return [TinyEventNode.from_record(r) for r in results]
 
@@ -430,7 +479,15 @@ async def resolve_extracted_entity_nodes(
 
     _resolve_with_similarity(state, existing_candidates_index, extracted_entities)
 
-    _resolve_with_llm(state, clients.llm, existing_candidates_index, extracted_entities, event_node, previous_events, entity_types)
+    _resolve_with_llm(
+        state,
+        clients.llm,
+        existing_candidates_index,
+        extracted_entities,
+        event_node,
+        previous_events,
+        entity_types,
+    )
 
     # map `uuid_map` a -> a
     for idx, node in enumerate(extracted_entities):
@@ -456,8 +513,10 @@ async def extract_attributes_from_node(
         return entity_node
 
     (attributes, summary) = await run_in_semaphore(
-        _extract_entity_attributes(llm, entity_node, event_node, previous_events, entity_type),
-        _extract_entity_summary(llm, entity_node, event_node, previous_events)
+        _extract_entity_attributes(
+            llm, entity_node, event_node, previous_events, entity_type
+        ),
+        _extract_entity_summary(llm, entity_node, event_node, previous_events),
     )
 
     entity_node.attributes = attributes
@@ -481,11 +540,21 @@ async def extract_attributes_from_nodes(
                 event,
                 previous_events,
                 entity_type=(
-                    entity_types.get(next((item for item in entity.labels if item != NodeType.ENTITY.value), ''))
+                    entity_types.get(
+                        next(
+                            (
+                                item
+                                for item in entity.labels
+                                if item != NodeType.ENTITY.value
+                            ),
+                            '',
+                        )
+                    )
                     if entity_types is not None
                     else None
                 ),
-            ) for entity in entities
+            )
+            for entity in entities
         ]
     )
     return updated_entities

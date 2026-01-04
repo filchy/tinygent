@@ -39,7 +39,10 @@ async def batch_prediction():
         ('How to cook pasta?', 'Boil water, add pasta, cook for 8-10 minutes.'),
         ('How to cook pasta?', 'Machine learning models require training data.'),
         ('Best travel destinations', 'Paris, Tokyo, and Barcelona are popular cities.'),
-        ('Best travel destinations', 'Integer overflow can cause security vulnerabilities.'),
+        (
+            'Best travel destinations',
+            'Integer overflow can cause security vulnerabilities.',
+        ),
     ]
 
     results = await cross_encoder.predict(pairs=pairs)
@@ -50,7 +53,9 @@ async def compare_agents_relevance():
     """Demonstrate using cross-encoder to rank agent descriptions by relevance."""
     cross_encoder = build_cross_encoder('llm', llm='openai:gpt-4o-mini')
 
-    query = 'I need an agent that can use tools and reason about complex multi-step problems'
+    query = (
+        'I need an agent that can use tools and reason about complex multi-step problems'
+    )
 
     agent_descriptions = [
         'ReAct Agent: Combines reasoning and acting in iterative loops to solve tasks using tools.',

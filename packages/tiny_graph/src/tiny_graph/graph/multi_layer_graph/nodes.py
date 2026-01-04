@@ -1,13 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime
-from tinygent.datamodels.embedder import AbstractEmbedder
-from typing_extensions import Self
 
-from pydantic import model_validator
 from pydantic import TypeAdapter
-from tinygent.datamodels.messages import AllTinyMessages
-from tinygent.datamodels.messages import BaseMessage
+from pydantic import model_validator
+from typing_extensions import Self
 
 from tiny_graph.driver.base import BaseDriver
 from tiny_graph.graph.multi_layer_graph.types import DataType
@@ -15,6 +12,9 @@ from tiny_graph.graph.multi_layer_graph.types import NodeType
 from tiny_graph.graph.multi_layer_graph.utils.model_repr import compact_model_repr
 from tiny_graph.helper import parse_db_date
 from tiny_graph.node import TinyNode
+from tinygent.datamodels.embedder import AbstractEmbedder
+from tinygent.datamodels.messages import AllTinyMessages
+from tinygent.datamodels.messages import BaseMessage
 
 
 class TinyEventNode(TinyNode):
@@ -33,10 +33,12 @@ class TinyEventNode(TinyNode):
         type_map = {
             DataType.TEXT: str,
             DataType.JSON: dict,
-            DataType.MESSAGE: BaseMessage
+            DataType.MESSAGE: BaseMessage,
         }
 
-        if (desired_type := type_map.get(self.data_type)) is not (curr_type := type(self.data)):
+        if (desired_type := type_map.get(self.data_type)) is not (
+            curr_type := type(self.data)
+        ):
             raise TypeError(
                 f'If node data is of type: {self.data_type} then data must be of type {desired_type} but is {curr_type}'
             )
@@ -68,7 +70,9 @@ class TinyEventNode(TinyNode):
                 return adapter.validate_python(data)
 
             case _:
-                raise ValueError(f'Unsupported data type: {type_}, supported types: {", ".join(DataType.__members__)}')
+                raise ValueError(
+                    f'Unsupported data type: {type_}, supported types: {", ".join(DataType.__members__)}'
+                )
 
     @classmethod
     def from_record(cls, record: dict) -> TinyEventNode:
@@ -80,11 +84,13 @@ class TinyEventNode(TinyNode):
             created_at=parse_db_date(record['created_at']),
             valid_at=parse_db_date(record['valid_at']),
             data_type=DataType(record['data_type']),
-            data=cls._parse_data(record['data'], record['data_type'])
+            data=cls._parse_data(record['data'], record['data_type']),
         )
 
     async def save(self, driver: BaseDriver) -> str:
-        from tiny_graph.graph.multi_layer_graph.queries.node_queries import create_event_node
+        from tiny_graph.graph.multi_layer_graph.queries.node_queries import (
+            create_event_node,
+        )
 
         args = {
             'uuid': self.uuid,
@@ -121,11 +127,14 @@ class TinyEntityNode(TinyNode):
             created_at=parse_db_date(record['created_at']),
             summary=record['summary'],
             labels=record['labels'],
-            name_embedding=record.get('name_embedding', None)
+            name_embedding=record.get('name_embedding', None),
         )
 
     async def save(self, driver: BaseDriver) -> str:
-        from tiny_graph.graph.multi_layer_graph.queries.node_queries import create_entity_node
+        from tiny_graph.graph.multi_layer_graph.queries.node_queries import (
+            create_entity_node,
+        )
+
         args = {
             'uuid': self.uuid,
             'name': self.name,
@@ -164,11 +173,14 @@ class TinyClusterNode(TinyNode):
             name=record['name'],
             created_at=parse_db_date(record['created_at']),
             summary=record['summary'],
-            name_embedding=record.get('name_embedding', None)
+            name_embedding=record.get('name_embedding', None),
         )
 
     async def save(self, driver: BaseDriver) -> str:
-        from tiny_graph.graph.multi_layer_graph.queries.node_queries import create_cluster_node
+        from tiny_graph.graph.multi_layer_graph.queries.node_queries import (
+            create_cluster_node,
+        )
+
         args = {
             'uuid': self.uuid,
             'name': self.name,

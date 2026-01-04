@@ -1,9 +1,10 @@
+from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tinygent.types.base import TinyModel
 
-from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 
-
-def validate_custom_entity_types(entity_types: dict[str, type[TinyModel]] | None) -> None:
+def validate_custom_entity_types(
+    entity_types: dict[str, type[TinyModel]] | None,
+) -> None:
     if not entity_types:
         return
 

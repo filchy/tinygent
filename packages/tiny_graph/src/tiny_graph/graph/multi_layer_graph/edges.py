@@ -3,20 +3,25 @@ from __future__ import annotations
 from datetime import datetime
 
 from pydantic import Field
-from tinygent.datamodels.embedder import AbstractEmbedder
-from tinygent.utils.yaml import json
+
 from tiny_graph.driver.base import BaseDriver
 from tiny_graph.edge import TinyEdge
 from tiny_graph.graph.multi_layer_graph.utils.model_repr import compact_model_repr
 from tiny_graph.helper import parse_db_date
+from tinygent.datamodels.embedder import AbstractEmbedder
+from tinygent.utils.yaml import json
 
 
 class TinyEntityEdge(TinyEdge):
     name: str = Field(description='name of the edge, relation name')
 
-    fact: str = Field(description='fact representing the edge and nodes that it connects')
+    fact: str = Field(
+        description='fact representing the edge and nodes that it connects'
+    )
 
-    fact_embedding: list[float] | None = Field(default=None, description='embedding of the fact')
+    fact_embedding: list[float] | None = Field(
+        default=None, description='embedding of the fact'
+    )
 
     events: list[str] = Field(
         default=[],
@@ -36,7 +41,10 @@ class TinyEntityEdge(TinyEdge):
     )
 
     async def save(self, driver: BaseDriver) -> str:
-        from tiny_graph.graph.multi_layer_graph.queries.edge_queries import create_entity_edge
+        from tiny_graph.graph.multi_layer_graph.queries.edge_queries import (
+            create_entity_edge,
+        )
+
         args = {
             'edge_uuid': self.uuid,
             'subgraph_id': self.subgraph_id,
@@ -74,15 +82,30 @@ class TinyEntityEdge(TinyEdge):
             fact=record['fact'],
             fact_embedding=record.get('fact_embedding'),
             events=record.get('events', []),
-            expired_at=parse_db_date(record['expired_at']) if record.get('expired_at') else None,
-            valid_at=parse_db_date(record['valid_at']) if record.get('valid_at') else None,
-            invalid_at=parse_db_date(record['invalid_at']) if record.get('invalid_at') else None,
-            attributes=json.loads(record['attributes']) if isinstance(record.get('attributes'), str) else record.get('attributes', {}),
+            expired_at=(
+                parse_db_date(record['expired_at']) if record.get('expired_at') else None
+            ),
+            valid_at=(
+                parse_db_date(record['valid_at']) if record.get('valid_at') else None
+            ),
+            invalid_at=(
+                parse_db_date(record['invalid_at']) if record.get('invalid_at') else None
+            ),
+            attributes=(
+                json.loads(record['attributes'])
+                if isinstance(record.get('attributes'), str)
+                else record.get('attributes', {})
+            ),
         )
 
     @classmethod
-    async def find_by_targets(cls, driver: BaseDriver, source_uuid: str, target_uuid: str) -> list[TinyEntityEdge]:
-        from tiny_graph.graph.multi_layer_graph.queries.edge_queries import find_entity_edge_by_targets
+    async def find_by_targets(
+        cls, driver: BaseDriver, source_uuid: str, target_uuid: str
+    ) -> list[TinyEntityEdge]:
+        from tiny_graph.graph.multi_layer_graph.queries.edge_queries import (
+            find_entity_edge_by_targets,
+        )
+
         query = find_entity_edge_by_targets(driver.provider)
 
         results, _, _ = await driver.execute_query(

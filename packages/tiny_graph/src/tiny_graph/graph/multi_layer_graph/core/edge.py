@@ -1,8 +1,10 @@
-from tinygent.datamodels.embedder import AbstractEmbedder
 from tiny_graph.graph.multi_layer_graph.edges import TinyEntityEdge
+from tinygent.datamodels.embedder import AbstractEmbedder
 
 
-async def entity_edge_batch_embeddings(embedder: AbstractEmbedder, edges: list[TinyEntityEdge]) -> list[TinyEntityEdge]:
+async def entity_edge_batch_embeddings(
+    embedder: AbstractEmbedder, edges: list[TinyEntityEdge]
+) -> list[TinyEntityEdge]:
     if not edges:
         return []
 

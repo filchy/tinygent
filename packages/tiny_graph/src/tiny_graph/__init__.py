@@ -1,9 +1,5 @@
 from .edge import TinyEdge
-from .node import TinyNode
 from .graph import TinyMultiLayerGraph
+from .node import TinyNode
 
-__all__ = [
-    'TinyEdge',
-    'TinyNode',
-    'TinyMultiLayerGraph'
-]
+__all__ = ['TinyEdge', 'TinyNode', 'TinyMultiLayerGraph']

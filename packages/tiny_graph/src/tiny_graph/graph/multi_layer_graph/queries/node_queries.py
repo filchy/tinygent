@@ -4,7 +4,7 @@ from tiny_graph.types.provider import GraphProvider
 
 def create_entity_node(provider: GraphProvider) -> str:
     if provider == GraphProvider.NEO4J:
-        return f'''
+        return f"""
             MERGE (e:{NodeType.ENTITY.value} {{ uuid: $uuid }})
             SET e = {{
                 uuid: $uuid,
@@ -22,7 +22,7 @@ def create_entity_node(provider: GraphProvider) -> str:
                 $name_embedding
             )
             RETURN e.uuid AS uuid
-        '''
+        """
 
     raise ValueError(
         f'Unknown provider was given: {provider}, available providers: {", ".join(provider.__members__)}'
@@ -31,7 +31,7 @@ def create_entity_node(provider: GraphProvider) -> str:
 
 def create_event_node(provider: GraphProvider) -> str:
     if provider == GraphProvider.NEO4J:
-        return f'''
+        return f"""
             MERGE (e:{NodeType.EVENT.value} {{ uuid: $uuid }})
             SET e = {{
                 uuid: $uuid,
@@ -44,7 +44,7 @@ def create_event_node(provider: GraphProvider) -> str:
                 data_type: $data_type
             }}
             return e.uuid as uuid
-        '''
+        """
 
     raise ValueError(
         f'Unknown provider was given: {provider}, available providers: {", ".join(provider.__members__)}'
@@ -53,7 +53,7 @@ def create_event_node(provider: GraphProvider) -> str:
 
 def create_cluster_node(provider: GraphProvider) -> str:
     if provider == GraphProvider.NEO4J:
-        return f'''
+        return f"""
             MERGE (e:{NodeType.CLUSTER.value} {{ uuid: $uuid }})
             SET e = {{
                 uuid: $uuid,
@@ -70,7 +70,7 @@ def create_cluster_node(provider: GraphProvider) -> str:
                 $name_embedding
             )
             RETURN e.uuid AS uuid
-        '''
+        """
 
     raise ValueError(
         f'Unknown provider was given: {provider}, available providers: {", ".join(provider.__members__)}'
@@ -79,7 +79,7 @@ def create_cluster_node(provider: GraphProvider) -> str:
 
 def get_last_n_event_nodes(provider: GraphProvider) -> str:
     if provider == GraphProvider.NEO4J:
-        return f'''
+        return f"""
             MATCH (e:{NodeType.EVENT.value})
             WHERE ($subgraph_ids IS NULL OR size($subgraph_ids) = 0 OR e.subgraph_id in $subgraph_ids)
                 AND e.valid_at <= $reference_time
@@ -94,7 +94,7 @@ def get_last_n_event_nodes(provider: GraphProvider) -> str:
                 e.valid_at    AS valid_at,
                 e.data        AS data,
                 e.data_type   AS data_type
-        '''
+        """
 
     raise ValueError(
         f'Unknown provider was given: {provider}, available providers: {", ".join(provider.__members__)}'
