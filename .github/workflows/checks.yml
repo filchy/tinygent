@@ -14,7 +14,7 @@ jobs:
           - name: mypy
             run: uv run mypy
           - name: ruff
-            run: rv run ruff check .
+            run: uv run ruff check .
 
     steps:
       - name: Checkout repository
