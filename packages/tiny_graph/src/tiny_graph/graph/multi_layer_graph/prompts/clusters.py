@@ -88,5 +88,5 @@ If no new clusters are needed, return:
 - Summaries should explain the unifying concept in 1–2 sentences.
 - Do NOT reference entities or clusters explicitly in the output.
 - Do NOT restate existing cluster names.
-"""
+""",
     )

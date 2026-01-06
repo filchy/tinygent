@@ -1,8 +1,6 @@
 from datetime import datetime
 import logging
 
-from tinygent.runtime.executors import run_in_semaphore
-
 from tiny_graph.driver.base import BaseDriver
 from tiny_graph.graph.base import BaseGraph
 from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClients
@@ -12,21 +10,30 @@ from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import (
 from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import ExtractedEntity
 from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import MissedEntities
 from tiny_graph.graph.multi_layer_graph.edges import TinyClusterEdge
-from tiny_graph.graph.multi_layer_graph.edges import TinyEventEdge
 from tiny_graph.graph.multi_layer_graph.edges import TinyEntityEdge
+from tiny_graph.graph.multi_layer_graph.edges import TinyEventEdge
 from tiny_graph.graph.multi_layer_graph.nodes import TinyClusterNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEventNode
-from tiny_graph.graph.multi_layer_graph.ops.cluster_operations import resolve_and_extract_clusters
-from tiny_graph.graph.multi_layer_graph.ops.edge_operations import bulk_save_cluster_edges, bulk_save_entity_edges, bulk_save_event_edges, extract_edges
+from tiny_graph.graph.multi_layer_graph.ops.cluster_operations import (
+    resolve_and_extract_clusters,
+)
+from tiny_graph.graph.multi_layer_graph.ops.edge_operations import (
+    bulk_save_cluster_edges,
+)
+from tiny_graph.graph.multi_layer_graph.ops.edge_operations import (
+    bulk_save_entity_edges,
+)
+from tiny_graph.graph.multi_layer_graph.ops.edge_operations import bulk_save_event_edges
+from tiny_graph.graph.multi_layer_graph.ops.edge_operations import extract_edges
 from tiny_graph.graph.multi_layer_graph.ops.edge_operations import (
     resolve_extracted_entity_edges,
 )
 from tiny_graph.graph.multi_layer_graph.ops.graph_operations import build_indices
+from tiny_graph.graph.multi_layer_graph.ops.node_operations import bulk_save_clusters
+from tiny_graph.graph.multi_layer_graph.ops.node_operations import bulk_save_entities
+from tiny_graph.graph.multi_layer_graph.ops.node_operations import bulk_save_events
 from tiny_graph.graph.multi_layer_graph.ops.node_operations import (
-    bulk_save_clusters,
-    bulk_save_entities,
-    bulk_save_events,
     extract_attributes_from_nodes,
 )
 from tiny_graph.graph.multi_layer_graph.ops.node_operations import (
@@ -47,6 +54,7 @@ from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.messages import BaseMessage
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinySystemMessage
+from tinygent.runtime.executors import run_in_semaphore
 from tinygent.telemetry.decorators import tiny_trace
 from tinygent.types.base import TinyModel
 from tinygent.types.io.llm_io_input import TinyLLMInput
@@ -206,7 +214,12 @@ class TinyMultiLayerGraph(BaseGraph):
         )
 
         # Extract & resolve edges
-        entity_edges, invalidated_entity_edges, cluster_edges, event_edges = await self._extract_edges(
+        (
+            entity_edges,
+            invalidated_entity_edges,
+            cluster_edges,
+            event_edges,
+        ) = await self._extract_edges(
             event,
             prev_events,
             edge_types,
@@ -242,34 +255,22 @@ class TinyMultiLayerGraph(BaseGraph):
         driver = self.clients.driver
 
         if events:
-            tasks.append(
-                bulk_save_events(driver, events)
-            )
+            tasks.append(bulk_save_events(driver, events))
 
         if entities:
-            tasks.append(
-                bulk_save_entities(driver, entities)
-            )
+            tasks.append(bulk_save_entities(driver, entities))
 
         if clusters:
-            tasks.append(
-                bulk_save_clusters(driver, clusters)
-            )
+            tasks.append(bulk_save_clusters(driver, clusters))
 
         if entity_edges:
-            tasks.append(
-                bulk_save_entity_edges(driver, entity_edges)
-            )
+            tasks.append(bulk_save_entity_edges(driver, entity_edges))
 
         if cluster_edges:
-            tasks.append(
-                bulk_save_cluster_edges(driver, cluster_edges)
-            )
+            tasks.append(bulk_save_cluster_edges(driver, cluster_edges))
 
         if event_edges:
-            tasks.append(
-                bulk_save_event_edges(driver, event_edges)
-            )
+            tasks.append(bulk_save_event_edges(driver, event_edges))
 
         if tasks:
             await run_in_semaphore(*tasks)
@@ -304,7 +305,10 @@ class TinyMultiLayerGraph(BaseGraph):
             subgraph_id,
         )
 
-        resolved_entity_edges, invalidated_entity_edges = await resolve_extracted_entity_edges(
+        (
+            resolved_entity_edges,
+            invalidated_entity_edges,
+        ) = await resolve_extracted_entity_edges(
             self.clients,
             entity_edges,
             current_event,
@@ -318,11 +322,17 @@ class TinyMultiLayerGraph(BaseGraph):
             TinyEventEdge(
                 subgraph_id=subgraph_id,
                 source_node_uuid=current_event.uuid,
-                target_node_uuid=e.uuid
-            ) for e in entities
+                target_node_uuid=e.uuid,
+            )
+            for e in entities
         ]
 
-        return resolved_entity_edges, invalidated_entity_edges, cluster_edges, event_edges
+        return (
+            resolved_entity_edges,
+            invalidated_entity_edges,
+            cluster_edges,
+            event_edges,
+        )
 
     @tiny_trace('extract_entities')
     def _extract_entities(

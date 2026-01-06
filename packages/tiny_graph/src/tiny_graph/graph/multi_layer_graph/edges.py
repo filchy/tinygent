@@ -122,7 +122,9 @@ class TinyClusterEdge(TinyEdge):
     name: str = Field(default=EdgeType.HAS_MEMBER.value, frozen=True)
 
     async def save(self, driver: BaseDriver) -> str:
-        from tiny_graph.graph.multi_layer_graph.queries.edge_queries import create_cluster_edge
+        from tiny_graph.graph.multi_layer_graph.queries.edge_queries import (
+            create_cluster_edge,
+        )
 
         args = {
             'uuid': self.uuid,
@@ -153,7 +155,9 @@ class TinyEventEdge(TinyEdge):
     name: str = Field(default=EdgeType.MENTIONS.value, frozen=True)
 
     async def save(self, driver: BaseDriver) -> str:
-        from tiny_graph.graph.multi_layer_graph.queries.edge_queries import create_event_edge
+        from tiny_graph.graph.multi_layer_graph.queries.edge_queries import (
+            create_event_edge,
+        )
 
         args = {
             'uuid': self.uuid,

@@ -4,19 +4,27 @@ from tiny_graph.graph.multi_layer_graph.nodes import TinyClusterNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import ClusterSearchMethods
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import EdgeReranker
-from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinyClusterSearchConfig
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import EdgeSearchMethods
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import EntityReranker
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import EntitySearchMethods
+from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinyClusterSearchConfig
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinyEdgeSearchConfig
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinyEntitySearchConfig
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinySearchConfig
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinySearchFilters
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinySearchResult
-from tiny_graph.graph.multi_layer_graph.search.search_ranker import rerank_candidates_cross_encoder
-from tiny_graph.graph.multi_layer_graph.search.search_ranker import rerank_candidates_rrf
-from tiny_graph.graph.multi_layer_graph.search.search_utils import cluster_fulltext_search
-from tiny_graph.graph.multi_layer_graph.search.search_utils import cluster_similarity_search
+from tiny_graph.graph.multi_layer_graph.search.search_ranker import (
+    rerank_candidates_cross_encoder,
+)
+from tiny_graph.graph.multi_layer_graph.search.search_ranker import (
+    rerank_candidates_rrf,
+)
+from tiny_graph.graph.multi_layer_graph.search.search_utils import (
+    cluster_fulltext_search,
+)
+from tiny_graph.graph.multi_layer_graph.search.search_utils import (
+    cluster_similarity_search,
+)
 from tiny_graph.graph.multi_layer_graph.search.search_utils import edge_fulltext_search
 from tiny_graph.graph.multi_layer_graph.search.search_utils import (
     edge_similarity_search,
@@ -143,7 +151,9 @@ async def cluster_search(
         reranked_uuids, reranked_scores = rerank_candidates_rrf(search_results)
 
     elif config.reranker == EdgeReranker.CROSS_ENCODER:
-        reranked_uuids, reranked_scores = await rerank_candidates_cross_encoder(query, search_results, clients.cross_encoder)
+        reranked_uuids, reranked_scores = await rerank_candidates_cross_encoder(
+            query, search_results, clients.cross_encoder
+        )
 
     reranked_clusters = [cluster_uuid_map[uuid] for uuid in reranked_uuids]
     return reranked_clusters[:limit], reranked_scores[:limit]
@@ -199,7 +209,9 @@ async def entity_search(
         reranked_uuids, reranked_scores = rerank_candidates_rrf(search_results)
 
     elif config.reranker == EntityReranker.CROSS_ENCODER:
-        reranked_uuids, reranked_scores = await rerank_candidates_cross_encoder(query, search_results, clients.cross_encoder)
+        reranked_uuids, reranked_scores = await rerank_candidates_cross_encoder(
+            query, search_results, clients.cross_encoder
+        )
 
     reranked_entities = [entity_uuid_map[uuid] for uuid in reranked_uuids]
     return reranked_entities[:limit], reranked_scores[:limit]
@@ -262,7 +274,9 @@ async def edge_search(
         reranked_uuids, reranked_scores = rerank_candidates_rrf(search_results)
 
     elif config.reranker == EdgeReranker.CROSS_ENCODER:
-        reranked_uuids, reranked_scores = await rerank_candidates_cross_encoder(query, search_results, clients.cross_encoder)
+        reranked_uuids, reranked_scores = await rerank_candidates_cross_encoder(
+            query, search_results, clients.cross_encoder
+        )
 
     reranked_edges = [edge_uuid_map[uuid] for uuid in reranked_uuids]
     return reranked_edges[:limit], reranked_scores[:limit]

@@ -1,13 +1,14 @@
-from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
+from collections.abc import Sequence
 
 from tiny_graph.edge import TinyEdge
 from tiny_graph.graph.multi_layer_graph.search.search_utils import rrf
 from tiny_graph.node import TinyNode
+from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
 
 
 async def rerank_candidates_cross_encoder(
     query: str,
-    candidates: list[list[TinyNode | TinyEdge]],
+    candidates: Sequence[Sequence[TinyNode | TinyEdge]],
     cross_encoder: AbstractCrossEncoder,
 ) -> tuple[list[str], list[float]]:
     candidate_name_2_uuid_map = {
@@ -21,6 +22,8 @@ async def rerank_candidates_cross_encoder(
     return reranked_uuids, reranked_scores
 
 
-def rerank_candidates_rrf(candidates: list[list[TinyNode | TinyEdge]]) -> tuple[list[str], list[float]]:
+def rerank_candidates_rrf(
+    candidates: Sequence[Sequence[TinyNode | TinyEdge]],
+) -> tuple[list[str], list[float]]:
     ranking_table = [[c.uuid for c in method] for method in candidates]
     return rrf(ranking_table)

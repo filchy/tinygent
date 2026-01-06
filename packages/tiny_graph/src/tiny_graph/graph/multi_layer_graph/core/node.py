@@ -1,6 +1,6 @@
+from tiny_graph.graph.multi_layer_graph.nodes import TinyClusterNode
+from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tinygent.datamodels.embedder import AbstractEmbedder
-
-from tiny_graph.graph.multi_layer_graph.nodes import TinyClusterNode, TinyEntityNode
 
 
 async def cluster_node_batch_embeddings(

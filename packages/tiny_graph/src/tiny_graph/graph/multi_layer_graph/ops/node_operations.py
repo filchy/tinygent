@@ -14,13 +14,15 @@ from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEventNode
 from tiny_graph.graph.multi_layer_graph.queries.node_queries import (
     get_last_n_event_nodes,
+)
+from tiny_graph.graph.multi_layer_graph.queries.node_queries import (
     save_cluster_nodes_bulk,
 )
 from tiny_graph.graph.multi_layer_graph.queries.node_queries import (
-    save_event_nodes_bulk,
+    save_entity_nodes_bulk,
 )
 from tiny_graph.graph.multi_layer_graph.queries.node_queries import (
-    save_entity_nodes_bulk,
+    save_event_nodes_bulk,
 )
 from tiny_graph.graph.multi_layer_graph.search.search import search
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinySearchResult
@@ -573,7 +575,9 @@ async def extract_attributes_from_nodes(
     return embedded_entities
 
 
-async def bulk_save_entities(driver: BaseDriver, entities: list[TinyEntityNode]) -> list[str]:
+async def bulk_save_entities(
+    driver: BaseDriver, entities: list[TinyEntityNode]
+) -> list[str]:
     payload = [
         {
             'uuid': e.uuid,
@@ -583,7 +587,8 @@ async def bulk_save_entities(driver: BaseDriver, entities: list[TinyEntityNode])
             'summary': e.summary,
             'labels': e.labels,
             'name_embedding': e.name_embedding,
-        } for e in entities
+        }
+        for e in entities
     ]
 
     results, _, _ = await driver.execute_query(
@@ -605,7 +610,8 @@ async def bulk_save_events(driver: BaseDriver, events: list[TinyEventNode]) -> l
             'valid_at': e.valid_at,
             'data': e.serialized_data,
             'data_type': e.data_type.value,
-        } for e in events
+        }
+        for e in events
     ]
 
     results, _, _ = await driver.execute_query(
@@ -616,7 +622,9 @@ async def bulk_save_events(driver: BaseDriver, events: list[TinyEventNode]) -> l
     return results[0]['uuids'] if results else []
 
 
-async def bulk_save_clusters(driver: BaseDriver, clusters: list[TinyClusterNode]) -> list[str]:
+async def bulk_save_clusters(
+    driver: BaseDriver, clusters: list[TinyClusterNode]
+) -> list[str]:
     payload = [
         {
             'uuid': c.uuid,
@@ -625,7 +633,8 @@ async def bulk_save_clusters(driver: BaseDriver, clusters: list[TinyClusterNode]
             'created_at': c.created_at,
             'summary': c.summary,
             'name_embedding': c.name_embedding,
-        } for c in clusters
+        }
+        for c in clusters
     ]
 
     results, _, _ = await driver.execute_query(

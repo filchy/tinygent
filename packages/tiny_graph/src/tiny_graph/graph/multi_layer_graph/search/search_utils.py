@@ -2,7 +2,8 @@ from collections import defaultdict
 
 from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClients
 from tiny_graph.graph.multi_layer_graph.edges import TinyEntityEdge
-from tiny_graph.graph.multi_layer_graph.nodes import TinyClusterNode, TinyEntityNode
+from tiny_graph.graph.multi_layer_graph.nodes import TinyClusterNode
+from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinySearchFilters
 from tiny_graph.graph.multi_layer_graph.types import NodeType
 from tiny_graph.types.provider import GraphProvider
@@ -99,7 +100,7 @@ async def entity_fulltext_search(
 
     if provider == GraphProvider.NEO4J:
         filter_clause = filters.build_query(provider, 'entity_uuids') if filters else ''
-        q = f'''
+        q = f"""
             CALL db.index.fulltext.queryNodes(
                 '{NodeType.ENTITY.value}_fulltext_index',
                 $text_query,
@@ -123,7 +124,7 @@ async def entity_fulltext_search(
                 e.name_embedding AS name_embedding,
                 e.summary as summary
             ORDER BY score DESC, e.uuid
-        '''
+        """
         results, _, _ = await clients.driver.execute_query(
             q,
             **{
@@ -369,7 +370,7 @@ async def cluster_fulltext_search(
 
     if provider == GraphProvider.NEO4J:
         filter_clause = filters.build_query(provider, 'cluster_uuids') if filters else ''
-        q = f'''
+        q = f"""
             CALL db.index.fulltext.queryNodes(
                 '{NodeType.CLUSTER.value}_fulltext_index',
                 $text_query,
@@ -392,7 +393,7 @@ async def cluster_fulltext_search(
                 c.name_embedding AS name_embedding,
                 c.summary as summary
             ORDER BY score DESC, c.uuid
-        '''
+        """
         results, _, _ = await clients.driver.execute_query(
             q,
             **{
@@ -400,7 +401,7 @@ async def cluster_fulltext_search(
                 'subgraph_ids': subgraph_ids,
                 'cluster_uuids': filters.cluster_uuids if filters else None,
                 'limit': limit,
-            }
+            },
         )
 
         return [TinyClusterNode.from_record(q) for q in results]

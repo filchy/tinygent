@@ -196,8 +196,12 @@ class TinyClusterNode(TinyNode):
         )
 
     @classmethod
-    async def find_by_entity(cls, driver: BaseDriver, entity_uuid: str) -> list[TinyClusterNode]:
-        from tiny_graph.graph.multi_layer_graph.queries.cluster_queries import find_entity_clusters
+    async def find_by_entity(
+        cls, driver: BaseDriver, entity_uuid: str
+    ) -> list[TinyClusterNode]:
+        from tiny_graph.graph.multi_layer_graph.queries.cluster_queries import (
+            find_entity_clusters,
+        )
 
         results, _, _ = await driver.execute_query(
             query=find_entity_clusters(driver.provider),

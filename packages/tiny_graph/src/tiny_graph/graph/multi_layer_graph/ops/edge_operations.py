@@ -10,8 +10,8 @@ from tiny_graph.driver.base import BaseDriver
 from tiny_graph.graph.multi_layer_graph.core.edge import entity_edge_batch_embeddings
 from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClients
 from tiny_graph.graph.multi_layer_graph.edges import TinyClusterEdge
-from tiny_graph.graph.multi_layer_graph.edges import TinyEventEdge
 from tiny_graph.graph.multi_layer_graph.edges import TinyEntityEdge
+from tiny_graph.graph.multi_layer_graph.edges import TinyEventEdge
 from tiny_graph.graph.multi_layer_graph.nodes import TinyClusterNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEventNode
@@ -308,7 +308,9 @@ async def _extract_cluster_edges(
     reflexion_iterations = 0
     valid_extracted_edges: list[ClusterEdge] | None = None
 
-    from tiny_graph.graph.multi_layer_graph.prompts.edges import get_cluster_edge_extraction_prompt
+    from tiny_graph.graph.multi_layer_graph.prompts.edges import (
+        get_cluster_edge_extraction_prompt,
+    )
 
     edge_prompt = get_cluster_edge_extraction_prompt()
 
@@ -318,10 +320,12 @@ async def _extract_cluster_edges(
             llm_input=TinyLLMInput(
                 messages=[
                     TinySystemMessage(content=edge_prompt.system),
-                    TinyHumanMessage(content=render_template(
-                        edge_prompt.user,
-                        context,
-                    )),
+                    TinyHumanMessage(
+                        content=render_template(
+                            edge_prompt.user,
+                            context,
+                        )
+                    ),
                 ]
             ),
             output_schema=ExtractedClusterEdges,
@@ -338,7 +342,8 @@ async def _extract_cluster_edges(
             target_entity_idx = extracted_edge.target_entity_id
 
             if not (
-                0 <= source_cluster_idx < len(all_clusters) and 0 <= target_entity_idx < len(entities)
+                0 <= source_cluster_idx < len(all_clusters)
+                and 0 <= target_entity_idx < len(entities)
             ):
                 logger.warning(
                     f'Invalid cluster/entity IDs in cluster edge extraction. '
@@ -348,24 +353,30 @@ async def _extract_cluster_edges(
                 continue
 
             valid_extracted_edges.append(extracted_edge)
-            context['extracted_edges'].append({
-                'cluster_name': all_clusters[source_cluster_idx].name,
-                'entity_name': entities[target_entity_idx].name,
-            })
+            context['extracted_edges'].append(
+                {
+                    'cluster_name': all_clusters[source_cluster_idx].name,
+                    'entity_name': entities[target_entity_idx].name,
+                }
+            )
 
         reflexion_iterations += 1
         if reflexion_iterations < MAX_REFLEXION_ITERATIONS:
-            from tiny_graph.graph.multi_layer_graph.prompts.edges import get_cluster_edge_extract_reflextion_prompt
+            from tiny_graph.graph.multi_layer_graph.prompts.edges import (
+                get_cluster_edge_extract_reflextion_prompt,
+            )
 
             reflex_prompt = get_cluster_edge_extract_reflextion_prompt()
             reflexion_result = llm.generate_structured(
                 llm_input=TinyLLMInput(
                     messages=[
                         TinySystemMessage(content=reflex_prompt.system),
-                        TinyHumanMessage(content=render_template(
-                            reflex_prompt.user,
-                            context,
-                        )),
+                        TinyHumanMessage(
+                            content=render_template(
+                                reflex_prompt.user,
+                                context,
+                            )
+                        ),
                     ]
                 ),
                 output_schema=MissingFacts,
@@ -394,7 +405,7 @@ async def _extract_cluster_edges(
                 target_node_uuid=entities[target_entity_idx].uuid,
             )
         )
-        
+
     return final_edges
 
 
@@ -426,7 +437,7 @@ async def extract_edges(
             extracted_clusters,
             existing_clusters,
             subgraph_id,
-        )
+        ),
     )
 
     return extracted_entity_edges, extracted_cluster_edges
@@ -883,7 +894,9 @@ async def resolve_extracted_entity_edges(
     return resolved_edges, invalidated_edges
 
 
-async def bulk_save_entity_edges(driver: BaseDriver, edges: list[TinyEntityEdge]) -> list[str]:
+async def bulk_save_entity_edges(
+    driver: BaseDriver, edges: list[TinyEntityEdge]
+) -> list[str]:
     from tiny_graph.graph.multi_layer_graph.queries.edge_queries import (
         save_entity_edges_bulk,
     )
@@ -915,7 +928,9 @@ async def bulk_save_entity_edges(driver: BaseDriver, edges: list[TinyEntityEdge]
     return results[0]['uuids'] if results else []
 
 
-async def bulk_save_cluster_edges(driver: BaseDriver, edges: list[TinyClusterEdge]) -> list[str]:
+async def bulk_save_cluster_edges(
+    driver: BaseDriver, edges: list[TinyClusterEdge]
+) -> list[str]:
     from tiny_graph.graph.multi_layer_graph.queries.edge_queries import (
         save_cluster_edges_bulk,
     )
@@ -939,8 +954,12 @@ async def bulk_save_cluster_edges(driver: BaseDriver, edges: list[TinyClusterEdg
     return results[0]['uuids'] if results else []
 
 
-async def bulk_save_event_edges(driver: BaseDriver, edges: list[TinyEventEdge]) -> list[str]:
-    from tiny_graph.graph.multi_layer_graph.queries.edge_queries import save_event_edges_bulk
+async def bulk_save_event_edges(
+    driver: BaseDriver, edges: list[TinyEventEdge]
+) -> list[str]:
+    from tiny_graph.graph.multi_layer_graph.queries.edge_queries import (
+        save_event_edges_bulk,
+    )
 
     payload = [
         {
