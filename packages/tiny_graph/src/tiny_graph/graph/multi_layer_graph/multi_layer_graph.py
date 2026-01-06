@@ -1,6 +1,8 @@
 from datetime import datetime
 import logging
 
+from tinygent.runtime.executors import run_in_semaphore
+
 from tiny_graph.driver.base import BaseDriver
 from tiny_graph.graph.base import BaseGraph
 from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClients
@@ -9,16 +11,22 @@ from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import (
 )
 from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import ExtractedEntity
 from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import MissedEntities
+from tiny_graph.graph.multi_layer_graph.edges import TinyClusterEdge
+from tiny_graph.graph.multi_layer_graph.edges import TinyEventEdge
 from tiny_graph.graph.multi_layer_graph.edges import TinyEntityEdge
+from tiny_graph.graph.multi_layer_graph.nodes import TinyClusterNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEventNode
-from tiny_graph.graph.multi_layer_graph.ops.edge_operations import extract_edges
-from tiny_graph.graph.multi_layer_graph.ops.edge_operations import resolve_edge_pointers
+from tiny_graph.graph.multi_layer_graph.ops.cluster_operations import resolve_and_extract_clusters
+from tiny_graph.graph.multi_layer_graph.ops.edge_operations import bulk_save_cluster_edges, bulk_save_entity_edges, bulk_save_event_edges, extract_edges
 from tiny_graph.graph.multi_layer_graph.ops.edge_operations import (
-    resolve_extracted_edges,
+    resolve_extracted_entity_edges,
 )
 from tiny_graph.graph.multi_layer_graph.ops.graph_operations import build_indices
 from tiny_graph.graph.multi_layer_graph.ops.node_operations import (
+    bulk_save_clusters,
+    bulk_save_entities,
+    bulk_save_events,
     extract_attributes_from_nodes,
 )
 from tiny_graph.graph.multi_layer_graph.ops.node_operations import (
@@ -179,43 +187,92 @@ class TinyMultiLayerGraph(BaseGraph):
             else {(NodeType.ENTITY.value, NodeType.ENTITY.value): []}
         )
 
-        # Extract & resolve edges
-        resolved_edges, invalidated_edges = await self._extract_edges(
-            event,
-            prev_events,
-            edge_types,
-            edge_type_map or edge_type_map_default,
-            entities,
-            uuid_map,
-            subgraph_id,
-        )
-
-        logger.info('entities: %s', entities)
-        logger.info('edges: %s', resolved_edges)
-        logger.info('invalidated edges: %s', invalidated_edges)
-
         # Extract node attributes
         entities_with_attributes: list[
             TinyEntityNode
         ] = await extract_attributes_from_nodes(
             self.clients.llm,
+            self.clients.embedder,
             entities,
             event,
             prev_events,
             entity_types=entity_types,
         )
 
-        logger.info('entities with attributes: %s', entities_with_attributes)
-
         # Extract & resolve clusters
-        # clusters = await resolve_and_extract_clusters(
-        #     self.clients.driver,
-        #     self.clients.llm,
-        #     self.clients.embedder,
-        #     entities_with_attributes,
-        # )
+        new_clusters, exisiting_clusters = await resolve_and_extract_clusters(
+            self.clients,
+            entities_with_attributes,
+        )
+
+        # Extract & resolve edges
+        entity_edges, invalidated_entity_edges, cluster_edges, event_edges = await self._extract_edges(
+            event,
+            prev_events,
+            edge_types,
+            edge_type_map or edge_type_map_default,
+            entities,
+            uuid_map,
+            new_clusters,
+            exisiting_clusters,
+            subgraph_id,
+        )
 
         # Process and save data
+        await self._bulk_save(
+            [event],
+            entities_with_attributes,
+            new_clusters,
+            entity_edges + invalidated_entity_edges,
+            cluster_edges,
+            event_edges,
+        )
+
+    @tiny_trace('bulk_save')
+    async def _bulk_save(
+        self,
+        events: list[TinyEventNode] | None = None,
+        entities: list[TinyEntityNode] | None = None,
+        clusters: list[TinyClusterNode] | None = None,
+        entity_edges: list[TinyEntityEdge] | None = None,
+        cluster_edges: list[TinyClusterEdge] | None = None,
+        event_edges: list[TinyEventEdge] | None = None,
+    ) -> None:
+        tasks = []
+        driver = self.clients.driver
+
+        if events:
+            tasks.append(
+                bulk_save_events(driver, events)
+            )
+
+        if entities:
+            tasks.append(
+                bulk_save_entities(driver, entities)
+            )
+
+        if clusters:
+            tasks.append(
+                bulk_save_clusters(driver, clusters)
+            )
+
+        if entity_edges:
+            tasks.append(
+                bulk_save_entity_edges(driver, entity_edges)
+            )
+
+        if cluster_edges:
+            tasks.append(
+                bulk_save_cluster_edges(driver, cluster_edges)
+            )
+
+        if event_edges:
+            tasks.append(
+                bulk_save_event_edges(driver, event_edges)
+            )
+
+        if tasks:
+            await run_in_semaphore(*tasks)
 
     @tiny_trace('extract_edges')
     async def _extract_edges(
@@ -226,29 +283,46 @@ class TinyMultiLayerGraph(BaseGraph):
         edge_type_map: dict[tuple[str, str], list[str]],
         entities: list[TinyEntityNode],
         entity_uuid_map: dict[str, str],
+        extracted_clusters: list[TinyClusterNode],
+        existing_clusters: list[TinyClusterNode],
         subgraph_id: str,
-    ) -> tuple[list[TinyEntityEdge], list[TinyEntityEdge]]:
-        extraced_edges = extract_edges(
+    ) -> tuple[
+        list[TinyEntityEdge],
+        list[TinyEntityEdge],
+        list[TinyClusterEdge],
+        list[TinyEventEdge],
+    ]:
+        entity_edges, cluster_edges = await extract_edges(
             self.clients.llm,
             entities,
             current_event,
             previous_events,
             edge_types,
             edge_type_map,
+            extracted_clusters,
+            existing_clusters,
             subgraph_id,
         )
 
-        edges = resolve_edge_pointers(extraced_edges, entity_uuid_map)
-
-        resolved_edges, invalidated_edges = await resolve_extracted_edges(
+        resolved_entity_edges, invalidated_entity_edges = await resolve_extracted_entity_edges(
             self.clients,
-            edges,
+            entity_edges,
             current_event,
             entities,
+            entity_uuid_map,
             edge_types or {},
             edge_type_map,
         )
-        return resolved_edges, invalidated_edges
+
+        event_edges = [
+            TinyEventEdge(
+                subgraph_id=subgraph_id,
+                source_node_uuid=current_event.uuid,
+                target_node_uuid=e.uuid
+            ) for e in entities
+        ]
+
+        return resolved_entity_edges, invalidated_entity_edges, cluster_edges, event_edges
 
     @tiny_trace('extract_entities')
     def _extract_entities(

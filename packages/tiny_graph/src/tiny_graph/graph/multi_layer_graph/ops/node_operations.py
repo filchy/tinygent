@@ -7,11 +7,20 @@ from typing import Any
 from pydantic import Field
 
 from tiny_graph.driver.base import BaseDriver
+from tiny_graph.graph.multi_layer_graph.core.node import entity_node_batch_embeddings
 from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClients
+from tiny_graph.graph.multi_layer_graph.nodes import TinyClusterNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEventNode
 from tiny_graph.graph.multi_layer_graph.queries.node_queries import (
     get_last_n_event_nodes,
+    save_cluster_nodes_bulk,
+)
+from tiny_graph.graph.multi_layer_graph.queries.node_queries import (
+    save_event_nodes_bulk,
+)
+from tiny_graph.graph.multi_layer_graph.queries.node_queries import (
+    save_entity_nodes_bulk,
 )
 from tiny_graph.graph.multi_layer_graph.search.search import search
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinySearchResult
@@ -36,6 +45,7 @@ from tiny_graph.graph.multi_layer_graph.utils.text_similarity import (
 )
 from tiny_graph.graph.multi_layer_graph.utils.text_similarity import shingles
 from tiny_graph.types.provider import GraphProvider
+from tinygent.datamodels.embedder import AbstractEmbedder
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinySystemMessage
@@ -526,6 +536,7 @@ async def extract_attributes_from_node(
 
 async def extract_attributes_from_nodes(
     llm: AbstractLLM,
+    embedder: AbstractEmbedder,
     entities: list[TinyEntityNode],
     event: TinyEventNode | None = None,
     previous_events: list[TinyEventNode] | None = None,
@@ -557,4 +568,69 @@ async def extract_attributes_from_nodes(
             for entity in entities
         ]
     )
-    return updated_entities
+
+    embedded_entities = await entity_node_batch_embeddings(embedder, updated_entities)
+    return embedded_entities
+
+
+async def bulk_save_entities(driver: BaseDriver, entities: list[TinyEntityNode]) -> list[str]:
+    payload = [
+        {
+            'uuid': e.uuid,
+            'name': e.name,
+            'subgraph_id': e.subgraph_id,
+            'created_at': e.created_at,
+            'summary': e.summary,
+            'labels': e.labels,
+            'name_embedding': e.name_embedding,
+        } for e in entities
+    ]
+
+    results, _, _ = await driver.execute_query(
+        query=save_entity_nodes_bulk(driver.provider),
+        entities=payload,
+    )
+
+    return results[0]['uuids'] if results else []
+
+
+async def bulk_save_events(driver: BaseDriver, events: list[TinyEventNode]) -> list[str]:
+    payload = [
+        {
+            'uuid': e.uuid,
+            'name': e.name,
+            'description': e.description,
+            'subgraph_id': e.subgraph_id,
+            'created_at': e.created_at,
+            'valid_at': e.valid_at,
+            'data': e.serialized_data,
+            'data_type': e.data_type.value,
+        } for e in events
+    ]
+
+    results, _, _ = await driver.execute_query(
+        query=save_event_nodes_bulk(driver.provider),
+        events=payload,
+    )
+
+    return results[0]['uuids'] if results else []
+
+
+async def bulk_save_clusters(driver: BaseDriver, clusters: list[TinyClusterNode]) -> list[str]:
+    payload = [
+        {
+            'uuid': c.uuid,
+            'name': c.name,
+            'subgraph_id': c.subgraph_id,
+            'created_at': c.created_at,
+            'summary': c.summary,
+            'name_embedding': c.name_embedding,
+        } for c in clusters
+    ]
+
+    results, _, _ = await driver.execute_query(
+        query=save_cluster_nodes_bulk(driver.provider),
+        clusters=payload,
+    )
+
+    return results[0]['uuids'] if results else []

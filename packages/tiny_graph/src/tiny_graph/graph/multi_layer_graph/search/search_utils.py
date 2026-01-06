@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClients
 from tiny_graph.graph.multi_layer_graph.edges import TinyEntityEdge
-from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
+from tiny_graph.graph.multi_layer_graph.nodes import TinyClusterNode, TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinySearchFilters
 from tiny_graph.graph.multi_layer_graph.types import NodeType
 from tiny_graph.types.provider import GraphProvider
@@ -99,7 +99,7 @@ async def entity_fulltext_search(
 
     if provider == GraphProvider.NEO4J:
         filter_clause = filters.build_query(provider, 'entity_uuids') if filters else ''
-        q = f"""
+        q = f'''
             CALL db.index.fulltext.queryNodes(
                 '{NodeType.ENTITY.value}_fulltext_index',
                 $text_query,
@@ -123,7 +123,7 @@ async def entity_fulltext_search(
                 e.name_embedding AS name_embedding,
                 e.summary as summary
             ORDER BY score DESC, e.uuid
-        """
+        '''
         results, _, _ = await clients.driver.execute_query(
             q,
             **{
@@ -295,6 +295,115 @@ async def edge_fulltext_search(
         )
 
         return [TinyEntityEdge.from_record(r) for r in results]
+
+    raise ValueError(
+        f'Unknown provider was given: {provider}, available providers: {", ".join(provider.__members__)}'
+    )
+
+
+async def cluster_similarity_search(
+    clients: TinyGraphClients,
+    query_vector: list[float],
+    *,
+    subgraph_ids: list[str] | None = None,
+    filters: TinySearchFilters | None = None,
+    limit: int = 5,
+    min_score: float = 0.0,
+) -> list[TinyClusterNode]:
+    provider = clients.driver.provider
+
+    if provider == GraphProvider.NEO4J:
+        filter_clause = filters.build_query(provider, 'cluster_uuids') if filters else ''
+
+        query = f"""
+            CALL db.index.vector.queryNodes(
+                '{NodeType.CLUSTER.value}_{clients.safe_embed_model}_name_embedding_index',
+                $limit,
+                $query_vector
+            )
+            YIELD node as c, score
+            WHERE score >= $min_score
+            AND (
+                $subgraph_ids IS NULL
+                OR size($subgraph_ids) = 0
+                OR c.subgraph_id in $subgraph_ids
+            )
+            {filter_clause}
+
+            RETURN
+                c.uuid AS uuid,
+                c.name AS name,
+                c.subgraph_id AS subgraph_id,
+                c.created_at AS created_at,
+                c.name_embedding AS name_embedding,
+                c.summary as summary
+            ORDER BY score DESC, c.uuid
+        """
+
+        results, _, _ = await clients.driver.execute_query(
+            query,
+            **{
+                'query_vector': query_vector,
+                'subgraph_ids': subgraph_ids or [],
+                'cluster_uuids': filters.cluster_uuids if filters else None,
+                'limit': limit,
+                'min_score': min_score,
+            },
+        )
+
+        return [TinyClusterNode.from_record(r) for r in results]
+
+    raise ValueError(
+        f'Unknown provider was given: {provider}, available providers: {", ".join(provider.__members__)}'
+    )
+
+
+async def cluster_fulltext_search(
+    clients: TinyGraphClients,
+    query: str,
+    subgraph_ids: list[str] | None = None,
+    filters: TinySearchFilters | None = None,
+    limit: int = 5,
+) -> list[TinyClusterNode]:
+    provider = clients.driver.provider
+
+    if provider == GraphProvider.NEO4J:
+        filter_clause = filters.build_query(provider, 'cluster_uuids') if filters else ''
+        q = f'''
+            CALL db.index.fulltext.queryNodes(
+                '{NodeType.CLUSTER.value}_fulltext_index',
+                $text_query,
+                {{limit: $limit}}
+            )
+            YIELD node as c, score
+            WHERE
+                (
+                    $subgraph_ids IS NULL
+                    OR size($subgraph_ids) = 0
+                    OR c.subgraph_id in $subgraph_ids
+                )
+            {filter_clause}
+
+            RETURN
+                c.uuid AS uuid,
+                c.name AS name,
+                c.subgraph_id AS subgraph_id,
+                c.created_at AS created_at,
+                c.name_embedding AS name_embedding,
+                c.summary as summary
+            ORDER BY score DESC, c.uuid
+        '''
+        results, _, _ = await clients.driver.execute_query(
+            q,
+            **{
+                'text_query': query,
+                'subgraph_ids': subgraph_ids,
+                'cluster_uuids': filters.cluster_uuids if filters else None,
+                'limit': limit,
+            }
+        )
+
+        return [TinyClusterNode.from_record(q) for q in results]
 
     raise ValueError(
         f'Unknown provider was given: {provider}, available providers: {", ".join(provider.__members__)}'

@@ -1,7 +1,73 @@
 from tinygent.types.prompt_template import TinyPromptTemplate
 
 
-def get_edge_extraction_prompt() -> TinyPromptTemplate.UserSystem:
+def get_cluster_edge_extraction_prompt() -> TinyPromptTemplate.UserSystem:
+    return TinyPromptTemplate.UserSystem(
+        system='You are an expert knowledge graph extraction engine. '
+        'You extract semantic relationships between CLUSTERS and ENTITIES '
+        'based strictly on the provided event content.',
+        user="""<CURRENT_MESSAGE>
+{{ event_content }}
+</CURRENT_MESSAGE>
+
+<ENTITIES>
+{{ entities }}
+</ENTITIES>
+
+<CLUSTERS>
+{{ clusters }}
+</CLUSTERS>
+
+# TASK
+Extract all valid relationships where a CLUSTER is related to an ENTITY based on the CURRENT MESSAGE.
+
+Only extract edges that:
+- connect ONE CLUSTER to ONE ENTITY,
+- are explicitly stated or unambiguously implied by the CURRENT MESSAGE,
+- represent meaningful semantic grouping, categorization, membership, association, or contextual linkage.
+
+{{ custom_prompt }}
+
+# OUTPUT FORMAT
+Return a JSON object that conforms EXACTLY to this schema:
+
+{
+  "edges": [
+    {
+      "source_cluster_id": <int>,   // from CLUSTERS.id
+      "target_entity_id": <int>     // from ENTITIES.id
+    }
+  ]
+}
+
+# EXTRACTION RULES
+
+1. **ID STRICTNESS**
+   - `source_cluster_id` MUST come from CLUSTERS.id
+   - `target_entity_id` MUST come from ENTITIES.id
+   - Any ID not in the lists is INVALID
+
+2. Do NOT invent clusters or entities.
+
+3. Do NOT output duplicate edges.
+
+4. If no valid relationships exist, return:
+   { "edges": [] }
+
+5. Do NOT include explanations, comments, metadata, or additional fields.
+   - Output JSON only.
+        """,
+    )
+
+
+def get_cluster_edge_extract_reflextion_prompt() -> TinyPromptTemplate.UserSystem:
+    return TinyPromptTemplate.UserSystem(
+        system='',
+        user='',
+    )
+
+
+def get_entity_edge_extraction_prompt() -> TinyPromptTemplate.UserSystem:
     return TinyPromptTemplate.UserSystem(
         system='You are an expert fact extractor that extracts fact triples from text. '
         '1. Extracted fact triples should also be extracted with relevant date information.'
@@ -68,7 +134,7 @@ You may use information from the PREVIOUS MESSAGES only to disambiguate referenc
     )
 
 
-def get_edge_extract_reflextion_prompt() -> TinyPromptTemplate.UserSystem:
+def get_entity_edge_extract_reflextion_prompt() -> TinyPromptTemplate.UserSystem:
     return TinyPromptTemplate.UserSystem(
         system='You are an AI assistant that determines which facts have not been extracted from the given context',
         user="""<PREVIOUS MESSAGES>

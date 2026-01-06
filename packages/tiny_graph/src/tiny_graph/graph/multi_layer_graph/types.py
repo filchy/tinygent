@@ -9,6 +9,7 @@ class NodeType(Enum):
 
 class EdgeType(Enum):
     HAS_MEMBER = 'HasMember'
+    MENTIONS = 'Mentions'
 
 
 class DataType(Enum):

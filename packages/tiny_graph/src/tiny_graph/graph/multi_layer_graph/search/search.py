@@ -1,7 +1,10 @@
 from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClients
 from tiny_graph.graph.multi_layer_graph.edges import TinyEntityEdge
+from tiny_graph.graph.multi_layer_graph.nodes import TinyClusterNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
+from tiny_graph.graph.multi_layer_graph.search.search_cfg import ClusterSearchMethods
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import EdgeReranker
+from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinyClusterSearchConfig
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import EdgeSearchMethods
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import EntityReranker
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import EntitySearchMethods
@@ -10,6 +13,10 @@ from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinyEntitySearc
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinySearchConfig
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinySearchFilters
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinySearchResult
+from tiny_graph.graph.multi_layer_graph.search.search_ranker import rerank_candidates_cross_encoder
+from tiny_graph.graph.multi_layer_graph.search.search_ranker import rerank_candidates_rrf
+from tiny_graph.graph.multi_layer_graph.search.search_utils import cluster_fulltext_search
+from tiny_graph.graph.multi_layer_graph.search.search_utils import cluster_similarity_search
 from tiny_graph.graph.multi_layer_graph.search.search_utils import edge_fulltext_search
 from tiny_graph.graph.multi_layer_graph.search.search_utils import (
     edge_similarity_search,
@@ -20,7 +27,6 @@ from tiny_graph.graph.multi_layer_graph.search.search_utils import (
 from tiny_graph.graph.multi_layer_graph.search.search_utils import (
     entity_similarity_search,
 )
-from tiny_graph.graph.multi_layer_graph.search.search_utils import rrf
 from tinygent.runtime.executors import run_in_semaphore
 
 
@@ -41,8 +47,9 @@ async def search(
 
     (
         (
-            (edges, edges_reranker_scores),
-            (entity_nodes, entity_reranker_scores),
+            (edges, edge_reranker_scores),
+            (entities, entity_reranker_scores),
+            (clusters, cluster_reranker_scores),
         )
     ) = await run_in_semaphore(
         edge_search(
@@ -65,14 +72,81 @@ async def search(
             subgraph_ids=subgraph_ids,
             limit=config.limit,
         ),
+        cluster_search(
+            clients,
+            query,
+            query_vector,
+            config=config.cluster_search,
+            filters=filters,
+            subgraph_ids=subgraph_ids,
+            limit=config.limit,
+        ),
     )
 
     return TinySearchResult(
-        entities=entity_nodes,
+        entities=entities,
         entity_reranker_scores=entity_reranker_scores,
         edges=edges,
-        edge_reranker_scores=edges_reranker_scores,
+        edge_reranker_scores=edge_reranker_scores,
+        clusters=clusters,
+        cluster_reranker_scores=cluster_reranker_scores,
     )
+
+
+async def cluster_search(
+    clients: TinyGraphClients,
+    query: str,
+    query_vector: list[float] | None,
+    *,
+    limit: int,
+    config: TinyClusterSearchConfig | None,
+    filters: TinySearchFilters | None = None,
+    subgraph_ids: list[str] | None,
+) -> tuple[list[TinyClusterNode], list[float]]:
+    if not config:
+        return [], []
+
+    tasks = []
+    search_results: list[list[TinyClusterNode]] = []
+
+    # search stage
+    if ClusterSearchMethods.BM_25 in config.search_methods:
+        tasks.append(
+            cluster_fulltext_search(
+                clients, query, subgraph_ids=subgraph_ids, filters=filters, limit=limit
+            )
+        )
+
+    if query_vector and ClusterSearchMethods.COSINE_SIM in config.search_methods:
+        tasks.append(
+            cluster_similarity_search(
+                clients,
+                query_vector,
+                subgraph_ids=subgraph_ids,
+                filters=filters,
+                limit=limit,
+            )
+        )
+
+    if tasks:
+        search_results = await run_in_semaphore(*tasks)
+
+    # reranking stage
+    cluster_uuid_map = {
+        c.uuid: c for single_group in search_results for c in single_group
+    }
+
+    reranked_uuids: list[str] = []
+    reranked_scores: list[float] = []
+
+    if config.reranker == EdgeReranker.RRF:
+        reranked_uuids, reranked_scores = rerank_candidates_rrf(search_results)
+
+    elif config.reranker == EdgeReranker.CROSS_ENCODER:
+        reranked_uuids, reranked_scores = await rerank_candidates_cross_encoder(query, search_results, clients.cross_encoder)
+
+    reranked_clusters = [cluster_uuid_map[uuid] for uuid in reranked_uuids]
+    return reranked_clusters[:limit], reranked_scores[:limit]
 
 
 async def entity_search(
@@ -122,18 +196,10 @@ async def entity_search(
     reranked_scores: list[float] = []
 
     if config.reranker == EntityReranker.RRF:
-        ranking_table = [[e.uuid for e in method] for method in search_results]
-        reranked_uuids, reranked_scores = rrf(ranking_table)
+        reranked_uuids, reranked_scores = rerank_candidates_rrf(search_results)
 
     elif config.reranker == EntityReranker.CROSS_ENCODER:
-        entity_name_2_uuid_map = {
-            e.name: e.uuid for single_group in search_results for e in single_group
-        }
-        reranked_results = await clients.cross_encoder.rank(
-            query, list(entity_name_2_uuid_map.keys())
-        )
-        reranked_uuids = [entity_name_2_uuid_map[r[0][1]] for r in reranked_results]
-        reranked_scores = [r[1] for r in reranked_results]
+        reranked_uuids, reranked_scores = await rerank_candidates_cross_encoder(query, search_results, clients.cross_encoder)
 
     reranked_entities = [entity_uuid_map[uuid] for uuid in reranked_uuids]
     return reranked_entities[:limit], reranked_scores[:limit]
@@ -193,18 +259,10 @@ async def edge_search(
     reranked_scores: list[float] = []
 
     if config.reranker == EdgeReranker.RRF:
-        ranking_table = [[e.uuid for e in method] for method in search_results]
-        reranked_uuids, reranked_scores = rrf(ranking_table)
+        reranked_uuids, reranked_scores = rerank_candidates_rrf(search_results)
 
     elif config.reranker == EdgeReranker.CROSS_ENCODER:
-        edge_name_2_uuid_map = {
-            e.name: e.uuid for single_group in search_results for e in single_group
-        }
-        reranked_results = await clients.cross_encoder.rank(
-            query, list(edge_name_2_uuid_map.keys())
-        )
-        reranked_uuids = [edge_name_2_uuid_map[r[0][1]] for r in reranked_results]
-        reranked_scores = [r[1] for r in reranked_results]
+        reranked_uuids, reranked_scores = await rerank_candidates_cross_encoder(query, search_results, clients.cross_encoder)
 
     reranked_edges = [edge_uuid_map[uuid] for uuid in reranked_uuids]
     return reranked_edges[:limit], reranked_scores[:limit]

@@ -20,6 +20,11 @@ class EntitySearchMethods(Enum):
     BM_25 = 'bm_25'
 
 
+class ClusterSearchMethods(Enum):
+    COSINE_SIM = 'cosine_similarity'
+    BM_25 = 'bm_25'
+
+
 class EdgeReranker(Enum):
     RRF = 'rrf'
     CROSS_ENCODER = 'cross_encoder'
@@ -30,9 +35,15 @@ class EntityReranker(Enum):
     CROSS_ENCODER = 'cross_encoder'
 
 
+class ClusterReranker(Enum):
+    RRF = 'rrf'
+    CROSS_ENCODER = 'cross_encoder'
+
+
 class TinySearchFilters(TinyModel):
     entity_uuids: list[str] | None = None
     edge_uuids: list[str] | None = None
+    cluster_uuids: list[str] | None = None
 
     def build_query(self, provider: GraphProvider, *use_fields: str) -> str:
         clauses: list[str] = []
@@ -42,6 +53,9 @@ class TinySearchFilters(TinyModel):
 
         if 'edge_uuids' in use_fields and self.edge_uuids:
             clauses.append(self._in_clause(provider, 'e.uuid', 'edge_uuids'))
+
+        if 'cluster_uuids' in use_fields and self.edge_uuids:
+            clauses.append(self._in_clause(provider, 'c.uuid', 'cluster_uuids'))
 
         if not clauses:
             return ''
@@ -76,11 +90,19 @@ class TinyEdgeSearchConfig(TinyModel):
     reranker: EdgeReranker = Field(default=EdgeReranker.CROSS_ENCODER)
 
 
+class TinyClusterSearchConfig(TinyModel):
+    search_methods: list[ClusterSearchMethods] = Field(
+        default=[ClusterSearchMethods.COSINE_SIM]
+    )
+    reranker: ClusterReranker = Field(default=ClusterReranker.CROSS_ENCODER)
+
+
 class TinySearchConfig(TinyModel):
     limit: int = Field(default=5)
 
     entity_search: TinyEntitySearchConfig | None = Field(default=None)
     edge_search: TinyEdgeSearchConfig | None = Field(default=None)
+    cluster_search: TinyClusterSearchConfig | None = Field(default=None)
 
 
 class TinySearchResult(TinyModel):

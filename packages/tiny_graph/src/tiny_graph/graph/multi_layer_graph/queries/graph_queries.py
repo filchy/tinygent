@@ -54,6 +54,15 @@ def get_fulltext_indices(
                 e.summary
             ];
             """,
+            f"""
+            CREATE FULLTEXT INDEX `{NodeType.CLUSTER.value}_fulltext_index`
+            IF NOT EXISTS
+            FOR (e:{NodeType.CLUSTER.value})
+            ON EACH [
+                e.name,
+                e.summary
+            ];
+            """,
             """
             CREATE FULLTEXT INDEX edge_name_and_fact IF NOT EXISTS
             FOR ()-[e:RELATES_TO]-()
@@ -79,6 +88,18 @@ def get_vector_indices(
             CREATE VECTOR INDEX `{NodeType.ENTITY.value}_{clients.safe_embed_model}_name_embedding_index`
             IF NOT EXISTS
             FOR (e:{NodeType.ENTITY.value})
+            ON (e.name_embedding)
+            OPTIONS {{
+                indexConfig: {{
+                    `vector.dimensions`: {clients.embedder.embedding_dim},
+                    `vector.similarity_function`: 'cosine'
+                }}
+            }};
+            """,
+            f"""
+            CREATE VECTOR INDEX `{NodeType.CLUSTER.value}_{clients.safe_embed_model}_name_embedding_index`
+            IF NOT EXISTS
+            FOR (e:{NodeType.CLUSTER.value})
             ON (e.name_embedding)
             OPTIONS {{
                 indexConfig: {{

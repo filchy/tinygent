@@ -1,13 +1,18 @@
 from datetime import datetime
+import json
 import logging
 import os
 from typing import Any
 
 from pydantic import Field
 
+from tiny_graph.driver.base import BaseDriver
 from tiny_graph.graph.multi_layer_graph.core.edge import entity_edge_batch_embeddings
 from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClients
+from tiny_graph.graph.multi_layer_graph.edges import TinyClusterEdge
+from tiny_graph.graph.multi_layer_graph.edges import TinyEventEdge
 from tiny_graph.graph.multi_layer_graph.edges import TinyEntityEdge
+from tiny_graph.graph.multi_layer_graph.nodes import TinyClusterNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEventNode
 from tiny_graph.graph.multi_layer_graph.search.search import search
@@ -37,7 +42,20 @@ DEFAULT_EDGE_NAME = os.getenv('TINY_DEFAULT_EDGE_NAME', 'RELATES_TO')
 MAX_REFLEXION_ITERATIONS = int(os.getenv('TINY_GRAPH_MAX_REFLEXION_ITERATIONS', 0))
 
 
-class Edge(TinyModel):
+class ClusterEdge(TinyModel):
+    source_cluster_id: int = Field(
+        ..., description='The id of the source entity from the CLUSTERS list'
+    )
+    target_entity_id: int = Field(
+        ..., description='The id of the target entity from the ENTITIES list'
+    )
+
+
+class ExtractedClusterEdges(TinyModel):
+    edges: list[ClusterEdge]
+
+
+class EntityEdge(TinyModel):
     relation_type: str = Field(..., description='FACT_PREDICATE_IN_SCREAMING_SNAKE_CASE')
     source_entity_id: int = Field(
         ..., description='The id of the source entity from the ENTITIES list'
@@ -59,8 +77,8 @@ class Edge(TinyModel):
     )
 
 
-class ExtractedEdges(TinyModel):
-    edges: list[Edge]
+class ExtractedEntityEdges(TinyModel):
+    edges: list[EntityEdge]
 
 
 class MissingFacts(TinyModel):
@@ -79,7 +97,7 @@ class EdgeDuplicate(TinyModel):
     fact_type: str = Field(..., description='One of the provided fact types or DEFAULT')
 
 
-def extract_edges(
+async def _extract_entity_edges(
     llm: AbstractLLM,
     entities: list[TinyEntityNode],
     event_node: TinyEventNode,
@@ -125,13 +143,13 @@ def extract_edges(
 
     facts_missed = True
     reflexion_iterations = 0
-    edges_data: list[Edge] | None = None
+    edges_data: list[EntityEdge] | None = None
 
     from tiny_graph.graph.multi_layer_graph.prompts.edges import (
-        get_edge_extraction_prompt,
+        get_entity_edge_extraction_prompt,
     )
 
-    edge_prompt = get_edge_extraction_prompt()
+    edge_prompt = get_entity_edge_extraction_prompt()
 
     # extract edges & check all missing facts using reflexion
     while facts_missed and reflexion_iterations <= MAX_REFLEXION_ITERATIONS:
@@ -149,7 +167,7 @@ def extract_edges(
                     ),
                 ]
             ),
-            output_schema=ExtractedEdges,
+            output_schema=ExtractedEntityEdges,
         )
 
         edges_data = result.edges
@@ -158,10 +176,10 @@ def extract_edges(
         reflexion_iterations += 1
         if reflexion_iterations < MAX_REFLEXION_ITERATIONS:
             from tiny_graph.graph.multi_layer_graph.prompts.edges import (
-                get_edge_extract_reflextion_prompt,
+                get_entity_edge_extract_reflextion_prompt,
             )
 
-            reflex_prompt = get_edge_extract_reflextion_prompt()
+            reflex_prompt = get_entity_edge_extract_reflextion_prompt()
             reflexion_result = llm.generate_structured(
                 llm_input=TinyLLMInput(
                     messages=[
@@ -187,7 +205,7 @@ def extract_edges(
     if not edges_data:
         return []
 
-    # convert edges data `list[Edge]` -> `list[TinyEntityEdge]`
+    # convert edges data `list[EntityEdge]` -> `list[TinyEntityEdge]`
     edges = []
     for edge_data in edges_data:
         # Validate Edge Date information
@@ -261,6 +279,157 @@ def extract_edges(
         [(e.name, e.source_node_uuid, e.target_node_uuid, e.fact) for e in edges],
     )
     return edges
+
+
+async def _extract_cluster_edges(
+    llm: AbstractLLM,
+    event_node: TinyEventNode,
+    entities: list[TinyEntityNode],
+    extracted_clusters: list[TinyClusterNode],
+    existing_clusters: list[TinyClusterNode],
+    subgraph_id: str,
+) -> list[TinyClusterEdge]:
+    all_clusters = extracted_clusters + existing_clusters
+
+    context: dict[str, Any] = {
+        'event_content': event_node.serialized_data,
+        'entities': [
+            {'id': idx, 'name': node.name, 'entity_types': node.labels}
+            for idx, node in enumerate(entities)
+        ],
+        'clusters': [
+            {'id': idx, 'name': cluster.name, 'summary': cluster.summary}
+            for idx, cluster in enumerate(all_clusters)
+        ],
+        'custom_prompt': '',
+    }
+
+    facts_missed = True
+    reflexion_iterations = 0
+    valid_extracted_edges: list[ClusterEdge] | None = None
+
+    from tiny_graph.graph.multi_layer_graph.prompts.edges import get_cluster_edge_extraction_prompt
+
+    edge_prompt = get_cluster_edge_extraction_prompt()
+
+    # extract edges & check all missing facts using reflexion
+    while facts_missed and reflexion_iterations <= MAX_REFLEXION_ITERATIONS:
+        result = llm.generate_structured(
+            llm_input=TinyLLMInput(
+                messages=[
+                    TinySystemMessage(content=edge_prompt.system),
+                    TinyHumanMessage(content=render_template(
+                        edge_prompt.user,
+                        context,
+                    )),
+                ]
+            ),
+            output_schema=ExtractedClusterEdges,
+        )
+
+        edges_data = result.edges
+        context['extracted_edges'] = []
+
+        # validate results
+        valid_extracted_edges = []
+
+        for extracted_edge in edges_data:
+            source_cluster_idx = extracted_edge.source_cluster_id
+            target_entity_idx = extracted_edge.target_entity_id
+
+            if not (
+                0 <= source_cluster_idx < len(all_clusters) and 0 <= target_entity_idx < len(entities)
+            ):
+                logger.warning(
+                    f'Invalid cluster/entity IDs in cluster edge extraction. '
+                    f'source_cluster_id: {source_cluster_idx} (valid range: 0-{len(all_clusters) - 1}), '
+                    f'target_entity_id: {target_entity_idx} (valid range: 0-{len(entities) - 1})'
+                )
+                continue
+
+            valid_extracted_edges.append(extracted_edge)
+            context['extracted_edges'].append({
+                'cluster_name': all_clusters[source_cluster_idx].name,
+                'entity_name': entities[target_entity_idx].name,
+            })
+
+        reflexion_iterations += 1
+        if reflexion_iterations < MAX_REFLEXION_ITERATIONS:
+            from tiny_graph.graph.multi_layer_graph.prompts.edges import get_cluster_edge_extract_reflextion_prompt
+
+            reflex_prompt = get_cluster_edge_extract_reflextion_prompt()
+            reflexion_result = llm.generate_structured(
+                llm_input=TinyLLMInput(
+                    messages=[
+                        TinySystemMessage(content=reflex_prompt.system),
+                        TinyHumanMessage(content=render_template(
+                            reflex_prompt.user,
+                            context,
+                        )),
+                    ]
+                ),
+                output_schema=MissingFacts,
+            )
+
+            if reflexion_result.missing_facts:
+                context['custom_prompt'] = (
+                    f'The following facts were missed in a previous extraction: {"\n".join(reflexion_result.missing_facts)}'
+                )
+
+            facts_missed = bool(reflexion_result.missing_facts)
+
+    if not valid_extracted_edges:
+        return []
+
+    final_edges: list[TinyClusterEdge] = []
+
+    for edge in valid_extracted_edges:
+        source_cluster_idx = edge.source_cluster_id
+        target_entity_idx = edge.target_entity_id
+
+        final_edges.append(
+            TinyClusterEdge(
+                subgraph_id=subgraph_id,
+                source_node_uuid=all_clusters[source_cluster_idx].uuid,
+                target_node_uuid=entities[target_entity_idx].uuid,
+            )
+        )
+        
+    return final_edges
+
+
+async def extract_edges(
+    llm: AbstractLLM,
+    entities: list[TinyEntityNode],
+    event_node: TinyEventNode,
+    previous_events: list[TinyEventNode],
+    edge_types: dict[str, type[TinyModel]] | None,
+    edge_type_map: dict[tuple[str, str], list[str]],
+    extracted_clusters: list[TinyClusterNode],
+    existing_clusters: list[TinyClusterNode],
+    subgraph_id: str,
+) -> tuple[list[TinyEntityEdge], list[TinyClusterEdge]]:
+    extracted_entity_edges, extracted_cluster_edges = await run_in_semaphore(
+        _extract_entity_edges(
+            llm,
+            entities,
+            event_node,
+            previous_events,
+            edge_types,
+            edge_type_map,
+            subgraph_id,
+        ),
+        _extract_cluster_edges(
+            llm,
+            event_node,
+            entities,
+            extracted_clusters,
+            existing_clusters,
+            subgraph_id,
+        )
+    )
+
+    return extracted_entity_edges, extracted_cluster_edges
 
 
 def resolve_edge_pointers(
@@ -516,14 +685,17 @@ async def resolve_extracted_edge(
     return resolved_edge, invalidated_edges, duplicate_edges
 
 
-async def resolve_extracted_edges(
+async def resolve_extracted_entity_edges(
     clients: TinyGraphClients,
     extracted_edges: list[TinyEntityEdge],
     event: TinyEventNode,
     entities: list[TinyEntityNode],
+    entity_uuid_map: dict[str, str],
     edge_types: dict[str, type[TinyModel]],
     edge_type_map: dict[tuple[str, str], list[str]],
 ) -> tuple[list[TinyEntityEdge], list[TinyEntityEdge]]:
+    extracted_edges = resolve_edge_pointers(extracted_edges, entity_uuid_map)
+
     # exact fast deduplication
     deduplicated_edges: list[TinyEntityEdge] = []
     seen: set[tuple[str, str, str]] = set()
@@ -709,3 +881,81 @@ async def resolve_extracted_edges(
         entity_edge_batch_embeddings(clients.embedder, invalidated_edges),
     )
     return resolved_edges, invalidated_edges
+
+
+async def bulk_save_entity_edges(driver: BaseDriver, edges: list[TinyEntityEdge]) -> list[str]:
+    from tiny_graph.graph.multi_layer_graph.queries.edge_queries import (
+        save_entity_edges_bulk,
+    )
+
+    payload = [
+        {
+            'uuid': e.uuid,
+            'subgraph_id': e.subgraph_id,
+            'source_node_uuid': e.source_node_uuid,
+            'target_node_uuid': e.target_node_uuid,
+            'created_at': e.created_at,
+            'name': e.name,
+            'fact': e.fact,
+            'fact_embedding': e.fact_embedding,
+            'events': e.events,
+            'expired_at': e.expired_at,
+            'valid_at': e.valid_at,
+            'invalid_at': e.invalid_at,
+            'attributes': json.dumps(e.attributes),
+        }
+        for e in edges
+    ]
+
+    results, _, _ = await driver.execute_query(
+        query=save_entity_edges_bulk(driver.provider),
+        edges=payload,
+    )
+
+    return results[0]['uuids'] if results else []
+
+
+async def bulk_save_cluster_edges(driver: BaseDriver, edges: list[TinyClusterEdge]) -> list[str]:
+    from tiny_graph.graph.multi_layer_graph.queries.edge_queries import (
+        save_cluster_edges_bulk,
+    )
+
+    payload = [
+        {
+            'uuid': e.uuid,
+            'subgraph_id': e.subgraph_id,
+            'created_at': e.created_at,
+            'cluster_node_uuid': e.source_node_uuid,
+            'entity_node_uuid': e.target_node_uuid,
+        }
+        for e in edges
+    ]
+
+    results, _, _ = await driver.execute_query(
+        query=save_cluster_edges_bulk(driver.provider),
+        edges=payload,
+    )
+
+    return results[0]['uuids'] if results else []
+
+
+async def bulk_save_event_edges(driver: BaseDriver, edges: list[TinyEventEdge]) -> list[str]:
+    from tiny_graph.graph.multi_layer_graph.queries.edge_queries import save_event_edges_bulk
+
+    payload = [
+        {
+            'uuid': e.uuid,
+            'subgraph_id': e.subgraph_id,
+            'created_at': e.created_at,
+            'event_node_uuid': e.source_node_uuid,
+            'entity_node_uuid': e.target_node_uuid,
+        }
+        for e in edges
+    ]
+
+    results, _, _ = await driver.execute_query(
+        query=save_event_edges_bulk(driver.provider),
+        edges=payload,
+    )
+
+    return results[0]['uuids'] if results else []

@@ -90,7 +90,7 @@ def get_entity_summary_creation_prompt() -> TinyPromptTemplate.UserSystem:
     return TinyPromptTemplate.UserSystem(
         system='You are a helpful assistant that extracts entity summaries from the provided text.',
         user="""Given the MESSAGES and the ENTITY, update the summary that combines relevant information about the entity
-from the messages and relevant information from the existing summary.
+from the messages and relevant information from the existing summary. Write only new summarization text, nothing else.
 
 <EXISTING SUMMARY>
 {{ existing_summary }}
