@@ -77,7 +77,7 @@ class TinyReActAgentConfig(TinyBaseAgentConfig['TinyReActAgent']):
 
     def build(self) -> TinyReActAgent:
         if not self.prompt_template:
-            from .prompts.react import get_prompt_template
+            from ..prompts.agents.react_agent import get_prompt_template
 
             self.prompt_template = get_prompt_template()
 

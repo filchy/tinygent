@@ -24,7 +24,6 @@ build-backend = "hatchling.build"
 
 [project.optional-dependencies]
 dev = [
-    "black>=25.1.0",
     "mypy>=1.17.1",
     "ruff>=0.12.11",
 ]
@@ -33,6 +32,7 @@ openai = ["tiny-openai"]
 mistralai = ["tiny-mistralai"]
 gemini = ["tiny-gemini"]
 chat = ["tiny-chat"]
+graph = ["tiny-graph"]
 
 [project.scripts]
 tiny = "tinygent.cli.main:run_cli"
@@ -43,6 +43,7 @@ fmt = "scripts.fmt:main"
 tiny_agents = "tinygent.agents.register"
 tiny_tools = "tinygent.tools.register"
 tiny_memory = "tinygent.memory.register"
+tiny_crossencoders = "tinygent.cross_encoders.register"
 
 [tool.uv]
 package = true
@@ -56,6 +57,7 @@ tiny-openai = { workspace = true }
 tiny-mistralai = { workspace = true }
 tiny-gemini = { workspace = true }
 tiny-chat = { workspace = true }
+tiny-graph = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["tinygent"]

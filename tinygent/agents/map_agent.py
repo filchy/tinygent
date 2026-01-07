@@ -185,7 +185,7 @@ class TinyMAPAgentConfig(TinyBaseAgentConfig['TinyMAPAgent']):
 
     def build(self) -> TinyMAPAgent:
         if not self.prompt_template:
-            from .prompts.map import get_prompt_template
+            from ..prompts.agents.map_agent import get_prompt_template
 
             self.prompt_template = get_prompt_template()
 

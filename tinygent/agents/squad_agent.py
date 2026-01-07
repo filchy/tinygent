@@ -100,7 +100,7 @@ class TinySquadAgentConfig(TinyBaseAgentConfig['TinySquadAgent']):
 
     def build(self) -> TinySquadAgent:
         if not self.prompt_template:
-            from .prompts.squad import get_prompt_template
+            from ..prompts.agents.squad_agent import get_prompt_template
 
             self.prompt_template = get_prompt_template()
 

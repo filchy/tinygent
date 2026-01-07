@@ -41,6 +41,8 @@ class TinyModelBuildable(TinyModel, Generic[T], ABC):
 
         mapping = {
             'llm': registry.get_llms,
+            'embedders': registry.get_embedders,
+            'crossencoders': registry.get_crossencoders,
             'tools': registry.get_tools,
             'memory_list': registry.get_memories,
             'agents': registry.get_agents,

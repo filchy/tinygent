@@ -26,8 +26,6 @@ class AbstractLLMConfig(TinyModelBuildable[T], Generic[T]):
 
     model: str
 
-    temperature: float
-
     api_key: str | None = None
 
     timeout: float = 60.0

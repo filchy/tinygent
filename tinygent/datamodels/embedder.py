@@ -26,6 +26,18 @@ class AbstractEmbedder(ABC):
         """Initialize the Embedder with the given configuration."""
         pass
 
+    @property
+    @abstractmethod
+    def model_name(self) -> str:
+        """Returns current model name."""
+        raise NotImplementedError('Subclasses must implement this method.')
+
+    @property
+    @abstractmethod
+    def embedding_dim(self) -> int:
+        """Get dimension of the embeddings for the current model."""
+        raise NotImplementedError('Subclasses must implement this method.')
+
     @abstractmethod
     def embed(self, query: str) -> list[float]:
         """Create embedding for single input query."""
