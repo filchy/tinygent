@@ -21,9 +21,7 @@ from tiny_graph.graph.multi_layer_graph.queries.node_queries import (
 from tiny_graph.graph.multi_layer_graph.queries.node_queries import (
     save_entity_nodes_bulk,
 )
-from tiny_graph.graph.multi_layer_graph.queries.node_queries import (
-    save_event_nodes_bulk,
-)
+from tiny_graph.graph.multi_layer_graph.queries.node_queries import save_event_nodes_bulk
 from tiny_graph.graph.multi_layer_graph.search.search import search
 from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinySearchResult
 from tiny_graph.graph.multi_layer_graph.search.search_presets import (

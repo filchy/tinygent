@@ -16,9 +16,7 @@ from tiny_graph.graph.multi_layer_graph.search.search_cfg import TinySearchResul
 from tiny_graph.graph.multi_layer_graph.search.search_ranker import (
     rerank_candidates_cross_encoder,
 )
-from tiny_graph.graph.multi_layer_graph.search.search_ranker import (
-    rerank_candidates_rrf,
-)
+from tiny_graph.graph.multi_layer_graph.search.search_ranker import rerank_candidates_rrf
 from tiny_graph.graph.multi_layer_graph.search.search_utils import (
     cluster_fulltext_search,
 )
@@ -26,12 +24,8 @@ from tiny_graph.graph.multi_layer_graph.search.search_utils import (
     cluster_similarity_search,
 )
 from tiny_graph.graph.multi_layer_graph.search.search_utils import edge_fulltext_search
-from tiny_graph.graph.multi_layer_graph.search.search_utils import (
-    edge_similarity_search,
-)
-from tiny_graph.graph.multi_layer_graph.search.search_utils import (
-    entity_fulltext_search,
-)
+from tiny_graph.graph.multi_layer_graph.search.search_utils import edge_similarity_search
+from tiny_graph.graph.multi_layer_graph.search.search_utils import entity_fulltext_search
 from tiny_graph.graph.multi_layer_graph.search.search_utils import (
     entity_similarity_search,
 )

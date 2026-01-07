@@ -6,9 +6,7 @@ import time
 from tiny_graph.driver.base import BaseDriver
 from tiny_graph.graph.base import BaseGraph
 from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClients
-from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import (
-    ExtractedEntities,
-)
+from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import ExtractedEntities
 from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import ExtractedEntity
 from tiny_graph.graph.multi_layer_graph.datamodels.extract_nodes import MissedEntities
 from tiny_graph.graph.multi_layer_graph.edges import TinyClusterEdge
@@ -23,9 +21,7 @@ from tiny_graph.graph.multi_layer_graph.ops.cluster_operations import (
 from tiny_graph.graph.multi_layer_graph.ops.edge_operations import (
     bulk_save_cluster_edges,
 )
-from tiny_graph.graph.multi_layer_graph.ops.edge_operations import (
-    bulk_save_entity_edges,
-)
+from tiny_graph.graph.multi_layer_graph.ops.edge_operations import bulk_save_entity_edges
 from tiny_graph.graph.multi_layer_graph.ops.edge_operations import bulk_save_event_edges
 from tiny_graph.graph.multi_layer_graph.ops.edge_operations import extract_edges
 from tiny_graph.graph.multi_layer_graph.ops.edge_operations import (

@@ -114,6 +114,6 @@ Before you begin using tinygent, ensure that you meet the following software pre
 To ensure code quality, formatting consistency, and type safety, run:
 
 ```bash
-uv run fmt   # Format code using Black and Ruff
+uv run fmt   # Format code Ruff
 uv run lint  # Run Ruff linter and Mypy type checks
 ```
