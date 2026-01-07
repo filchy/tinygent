@@ -1,9 +1,7 @@
 from datetime import datetime
-import time
 import json
 import logging
-
-from tinygent.telemetry.otel import set_tiny_attributes
+import time
 
 from tiny_graph.driver.base import BaseDriver
 from tiny_graph.graph.base import BaseGraph
@@ -49,9 +47,10 @@ from tiny_graph.graph.multi_layer_graph.types import NodeType
 from tiny_graph.graph.multi_layer_graph.utils.custom_types import (
     validate_custom_entity_types,
 )
-from tiny_graph.helper import generate_uuid, parse_timestamp
+from tiny_graph.helper import generate_uuid
 from tiny_graph.helper import get_current_timestamp
 from tiny_graph.helper import get_default_subgraph_id
+from tiny_graph.helper import parse_timestamp
 from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
 from tinygent.datamodels.embedder import AbstractEmbedder
 from tinygent.datamodels.llm import AbstractLLM
@@ -60,6 +59,7 @@ from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.runtime.executors import run_in_semaphore
 from tinygent.telemetry.decorators import tiny_trace
+from tinygent.telemetry.otel import set_tiny_attributes
 from tinygent.types.base import TinyModel
 from tinygent.types.io.llm_io_input import TinyLLMInput
 from tinygent.types.prompt_template import TinyPromptTemplate
@@ -258,16 +258,18 @@ class TinyMultiLayerGraph(BaseGraph):
 
         logger.debug('add episode finished in %d seconds', time.time() - start)
 
-        set_tiny_attributes({
-            'subgraph_id': subgraph_id,
-            'event.uuid': event.uuid,
-            'event.content': json.dumps(event.serialized_data),
-            'event.valid_at': parse_timestamp(event.valid_at),
-            'entity.count': len(entities_with_attributes),
-            'entity_edge.count': len(entity_edges),
-            'cluster.count': len(new_clusters),
-            'cluster_edge.count': len(cluster_edges),
-        })
+        set_tiny_attributes(
+            {
+                'subgraph_id': subgraph_id,
+                'event.uuid': event.uuid,
+                'event.content': json.dumps(event.serialized_data),
+                'event.valid_at': parse_timestamp(event.valid_at),
+                'entity.count': len(entities_with_attributes),
+                'entity_edge.count': len(entity_edges),
+                'cluster.count': len(new_clusters),
+                'cluster_edge.count': len(cluster_edges),
+            }
+        )
 
         return AddRecordResult(
             event=event,
@@ -448,7 +450,11 @@ class TinyMultiLayerGraph(BaseGraph):
                 output_schema=ExtractedEntities,
             )
 
-            logger.debug('Extracted (%d) entities: %s', len(extracted_entities.extracted_entities), [e.name for e in extracted_entities.extracted_entities])
+            logger.debug(
+                'Extracted (%d) entities: %s',
+                len(extracted_entities.extracted_entities),
+                [e.name for e in extracted_entities.extracted_entities],
+            )
 
             missed_entities = self.llm.generate_structured(
                 llm_input=TinyLLMInput(
@@ -480,9 +486,15 @@ class TinyMultiLayerGraph(BaseGraph):
 
             need_revision = len(missed_entities.missed_entities) > 0
 
-            logger.debug('Entities extraction %s revision', 'need' if need_revision else 'don\'t need')
+            logger.debug(
+                'Entities extraction %s revision',
+                'need' if need_revision else "don't need",
+            )
             if need_revision:
-                logger.debug('Entities reflexion missed entities: %s', missed_entities.missed_entities)
+                logger.debug(
+                    'Entities reflexion missed entities: %s',
+                    missed_entities.missed_entities,
+                )
 
             custom_prompt = f'Make sure that the following entities are extracted: {"\n".join(missed_entities.missed_entities)}'
         if not extracted_entities:

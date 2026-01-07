@@ -465,7 +465,11 @@ async def retrieve_events(
         )
 
         r_events = [TinyEventNode.from_record(r) for r in results]
-        logger.debug('Retrieved (%d) events: %s', len(r_events), [r.serialized_data for r in r_events])
+        logger.debug(
+            'Retrieved (%d) events: %s',
+            len(r_events),
+            [r.serialized_data for r in r_events],
+        )
 
         return r_events
 
@@ -534,7 +538,12 @@ async def extract_attributes_from_node(
         _extract_entity_summary(llm, entity_node, event_node, previous_events),
     )
 
-    logger.debug('For entity: %s extracted attributes: %s and summary: %s', entity_node.uuid, attributes, summary)
+    logger.debug(
+        'For entity: %s extracted attributes: %s and summary: %s',
+        entity_node.uuid,
+        attributes,
+        summary,
+    )
 
     entity_node.attributes = attributes
     entity_node.summary = summary

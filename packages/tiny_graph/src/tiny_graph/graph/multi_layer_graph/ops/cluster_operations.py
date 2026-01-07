@@ -61,7 +61,9 @@ async def resolve_and_extract_clusters(
             cluster_entities_map[cluster.uuid].append(entity)
 
         logger.debug(
-            'Existing clusters for entity (%s): %s', entity.uuid, [c.uuid for c in clusters]
+            'Existing clusters for entity (%s): %s',
+            entity.uuid,
+            [c.uuid for c in clusters],
         )
 
     # answers: What similar clusters we have from all existing clusters to current entity
@@ -88,7 +90,9 @@ async def resolve_and_extract_clusters(
         c.uuid: c for clusters in semantic_similar_clusters for c in clusters
     }
 
-    logger.debug('Semantic similar clusters for %s', [c for c in semantic_clusters.keys()])
+    logger.debug(
+        'Semantic similar clusters for %s', [c for c in semantic_clusters.keys()]
+    )
 
     cluster_entity_context = {
         'existing_clusters': [
