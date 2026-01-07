@@ -7,7 +7,8 @@ on:
     branches: [master]
 
 jobs:
-  ruff:
+  lint_and_typecheck:
+    name: Lint & Typecheck
     runs-on: ubuntu-latest
 
     strategy:
