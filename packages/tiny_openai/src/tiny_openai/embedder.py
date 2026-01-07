@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import json
 import os
 from typing import Literal
 
 from openai import AsyncOpenAI
 from openai import OpenAI
+from pydantic import Field
+from pydantic import SecretStr
 
 from tinygent.datamodels.embedder import AbstractEmbedder
 from tinygent.datamodels.embedder import AbstractEmbedderConfig
+from tinygent.telemetry.decorators import tiny_trace
+from tinygent.telemetry.otel import set_tiny_attributes
 
 # all supported models with its output embeddings size
 _SUPPORTED_MODELS: dict[str, int] = {
@@ -18,18 +23,24 @@ _SUPPORTED_MODELS: dict[str, int] = {
 
 
 class OpenAIEmbedderConfig(AbstractEmbedderConfig['OpenAIEmbedder']):
-    type: Literal['openai'] = 'openai'
+    type: Literal['openai'] = Field(default='openai', frozen=True)
 
-    model: str = 'text-embedding-3-small'
+    model_name: str = Field(default='text-embedding-3-small')
 
-    api_key: str | None = os.getenv('OPENAI_API_KEY', None)
+    api_key: SecretStr | None = Field(
+        default_factory=lambda: (
+            SecretStr(os.environ['OPENAI_API_KEY'])
+            if 'OPENAI_API_KEY' in os.environ
+            else None
+        ),
+    )
 
-    base_url: str | None = None
+    base_url: str | None = Field(default=None)
 
     def build(self) -> OpenAIEmbedder:
         return OpenAIEmbedder(
-            model_name=self.model,
-            api_key=self.api_key,
+            model_name=self.model_name,
+            api_key=self.api_key.get_secret_value() if self.api_key else None,
             base_url=self.base_url,
         )
 
@@ -60,6 +71,14 @@ class OpenAIEmbedder(AbstractEmbedder):
         self.__async_client: AsyncOpenAI | None = None
 
     @property
+    def config(self) -> OpenAIEmbedderConfig:
+        return OpenAIEmbedderConfig(
+            model_name=self.model_name,
+            api_key=SecretStr(self.api_key),
+            base_url=self.base_url,
+        )
+
+    @property
     def model_name(self) -> str:
         return self._model_name
 
@@ -71,6 +90,26 @@ class OpenAIEmbedder(AbstractEmbedder):
                 f'Provided model name: {self.model_name} not in supported model names: {", ".join(_SUPPORTED_MODELS.keys())}'
             )
         return v
+
+    def __set_telemetry_attributes(
+        self,
+        query: str | list[str],
+        *,
+        result_len: int | None = None,
+    ) -> None:
+        """Unified telemetry attribute setter for all embedder methods."""
+        queries = [query] if isinstance(query, str) else query
+        attrs: dict[str, str | int | list[str]] = {
+            'model.config': json.dumps(self.config.model_dump(mode='json')),
+            'embedding.dim': self.embedding_dim,
+            'queries': queries,
+            'queries.len': len(queries),
+        }
+
+        if result_len is not None:
+            attrs['result.len'] = result_len
+
+        set_tiny_attributes(attrs)  # type: ignore[arg-type]
 
     def __get_sync_client(self) -> OpenAI:
         if self.__sync_client:
@@ -86,30 +125,42 @@ class OpenAIEmbedder(AbstractEmbedder):
         self.__async_client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
         return self.__async_client
 
+    @tiny_trace('embed')
     def embed(self, query: str) -> list[float]:
         res = self.__get_sync_client().embeddings.create(
             input=query,
             model=self.model_name,
         )
-        return res.data[0].embedding
+        embedding = res.data[0].embedding
+        self.__set_telemetry_attributes(query, result_len=len(embedding))
+        return embedding
 
+    @tiny_trace('embed_batch')
     def embed_batch(self, queries: list[str]) -> list[list[float]]:
         res = self.__get_sync_client().embeddings.create(
             input=queries,
             model=self.model_name,
         )
-        return [emb.embedding for emb in res.data]
+        embeddings = [emb.embedding for emb in res.data]
+        self.__set_telemetry_attributes(queries, result_len=len(embeddings))
+        return embeddings
 
+    @tiny_trace('aembed')
     async def aembed(self, query: str) -> list[float]:
         res = await self.__get_async_client().embeddings.create(
             input=query,
             model=self.model_name,
         )
-        return res.data[0].embedding
+        embedding = res.data[0].embedding
+        self.__set_telemetry_attributes(query, result_len=len(embedding))
+        return embedding
 
+    @tiny_trace('aembed_batch')
     async def aembed_batch(self, queries: list[str]) -> list[list[float]]:
         res = await self.__get_async_client().embeddings.create(
             input=queries,
             model=self.model_name,
         )
-        return [emb.embedding for emb in res.data]
+        embeddings = [emb.embedding for emb in res.data]
+        self.__set_telemetry_attributes(queries, result_len=len(embeddings))
+        return embeddings

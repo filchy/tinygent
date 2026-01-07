@@ -106,15 +106,6 @@ class TinyBaseAgent(AbstractAgent):
     def run_llm(
         self, run_id: str, fn: Callable, llm_input: TinyLLMInput, **kwargs
     ) -> Any:
-        set_tiny_attributes(
-            {
-                'llm.model': str(self.llm.config.model_dump()),
-                'llm.stream': 'false',
-                'llm.messages.data': str([m.tiny_str for m in llm_input.messages]),
-                'llm.messages.num_messages': str(len(llm_input.messages)),
-            }
-        )
-
         self.on_before_llm_call(run_id=run_id, llm_input=llm_input)
         try:
             result = fn(llm_input=llm_input, **kwargs)
@@ -137,15 +128,6 @@ class TinyBaseAgent(AbstractAgent):
         llm_input: TinyLLMInput,
         **kwargs: Any,
     ) -> AsyncGenerator[TinyLLMResultChunk, None]:
-        set_tiny_attributes(
-            {
-                'llm.model': str(self.llm.config.model_dump()),
-                'llm.stream': 'true',
-                'llm.messages.data': str([m.tiny_str for m in llm_input.messages]),
-                'llm.messages.num_messages': str(len(llm_input.messages)),
-            }
-        )
-
         self.on_before_llm_call(run_id=run_id, llm_input=llm_input)
         try:
             result = fn(llm_input=llm_input, **kwargs)

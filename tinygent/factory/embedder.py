@@ -18,7 +18,7 @@ def build_embedder(
     if isinstance(embedder, str):
         model_provider, model_name = parse_model(embedder, provider)
 
-        embed_dict = {'model': model_name, 'type': model_provider, **kwargs}
+        embed_dict = {'model_name': model_name, 'type': model_provider, **kwargs}
 
         if model_provider == 'openai':
             from tiny_openai import OpenAIEmbedderConfig

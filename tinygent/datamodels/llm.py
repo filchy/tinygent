@@ -7,6 +7,8 @@ import typing
 from typing import Generic
 from typing import TypeVar
 
+from pydantic import SecretStr
+
 from tinygent.types.base import TinyModel
 from tinygent.types.builder import TinyModelBuildable
 
@@ -26,7 +28,7 @@ class AbstractLLMConfig(TinyModelBuildable[T], Generic[T]):
 
     model: str
 
-    api_key: str | None = None
+    api_key: SecretStr | None
 
     timeout: float = 60.0
 

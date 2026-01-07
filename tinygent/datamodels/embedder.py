@@ -3,6 +3,8 @@ from abc import abstractmethod
 from typing import Generic
 from typing import TypeVar
 
+from pydantic import SecretStr
+
 from tinygent.types.builder import TinyModelBuildable
 
 T = TypeVar('T', bound='AbstractEmbedder')
@@ -11,7 +13,9 @@ T = TypeVar('T', bound='AbstractEmbedder')
 class AbstractEmbedderConfig(TinyModelBuildable[T], Generic[T]):
     """Abstract base class for Embedder configuration."""
 
-    model: str
+    model_name: str
+
+    api_key: SecretStr | None
 
     def build(self) -> T:
         """Build the Embedder instance from the configuration."""

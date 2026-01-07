@@ -35,7 +35,7 @@ To run the tracing example:
 1. Start the tracing infrastructure:
 ```bash
 cd examples/tracing
-docker-compose up -d
+docker compose up -d
 ```
 
 2. Run the telemetry demo script to generate sample spans:

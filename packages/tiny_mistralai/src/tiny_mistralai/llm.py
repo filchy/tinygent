@@ -12,6 +12,8 @@ from typing import override
 from mistralai import Function
 from mistralai import Mistral
 from mistralai import Tool
+from pydantic import Field
+from pydantic import SecretStr
 
 from tiny_mistralai.utils import mistralai_chunk_to_tiny_chunks
 from tiny_mistralai.utils import mistralai_result_to_tiny_result
@@ -19,6 +21,10 @@ from tiny_mistralai.utils import tiny_prompt_to_mistralai_params
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.llms.utils import accumulate_llm_chunks
+from tinygent.llms.utils import group_chunks_for_telemetry
+from tinygent.llms.utils import set_llm_telemetry_attributes
+from tinygent.telemetry.decorators import tiny_trace
+from tinygent.telemetry.otel import set_tiny_attribute
 from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 
 if typing.TYPE_CHECKING:
@@ -29,22 +35,28 @@ if typing.TYPE_CHECKING:
 
 
 class MistralAILLMConfig(AbstractLLMConfig['MistralAILLM']):
-    type: Literal['mistralai'] = 'mistralai'
+    type: Literal['mistralai'] = Field(default='mistralai', frozen=True)
 
-    model: str = 'mistral-medium-latest'
+    model: str = Field(default='mistral-medium-latest')
 
-    api_key: str | None = os.getenv('MISTRALAI_API_KEY', None)
+    api_key: SecretStr | None = Field(
+        default_factory=lambda: (
+            SecretStr(os.environ['MISTRALAI_API_KEY'])
+            if 'MISTRALAI_API_KEY' in os.environ
+            else None
+        ),
+    )
 
-    safe_prompt: bool = True
+    safe_prompt: bool = Field(default=True)
 
-    temperature: float = 0.6
+    temperature: float = Field(default=0.6)
 
-    timeout: float = 60.0
+    timeout: float = Field(default=60.0)
 
     def build(self) -> MistralAILLM:
         return MistralAILLM(
             model_name=self.model,
-            api_key=self.api_key,
+            api_key=self.api_key.get_secret_value() if self.api_key else None,
             safe_prompt=self.safe_prompt,
             temperature=self.temperature,
             timeout=self.timeout,
@@ -137,6 +149,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
             ),
         )
 
+    @tiny_trace('generate_text')
     def generate_text(
         self,
         llm_input: TinyLLMInput,
@@ -151,8 +164,11 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
             timeout_ms=int(self.timeout * 1000),
         )
 
-        return mistralai_result_to_tiny_result(res)
+        tiny_res = mistralai_result_to_tiny_result(res)
+        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string())
+        return tiny_res
 
+    @tiny_trace('agenerate_text')
     async def agenerate_text(
         self,
         llm_input: TinyLLMInput,
@@ -167,12 +183,16 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
             timeout_ms=int(self.timeout * 1000),
         )
 
-        return mistralai_result_to_tiny_result(res)
+        tiny_res = mistralai_result_to_tiny_result(res)
+        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string())
+        return tiny_res
 
+    @tiny_trace('stream_text')
     async def stream_text(
         self, llm_input: TinyLLMInput
     ) -> AsyncIterator[TinyLLMResultChunk]:
         messages = tiny_prompt_to_mistralai_params(llm_input)
+        set_llm_telemetry_attributes(self.config, llm_input)
 
         res = await self.__get_client().chat.stream_async(
             model=self.model_name,
@@ -182,10 +202,23 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
             timeout_ms=int(self.timeout * 1000),
         )
 
-        async for chunk in res:
-            for tiny_chunk in mistralai_chunk_to_tiny_chunks(chunk.data):
-                yield tiny_chunk
+        async def raw_chunks() -> AsyncIterator[TinyLLMResultChunk]:
+            async for chunk in res:
+                for tiny_chunk in mistralai_chunk_to_tiny_chunks(chunk.data):
+                    yield tiny_chunk
 
+        accumulated_chunks: list[TinyLLMResultChunk] = []
+        try:
+            async for acc_chunk in accumulate_llm_chunks(raw_chunks()):
+                accumulated_chunks.append(acc_chunk)
+                yield acc_chunk
+        finally:
+            set_tiny_attribute(
+                'result',
+                group_chunks_for_telemetry(accumulated_chunks),
+            )
+
+    @tiny_trace('generate_structured')
     def generate_structured(
         self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
@@ -203,8 +236,13 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         if not res.choices or not (message := res.choices[0].message):
             raise ValueError('No message in MistralAI response.')
 
-        return output_schema.model_validate(json.loads(str(message.content) or '{}'))
+        parsed = output_schema.model_validate(json.loads(str(message.content) or '{}'))
+        set_llm_telemetry_attributes(
+            self.config, llm_input, result=str(parsed), output_schema=output_schema
+        )
+        return parsed
 
+    @tiny_trace('agenerate_structured')
     async def agenerate_structured(
         self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
@@ -222,8 +260,13 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         if not res.choices or not (message := res.choices[0].message):
             raise ValueError('No message in MistralAI response.')
 
-        return output_schema.model_validate(json.loads(str(message.content) or '{}'))
+        parsed = output_schema.model_validate(json.loads(str(message.content) or '{}'))
+        set_llm_telemetry_attributes(
+            self.config, llm_input, result=str(parsed), output_schema=output_schema
+        )
+        return parsed
 
+    @tiny_trace('generate_with_tools')
     def generate_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult:
@@ -240,8 +283,13 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
             timeout_ms=int(self.timeout * 1000),
         )
 
-        return mistralai_result_to_tiny_result(res)
+        tiny_res = mistralai_result_to_tiny_result(res)
+        set_llm_telemetry_attributes(
+            self.config, llm_input, result=tiny_res.to_string(), tools=tools
+        )
+        return tiny_res
 
+    @tiny_trace('agenerate_with_tools')
     async def agenerate_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult:
@@ -258,13 +306,19 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
             timeout_ms=int(self.timeout * 1000),
         )
 
-        return mistralai_result_to_tiny_result(res)
+        tiny_res = mistralai_result_to_tiny_result(res)
+        set_llm_telemetry_attributes(
+            self.config, llm_input, result=tiny_res.to_string(), tools=tools
+        )
+        return tiny_res
 
+    @tiny_trace('stream_with_tools')
     async def stream_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> AsyncIterator[TinyLLMResultChunk]:
         functions = [self._tool_convertor(tool) for tool in tools]
         messages = tiny_prompt_to_mistralai_params(llm_input)
+        set_llm_telemetry_attributes(self.config, llm_input, tools=tools)
 
         res = await self.__get_client().chat.stream_async(
             model=self.model_name,
@@ -281,8 +335,16 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
                 for tiny_chunk in mistralai_chunk_to_tiny_chunks(chunk.data):
                     yield tiny_chunk
 
-        async for acc_chunk in accumulate_llm_chunks(raw_chunks()):
-            yield acc_chunk
+        accumulated_chunks: list[TinyLLMResultChunk] = []
+        try:
+            async for acc_chunk in accumulate_llm_chunks(raw_chunks()):
+                accumulated_chunks.append(acc_chunk)
+                yield acc_chunk
+        finally:
+            set_tiny_attribute(
+                'result',
+                group_chunks_for_telemetry(accumulated_chunks),
+            )
 
     def __str__(self) -> str:
         buf = StringIO()
