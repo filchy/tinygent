@@ -88,6 +88,8 @@ async def resolve_and_extract_clusters(
         c.uuid: c for clusters in semantic_similar_clusters for c in clusters
     }
 
+    logger.debug('Semantic similar clusters for %s', [c for c in semantic_clusters.keys()])
+
     cluster_entity_context = {
         'existing_clusters': [
             {
@@ -141,7 +143,7 @@ async def resolve_and_extract_clusters(
         output_schema=NewClusterProposals,
     )
 
-    logger.info('new clusters: %s', new_cluster_proposals.proposals)
+    logger.debug('new clusters: %s', new_cluster_proposals.proposals)
 
     extracted_clusters = [
         TinyClusterNode(

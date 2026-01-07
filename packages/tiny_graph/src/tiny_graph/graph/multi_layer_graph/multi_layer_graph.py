@@ -448,6 +448,8 @@ class TinyMultiLayerGraph(BaseGraph):
                 output_schema=ExtractedEntities,
             )
 
+            logger.debug('Extracted (%d) entities: %s', len(extracted_entities.extracted_entities), [e.name for e in extracted_entities.extracted_entities])
+
             missed_entities = self.llm.generate_structured(
                 llm_input=TinyLLMInput(
                     messages=[
@@ -477,6 +479,10 @@ class TinyMultiLayerGraph(BaseGraph):
             )
 
             need_revision = len(missed_entities.missed_entities) > 0
+
+            logger.debug('Entities extraction %s revision', 'need' if need_revision else 'don\'t need')
+            if need_revision:
+                logger.debug('Entities reflexion missed entities: %s', missed_entities.missed_entities)
 
             custom_prompt = f'Make sure that the following entities are extracted: {"\n".join(missed_entities.missed_entities)}'
         if not extracted_entities:

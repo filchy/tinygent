@@ -398,14 +398,20 @@ async def _extract_cluster_edges(
         source_cluster_idx = edge.source_cluster_id
         target_entity_idx = edge.target_entity_id
 
-        final_edges.append(
-            TinyClusterEdge(
-                subgraph_id=subgraph_id,
-                source_node_uuid=all_clusters[source_cluster_idx].uuid,
-                target_node_uuid=entities[target_entity_idx].uuid,
-            )
+        cluster_edge = TinyClusterEdge(
+            subgraph_id=subgraph_id,
+            source_node_uuid=all_clusters[source_cluster_idx].uuid,
+            target_node_uuid=entities[target_entity_idx].uuid,
+        )
+        final_edges.append(cluster_edge)
+        logger.debug(
+            f'Created new cluster edge: from cluster (UUID: {cluster_edge.source_node_uuid}) to entity (UUID: {cluster_edge.target_node_uuid})'
         )
 
+    logger.debug(
+        'EXTRACTED cluster edges: %s',
+        [(e.source_node_uuid, e.target_node_uuid) for e in final_edges],
+    )
     return final_edges
 
 

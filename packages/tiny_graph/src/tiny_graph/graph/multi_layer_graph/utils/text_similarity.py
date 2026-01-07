@@ -140,7 +140,7 @@ if __name__ == '__main__':
     b_norm = normalize_string_for_fuzzy(b)
 
     print(f'a normilized text: {a_norm}')
-    print(f'b normilized text: {a_norm}')
+    print(f'b normilized text: {b_norm}')
 
     a_shingles = shingles(a_norm)
     b_shingles = shingles(b_norm)

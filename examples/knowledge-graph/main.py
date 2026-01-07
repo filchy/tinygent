@@ -134,16 +134,16 @@ async def main():
             'description': 'Long-term sleeper agent activated during crisis',
             'text': 'Agent Echo was a sleeper agent activated after several years of inactivity to influence political decisions during a Cold War crisis. She knew Agent Raven from their training in London.',
         },
-        # {
-        #     'name': 'SIGINT Unit North',
-        #     'description': 'Signals intelligence group monitoring enemy communications',
-        #     'text': 'SIGINT Unit North, a division of the NSA, monitored encrypted radio transmissions from their base in Frankfurt to track Soviet troop movements behind the Iron Curtain.',
-        # },
-        # {
-        #     'name': 'Handler Atlas',
-        #     'description': 'Senior intelligence handler coordinating field agents',
-        #     'text': 'Handler Atlas managed Agent Raven and Agent Echo from the MI6 headquarters in London, coordinating dead drops and coded messages throughout Europe.',
-        # },
+        {
+            'name': 'SIGINT Unit North',
+            'description': 'Signals intelligence group monitoring enemy communications',
+            'text': 'SIGINT Unit North, a division of the NSA, monitored encrypted radio transmissions from their base in Frankfurt to track Soviet troop movements behind the Iron Curtain.',
+        },
+        {
+            'name': 'Handler Atlas',
+            'description': 'Senior intelligence handler coordinating field agents',
+            'text': 'Handler Atlas managed Agent Raven and Agent Echo from the MI6 headquarters in London, coordinating dead drops and coded messages throughout Europe.',
+        },
     ]
 
     for text in texts:
@@ -157,7 +157,6 @@ async def main():
             edge_type_map=EDGE_TYPE_MAP,
         )
 
-    exit()
     # search in knowledge graph
     clients = TinyGraphClients(
         driver=driver,
