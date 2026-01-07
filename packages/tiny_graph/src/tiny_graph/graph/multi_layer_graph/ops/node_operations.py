@@ -596,7 +596,10 @@ async def bulk_save_entities(
         entities=payload,
     )
 
-    return results[0]['uuids'] if results else []
+    saved_uuids = results[0]['uuids'] if results else []
+    logger.debug('Saved %d entity nodes', len(saved_uuids))
+
+    return saved_uuids
 
 
 async def bulk_save_events(driver: BaseDriver, events: list[TinyEventNode]) -> list[str]:
@@ -619,7 +622,10 @@ async def bulk_save_events(driver: BaseDriver, events: list[TinyEventNode]) -> l
         events=payload,
     )
 
-    return results[0]['uuids'] if results else []
+    saved_uuids = results[0]['uuids'] if results else []
+    logger.debug('Saved %d event nodes', len(saved_uuids))
+
+    return saved_uuids
 
 
 async def bulk_save_clusters(
@@ -642,4 +648,7 @@ async def bulk_save_clusters(
         clusters=payload,
     )
 
-    return results[0]['uuids'] if results else []
+    saved_uuids = results[0]['uuids'] if results else []
+    logger.debug('Saved %d cluster nodes', len(saved_uuids))
+
+    return saved_uuids

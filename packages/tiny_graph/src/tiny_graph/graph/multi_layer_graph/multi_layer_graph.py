@@ -1,5 +1,9 @@
 from datetime import datetime
+import time
+import json
 import logging
+
+from tinygent.telemetry.otel import set_tiny_attributes
 
 from tiny_graph.driver.base import BaseDriver
 from tiny_graph.graph.base import BaseGraph
@@ -45,7 +49,7 @@ from tiny_graph.graph.multi_layer_graph.types import NodeType
 from tiny_graph.graph.multi_layer_graph.utils.custom_types import (
     validate_custom_entity_types,
 )
-from tiny_graph.helper import generate_uuid
+from tiny_graph.helper import generate_uuid, parse_timestamp
 from tiny_graph.helper import get_current_timestamp
 from tiny_graph.helper import get_default_subgraph_id
 from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
@@ -74,6 +78,15 @@ def _get_event_data_type(event: str | dict | BaseMessage) -> DataType:
             return DataType.MESSAGE
         case _:
             raise TypeError(f'Unsupported data type: {type(event)}')
+
+
+class AddRecordResult(TinyModel):
+    event: TinyEventNode
+    entities: list[TinyEntityNode]
+    clusters: list[TinyClusterNode]
+    event_edges: list[TinyEventEdge]
+    entity_edges: list[TinyEntityEdge]
+    cluster_edges: list[TinyClusterEdge]
 
 
 class EntityExtractorPromptTemplate(TinyPromptTemplate):
@@ -149,7 +162,9 @@ class TinyMultiLayerGraph(BaseGraph):
         edge_types: dict[str, type[TinyModel]] | None = None,
         edge_type_map: dict[tuple[str, str], list[str]] | None = None,
         **kwargs,
-    ) -> None:
+    ) -> AddRecordResult:
+        start = time.time()
+
         validate_custom_entity_types(entity_types)
 
         # resolve optional values
@@ -239,6 +254,28 @@ class TinyMultiLayerGraph(BaseGraph):
             entity_edges + invalidated_entity_edges,
             cluster_edges,
             event_edges,
+        )
+
+        logger.debug('add episode finished in %d seconds', time.time() - start)
+
+        set_tiny_attributes({
+            'subgraph_id': subgraph_id,
+            'event.uuid': event.uuid,
+            'event.content': json.dumps(event.serialized_data),
+            'event.valid_at': parse_timestamp(event.valid_at),
+            'entity.count': len(entities_with_attributes),
+            'entity_edge.count': len(entity_edges),
+            'cluster.count': len(new_clusters),
+            'cluster_edge.count': len(cluster_edges),
+        })
+
+        return AddRecordResult(
+            event=event,
+            entities=entities_with_attributes,
+            clusters=new_clusters,
+            event_edges=event_edges,
+            entity_edges=entity_edges,
+            cluster_edges=cluster_edges,
         )
 
     @tiny_trace('bulk_save')

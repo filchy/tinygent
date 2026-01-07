@@ -1,5 +1,6 @@
 from abc import ABC
 from abc import abstractmethod
+from typing import Any
 
 from tiny_graph.driver.base import BaseDriver
 from tinygent.datamodels.embedder import AbstractEmbedder
@@ -28,7 +29,7 @@ class BaseGraph(ABC):
         uuid: str | None = None,
         subgraph_id: str | None = None,
         **kwargs,
-    ) -> None:
+    ) -> Any:
         pass
 
     @abstractmethod

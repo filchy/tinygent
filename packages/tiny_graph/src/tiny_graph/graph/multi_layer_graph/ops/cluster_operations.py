@@ -61,7 +61,7 @@ async def resolve_and_extract_clusters(
             cluster_entities_map[cluster.uuid].append(entity)
 
         logger.debug(
-            'DB clusters for entity (%s): %s', entity.uuid, [c.uuid for c in clusters]
+            'Existing clusters for entity (%s): %s', entity.uuid, [c.uuid for c in clusters]
         )
 
     # answers: What similar clusters we have from all existing clusters to current entity

@@ -925,7 +925,10 @@ async def bulk_save_entity_edges(
         edges=payload,
     )
 
-    return results[0]['uuids'] if results else []
+    saved_uuids = results[0]['uuids'] if results else []
+    logger.debug('Saved %d entity edges', len(saved_uuids))
+
+    return saved_uuids
 
 
 async def bulk_save_cluster_edges(
@@ -951,7 +954,10 @@ async def bulk_save_cluster_edges(
         edges=payload,
     )
 
-    return results[0]['uuids'] if results else []
+    saved_uuids = results[0]['uuids'] if results else []
+    logger.debug('Saved %d cluster edges', len(saved_uuids))
+
+    return saved_uuids
 
 
 async def bulk_save_event_edges(
@@ -977,4 +983,7 @@ async def bulk_save_event_edges(
         edges=payload,
     )
 
-    return results[0]['uuids'] if results else []
+    saved_uuids = results[0]['uuids'] if results else []
+    logger.debug('Saved %d event edges', len(saved_uuids))
+
+    return saved_uuids
