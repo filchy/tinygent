@@ -19,7 +19,9 @@ def main():
         memory='buffer',
     )
 
-    result = agent.run('What is the weather like in Paris?')
+    result = agent.run(
+        'What is the best travel destination and what is the weather like there?'
+    )
 
     logger.info('[RESULT] %s', result)
     logger.info('[AGENT SUMMARY] %s', str(agent))

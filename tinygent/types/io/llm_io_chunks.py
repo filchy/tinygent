@@ -31,3 +31,16 @@ class TinyLLMResultChunk(TinyModel):
     def is_tool_call(self) -> bool:
         """Check if this chunk is a tool call."""
         return self.type == 'tool_call'
+
+    def to_string(self) -> str:
+        """Convert the chunk to a string representation."""
+        parts: list[str] = [f'type={self.type}']
+
+        if self.message:
+            parts.append(f'message={self.message.tiny_str}')
+        if self.tool_call:
+            parts.append(f'tool_call={self.tool_call.tiny_str}')
+        if self.full_tool_call:
+            parts.append(f'full_tool_call={self.full_tool_call.tiny_str}')
+
+        return f'TinyLLMResultChunk({", ".join(parts)})'

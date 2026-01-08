@@ -12,6 +12,8 @@ from openai import AsyncOpenAI
 from openai import OpenAI
 from openai.lib.streaming.chat import ChunkEvent
 from openai.types.chat import ChatCompletionFunctionToolParam
+from pydantic import Field
+from pydantic import SecretStr
 
 from tiny_openai.utils import openai_chunk_to_tiny_chunk
 from tiny_openai.utils import openai_result_to_tiny_result
@@ -19,6 +21,10 @@ from tiny_openai.utils import tiny_prompt_to_openai_params
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.llms.utils import accumulate_llm_chunks
+from tinygent.llms.utils import group_chunks_for_telemetry
+from tinygent.llms.utils import set_llm_telemetry_attributes
+from tinygent.telemetry.decorators import tiny_trace
+from tinygent.telemetry.otel import set_tiny_attribute
 from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 
 if typing.TYPE_CHECKING:
@@ -29,22 +35,28 @@ if typing.TYPE_CHECKING:
 
 
 class OpenAILLMConfig(AbstractLLMConfig['OpenAILLM']):
-    type: Literal['openai'] = 'openai'
+    type: Literal['openai'] = Field(default='openai', frozen=True)
 
-    model: str = 'gpt-4o'
+    model: str = Field(default='gpt-4o')
 
-    api_key: str | None = os.getenv('OPENAI_API_KEY', None)
+    api_key: SecretStr | None = Field(
+        default_factory=lambda: (
+            SecretStr(os.environ['OPENAI_API_KEY'])
+            if 'OPENAI_API_KEY' in os.environ
+            else None
+        ),
+    )
 
-    base_url: str | None = None
+    base_url: str | None = Field(default=None)
 
-    temperature: float | None = None
+    temperature: float | None = Field(default=None)
 
-    timeout: float = 60.0
+    timeout: float = Field(default=60.0)
 
     def build(self) -> OpenAILLM:
         return OpenAILLM(
             model_name=self.model,
-            api_key=self.api_key,
+            api_key=self.api_key.get_secret_value() if self.api_key else None,
             base_url=self.base_url,
             temperature=self.temperature,
             timeout=self.timeout,
@@ -79,6 +91,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
     def config(self) -> OpenAILLMConfig:
         return OpenAILLMConfig(
             model=self.model_name,
+            api_key=SecretStr(self.api_key),
             base_url=self.base_url,
             temperature=self.temperature,
             timeout=self.timeout,
@@ -156,6 +169,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
         self.__async_client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
         return self.__async_client
 
+    @tiny_trace('generate_text')
     def generate_text(
         self,
         llm_input: TinyLLMInput,
@@ -167,8 +181,11 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
             **self._request_args(),
         )
 
-        return openai_result_to_tiny_result(res)
+        tiny_res = openai_result_to_tiny_result(res)
+        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string())
+        return tiny_res
 
+    @tiny_trace('agenerate_text')
     async def agenerate_text(self, llm_input: TinyLLMInput) -> TinyLLMResult:
         messages = tiny_prompt_to_openai_params(llm_input)
 
@@ -177,21 +194,39 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
             **self._request_args(),
         )
 
-        return openai_result_to_tiny_result(res)
+        tiny_res = openai_result_to_tiny_result(res)
+        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string())
+        return tiny_res
 
+    @tiny_trace('stream_text')
     async def stream_text(
         self, llm_input: TinyLLMInput
     ) -> AsyncIterator[TinyLLMResultChunk]:
         messages = tiny_prompt_to_openai_params(llm_input)
+        set_llm_telemetry_attributes(self.config, llm_input)
 
         async with self.__get_async_client().chat.completions.stream(
             messages=messages,
             **self._request_args(),
         ) as stream:
-            async for event in stream:
-                if isinstance(event, ChunkEvent):
-                    yield openai_chunk_to_tiny_chunk(event.chunk)
 
+            async def tiny_chunks() -> AsyncIterator[TinyLLMResultChunk]:
+                async for event in stream:
+                    if isinstance(event, ChunkEvent):
+                        yield openai_chunk_to_tiny_chunk(event.chunk)
+
+            accumulated_chunks: list[TinyLLMResultChunk] = []
+            try:
+                async for acc_chunk in accumulate_llm_chunks(tiny_chunks()):
+                    accumulated_chunks.append(acc_chunk)
+                    yield acc_chunk
+            finally:
+                set_tiny_attribute(
+                    'result',
+                    group_chunks_for_telemetry(accumulated_chunks),
+                )
+
+    @tiny_trace('generate_structured')
     def generate_structured(
         self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
@@ -207,8 +242,16 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
             raise ValueError('No message returned from OpenAI.')
 
         assert message.parsed is not None, 'Parsed response is None.'
+
+        set_llm_telemetry_attributes(
+            self.config,
+            llm_input,
+            result=str(message.parsed),
+            output_schema=output_schema,
+        )
         return message.parsed
 
+    @tiny_trace('agenerate_structured')
     async def agenerate_structured(
         self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
@@ -222,8 +265,16 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
             raise ValueError('No message returned from OpenAI.')
 
         assert message.parsed is not None, 'Parsed response is None.'
+
+        set_llm_telemetry_attributes(
+            self.config,
+            llm_input,
+            result=str(message.parsed),
+            output_schema=output_schema,
+        )
         return message.parsed
 
+    @tiny_trace('generate_with_tools')
     def generate_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult:
@@ -237,8 +288,13 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
             **self._request_args(),
         )
 
-        return openai_result_to_tiny_result(res)
+        tiny_res = openai_result_to_tiny_result(res)
+        set_llm_telemetry_attributes(
+            self.config, llm_input, result=tiny_res.to_string(), tools=tools
+        )
+        return tiny_res
 
+    @tiny_trace('agenerate_with_tools')
     async def agenerate_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult:
@@ -252,13 +308,19 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
             **self._request_args(),
         )
 
-        return openai_result_to_tiny_result(res)
+        tiny_res = openai_result_to_tiny_result(res)
+        set_llm_telemetry_attributes(
+            self.config, llm_input, result=tiny_res.to_string(), tools=tools
+        )
+        return tiny_res
 
+    @tiny_trace('stream_with_tools')
     async def stream_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> AsyncIterator[TinyLLMResultChunk]:
         functions = [self._tool_convertor(tool) for tool in tools]
         messages = tiny_prompt_to_openai_params(llm_input)
+        set_llm_telemetry_attributes(self.config, llm_input, tools=tools)
 
         async with self.__get_async_client().chat.completions.stream(
             messages=messages,
@@ -272,8 +334,16 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
                     if isinstance(event, ChunkEvent):
                         yield openai_chunk_to_tiny_chunk(event.chunk)
 
-            async for acc_chunk in accumulate_llm_chunks(tiny_chunks()):
-                yield acc_chunk
+            accumulated_chunks: list[TinyLLMResultChunk] = []
+            try:
+                async for acc_chunk in accumulate_llm_chunks(tiny_chunks()):
+                    accumulated_chunks.append(acc_chunk)
+                    yield acc_chunk
+            finally:
+                set_tiny_attribute(
+                    'result',
+                    group_chunks_for_telemetry(accumulated_chunks),
+                )
 
     def __str__(self) -> str:
         buf = StringIO()

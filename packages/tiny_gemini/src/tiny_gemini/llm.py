@@ -11,6 +11,8 @@ from google.genai.types import FunctionDeclarationDict
 from google.genai.types import SchemaDict
 from google.genai.types import ToolDict
 from google.genai.types import Type
+from pydantic import Field
+from pydantic import SecretStr
 
 from tiny_gemini.utils import gemini_chunk_to_tiny_chunks
 from tiny_gemini.utils import gemini_response_to_tiny_result
@@ -18,6 +20,11 @@ from tiny_gemini.utils import tiny_attributes_to_gemini_config
 from tiny_gemini.utils import tiny_prompt_to_gemini_params
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
+from tinygent.llms.utils import accumulate_llm_chunks
+from tinygent.llms.utils import group_chunks_for_telemetry
+from tinygent.llms.utils import set_llm_telemetry_attributes
+from tinygent.telemetry.decorators import tiny_trace
+from tinygent.telemetry.otel import set_tiny_attribute
 from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 
 if typing.TYPE_CHECKING:
@@ -28,19 +35,25 @@ if typing.TYPE_CHECKING:
 
 
 class GeminiLLMConfig(AbstractLLMConfig['GeminiLLM']):
-    type: Literal['gemini'] = 'gemini'
+    type: Literal['gemini'] = Field(default='gemini', frozen=True)
 
-    model: str = 'gemini-2.5-flash'
+    model: str = Field(default='gemini-2.5-flash')
 
-    temperature: float = 0.6
+    temperature: float = Field(default=0.6)
 
-    api_key: str | None = os.getenv('GEMINI_API_KEY', None)
+    api_key: SecretStr | None = Field(
+        default_factory=lambda: (
+            SecretStr(os.environ['GEMINI_API_KEY'])
+            if 'GEMINI_API_KEY' in os.environ
+            else None
+        ),
+    )
 
     def build(self) -> GeminiLLM:
         return GeminiLLM(
             model_name=self.model,
             temperature=self.temperature,
-            api_key=self.api_key,
+            api_key=self.api_key.get_secret_value() if self.api_key else None,
         )
 
 
@@ -126,6 +139,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
 
         return ToolDict(function_declarations=[func_declaration])
 
+    @tiny_trace('generate_text')
     def generate_text(self, llm_input: TinyLLMInput) -> TinyLLMResult:
         params = tiny_prompt_to_gemini_params(llm_input)
         config = tiny_attributes_to_gemini_config(llm_input, self.temperature)
@@ -137,8 +151,11 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         )
         res = chat.send_message(params['message'])  # type: ignore
 
-        return gemini_response_to_tiny_result(res)
+        tiny_res = gemini_response_to_tiny_result(res)
+        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string())
+        return tiny_res
 
+    @tiny_trace('agenerate_text')
     async def agenerate_text(
         self,
         llm_input: TinyLLMInput,
@@ -153,13 +170,17 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         )
         res = await chat.send_message(params['message'])  # type: ignore
 
-        return gemini_response_to_tiny_result(res)
+        tiny_res = gemini_response_to_tiny_result(res)
+        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string())
+        return tiny_res
 
+    @tiny_trace('stream_text')
     async def stream_text(
         self, llm_input: TinyLLMInput
     ) -> AsyncIterator[TinyLLMResultChunk]:
         params = tiny_prompt_to_gemini_params(llm_input)
         config = tiny_attributes_to_gemini_config(llm_input, self.temperature)
+        set_llm_telemetry_attributes(self.config, llm_input)
 
         chat = self.__get_async_client().chats.create(
             model=self.model_name,
@@ -167,10 +188,24 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
             history=params['history'],
         )
         res = await chat.send_message_stream(params['message'])  # type: ignore
-        async for chunk in res:
-            for tiny_chunk in gemini_chunk_to_tiny_chunks(chunk):
-                yield tiny_chunk
 
+        async def raw_chunks() -> AsyncIterator[TinyLLMResultChunk]:
+            async for chunk in res:
+                for tiny_chunk in gemini_chunk_to_tiny_chunks(chunk):
+                    yield tiny_chunk
+
+        accumulated_chunks: list[TinyLLMResultChunk] = []
+        try:
+            async for acc_chunk in accumulate_llm_chunks(raw_chunks()):
+                accumulated_chunks.append(acc_chunk)
+                yield acc_chunk
+        finally:
+            set_tiny_attribute(
+                'result',
+                group_chunks_for_telemetry(accumulated_chunks),
+            )
+
+    @tiny_trace('generate_structured')
     def generate_structured(
         self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
@@ -191,12 +226,20 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         for message in tiny_result.tiny_iter():
             if content := getattr(message, 'content', None):
                 try:
-                    return output_schema.model_validate_json(content)
+                    parsed = output_schema.model_validate_json(content)
+                    set_llm_telemetry_attributes(
+                        self.config,
+                        llm_input,
+                        result=str(parsed),
+                        output_schema=output_schema,
+                    )
+                    return parsed
                 except Exception:
                     pass
 
         raise ValueError('No valid structured output found in Gemini response.')
 
+    @tiny_trace('agenerate_structured')
     async def agenerate_structured(
         self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
@@ -217,12 +260,20 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         for message in tiny_result.tiny_iter():
             if content := getattr(message, 'content', None):
                 try:
-                    return output_schema.model_validate_json(content)
+                    parsed = output_schema.model_validate_json(content)
+                    set_llm_telemetry_attributes(
+                        self.config,
+                        llm_input,
+                        result=str(parsed),
+                        output_schema=output_schema,
+                    )
+                    return parsed
                 except Exception:
                     pass
 
         raise ValueError('No valid structured output found in Gemini response.')
 
+    @tiny_trace('generate_with_tools')
     def generate_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult:
@@ -242,8 +293,13 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         )
         res = chat.send_message(params['message'])  # type: ignore
 
-        return gemini_response_to_tiny_result(res)
+        tiny_res = gemini_response_to_tiny_result(res)
+        set_llm_telemetry_attributes(
+            self.config, llm_input, result=tiny_res.to_string(), tools=tools
+        )
+        return tiny_res
 
+    @tiny_trace('agenerate_with_tools')
     async def agenerate_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult:
@@ -263,8 +319,13 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         )
         res = await chat.send_message(params['message'])  # type: ignore
 
-        return gemini_response_to_tiny_result(res)
+        tiny_res = gemini_response_to_tiny_result(res)
+        set_llm_telemetry_attributes(
+            self.config, llm_input, result=tiny_res.to_string(), tools=tools
+        )
+        return tiny_res
 
+    @tiny_trace('stream_with_tools')
     async def stream_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> AsyncIterator[TinyLLMResultChunk]:
@@ -276,6 +337,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
             self.temperature,
             tools=gemini_tools,  # type: ignore
         )
+        set_llm_telemetry_attributes(self.config, llm_input, tools=tools)
 
         chat = self.__get_async_client().chats.create(
             model=self.model_name,
@@ -283,6 +345,19 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
             history=params['history'],
         )
         res = await chat.send_message_stream(params['message'])  # type: ignore
-        async for chunk in res:
-            for tiny_chunk in gemini_chunk_to_tiny_chunks(chunk):
-                yield tiny_chunk
+
+        async def raw_chunks() -> AsyncIterator[TinyLLMResultChunk]:
+            async for chunk in res:
+                for tiny_chunk in gemini_chunk_to_tiny_chunks(chunk):
+                    yield tiny_chunk
+
+        accumulated_chunks: list[TinyLLMResultChunk] = []
+        try:
+            async for acc_chunk in accumulate_llm_chunks(raw_chunks()):
+                accumulated_chunks.append(acc_chunk)
+                yield acc_chunk
+        finally:
+            set_tiny_attribute(
+                'result',
+                group_chunks_for_telemetry(accumulated_chunks),
+            )

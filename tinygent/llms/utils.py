@@ -1,10 +1,105 @@
+from __future__ import annotations
+
 from collections import defaultdict
+from io import StringIO
 import json
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import AsyncIterator
 
 from tinygent.datamodels.messages import TinyToolCall
+from tinygent.telemetry.otel import set_tiny_attributes
 from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
+
+if TYPE_CHECKING:
+    from tinygent.datamodels.llm import AbstractLLMConfig
+    from tinygent.datamodels.tool import AbstractTool
+    from tinygent.types.io.llm_io_input import TinyLLMInput
+
+
+def set_llm_telemetry_attributes(
+    config: AbstractLLMConfig,
+    llm_input: TinyLLMInput,
+    *,
+    result: str | list[str] | None = None,
+    tools: list[AbstractTool] | None = None,
+    output_schema: type | None = None,
+) -> None:
+    """Unified telemetry attribute setter for all LLM methods."""
+    attrs: dict[str, Any] = {
+        'model.config': json.dumps(config.model_dump(mode='json')),
+        'messages': [m.tiny_str for m in llm_input.messages],
+        'messages.len': len(llm_input.messages),
+    }
+
+    if tools is not None:
+        attrs['tools'] = [tool.info.name for tool in tools]
+        attrs['tools.len'] = len(tools)
+
+    if output_schema is not None:
+        attrs['output_schema'] = output_schema.__name__
+
+    if result is not None:
+        attrs['result'] = result
+
+    set_tiny_attributes(attrs)  # type: ignore[arg-type]
+
+
+def group_chunks_for_telemetry(chunks: list[TinyLLMResultChunk]) -> list[str]:
+    """Group chunks into meaningful telemetry entries.
+
+    Groups consecutive text chunks into single entries and
+    groups tool call chunks by their complete tool calls.
+
+    Args:
+        chunks: List of TinyLLMResultChunk objects from streaming.
+
+    Returns:
+        List of grouped string representations for telemetry.
+    """
+    if not chunks:
+        return []
+
+    grouped: list[str] = []
+    text_buffer = StringIO()
+    current_tool_calls: dict[int, dict[str, str]] = {}
+
+    for chunk in chunks:
+        if chunk.type == 'message' and chunk.message:
+            # Accumulate text content
+            if chunk.message.content:
+                text_buffer.write(chunk.message.content)
+
+        elif chunk.type == 'tool_call' and chunk.tool_call:
+            # Flush text buffer before processing tool calls
+            if text_content := text_buffer.getvalue():
+                grouped.append(f'text: {text_content}')
+                text_buffer = StringIO()
+
+            # Accumulate tool call parts by index
+            tc = chunk.tool_call
+            if tc.index not in current_tool_calls:
+                current_tool_calls[tc.index] = {'name': '', 'arguments': ''}
+            if tc.tool_name:
+                current_tool_calls[tc.index]['name'] += tc.tool_name
+            if tc.arguments:
+                current_tool_calls[tc.index]['arguments'] += tc.arguments
+
+        elif chunk.type == 'tool_call' and chunk.full_tool_call:
+            # Full tool call is already complete
+            ftc = chunk.full_tool_call
+            grouped.append(f'tool_call: {ftc.tool_name}({ftc.arguments})')
+
+    # Flush remaining text
+    if text_content := text_buffer.getvalue():
+        grouped.append(f'text: {text_content}')
+
+    # Flush accumulated tool calls
+    for _idx, tc_data in sorted(current_tool_calls.items()):
+        if tc_data['name']:
+            grouped.append(f'tool_call: {tc_data["name"]}({tc_data["arguments"]})')
+
+    return grouped if grouped else ['empty_response']
 
 
 def accumulate_llm_chunks(
