@@ -51,7 +51,7 @@ class GeminiLLMConfig(AbstractLLMConfig['GeminiLLM']):
 
     def build(self) -> GeminiLLM:
         return GeminiLLM(
-            model_name=self.model,
+            model=self.model,
             temperature=self.temperature,
             api_key=self.api_key.get_secret_value() if self.api_key else None,
         )
@@ -60,7 +60,7 @@ class GeminiLLMConfig(AbstractLLMConfig['GeminiLLM']):
 class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
     def __init__(
         self,
-        model_name: str = 'gemini-2.5-flash',
+        model: str = 'gemini-2.5-flash',
         temperature: float = 0.6,
         api_key: str | None = None,
     ) -> None:
@@ -72,15 +72,16 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
 
         self._sync_client: Client | None = Client(api_key=api_key)
 
-        self.model_name = model_name
+        self.model = model
         self.temperature = temperature
         self.api_key = api_key
 
     @property
     def config(self) -> GeminiLLMConfig:
         return GeminiLLMConfig(
-            model=self.model_name,
+            model=self.model,
             temperature=self.temperature,
+            api_key=SecretStr(self.api_key),
         )
 
     @property
@@ -145,7 +146,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         config = tiny_attributes_to_gemini_config(llm_input, self.temperature)
 
         chat = self.__get_sync_client().chats.create(
-            model=self.model_name,
+            model=self.model,
             config=config,
             history=params['history'],
         )
@@ -164,7 +165,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         config = tiny_attributes_to_gemini_config(llm_input, self.temperature)
 
         chat = self.__get_async_client().chats.create(
-            model=self.model_name,
+            model=self.model,
             config=config,
             history=params['history'],
         )
@@ -183,7 +184,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         set_llm_telemetry_attributes(self.config, llm_input)
 
         chat = self.__get_async_client().chats.create(
-            model=self.model_name,
+            model=self.model,
             config=config,
             history=params['history'],
         )
@@ -217,7 +218,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         )
 
         chat = self.__get_sync_client().chats.create(
-            model=self.model_name,
+            model=self.model,
             config=config,
             history=params['history'],
         )
@@ -251,7 +252,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         )
 
         chat = self.__get_async_client().chats.create(
-            model=self.model_name,
+            model=self.model,
             config=config,
             history=params['history'],
         )
@@ -287,7 +288,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         )
 
         chat = self.__get_sync_client().chats.create(
-            model=self.model_name,
+            model=self.model,
             config=config,
             history=params['history'],
         )
@@ -313,7 +314,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         )
 
         chat = self.__get_async_client().chats.create(
-            model=self.model_name,
+            model=self.model,
             config=config,
             history=params['history'],
         )
@@ -340,7 +341,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         set_llm_telemetry_attributes(self.config, llm_input, tools=tools)
 
         chat = self.__get_async_client().chats.create(
-            model=self.model_name,
+            model=self.model,
             config=config,
             history=params['history'],
         )

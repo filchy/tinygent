@@ -55,7 +55,7 @@ class OpenAILLMConfig(AbstractLLMConfig['OpenAILLM']):
 
     def build(self) -> OpenAILLM:
         return OpenAILLM(
-            model_name=self.model,
+            model=self.model,
             api_key=self.api_key.get_secret_value() if self.api_key else None,
             base_url=self.base_url,
             temperature=self.temperature,
@@ -66,7 +66,7 @@ class OpenAILLMConfig(AbstractLLMConfig['OpenAILLM']):
 class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
     def __init__(
         self,
-        model_name: str = 'gpt-4o',
+        model: str = 'gpt-4o',
         api_key: str | None = None,
         base_url: str | None = None,
         temperature: float | None = None,
@@ -78,7 +78,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
                 " or 'OPENAI_API_KEY' env variable.",
             )
 
-        self.model_name = model_name
+        self.model = model
         self.api_key = api_key
         self.base_url = base_url
         self.temperature = temperature
@@ -90,7 +90,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
     @property
     def config(self) -> OpenAILLMConfig:
         return OpenAILLMConfig(
-            model=self.model_name,
+            model=self.model,
             api_key=SecretStr(self.api_key),
             base_url=self.base_url,
             temperature=self.temperature,
@@ -103,7 +103,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
 
     def _request_args(self) -> dict:
         args = {
-            'model': self.model_name,
+            'model': self.model,
             'timeout': self.timeout,
         }
         if self.temperature:
@@ -349,7 +349,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
         buf = StringIO()
 
         buf.write('OpenAI LLM Summary:\n')
-        buf.write(textwrap.indent(f'Model: {self.model_name}\n', '\t'))
+        buf.write(textwrap.indent(f'Model: {self.model}\n', '\t'))
         buf.write(textwrap.indent(f'Base URL: {self.base_url}\n', '\t'))
         buf.write(textwrap.indent(f'Temperature: {self.temperature}\n', '\t'))
         buf.write(textwrap.indent(f'Timeout: {self.timeout}\n', '\t'))

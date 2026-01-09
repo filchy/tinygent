@@ -55,7 +55,7 @@ class MistralAILLMConfig(AbstractLLMConfig['MistralAILLM']):
 
     def build(self) -> MistralAILLM:
         return MistralAILLM(
-            model_name=self.model,
+            model=self.model,
             api_key=self.api_key.get_secret_value() if self.api_key else None,
             safe_prompt=self.safe_prompt,
             temperature=self.temperature,
@@ -66,7 +66,7 @@ class MistralAILLMConfig(AbstractLLMConfig['MistralAILLM']):
 class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
     def __init__(
         self,
-        model_name: str,
+        model: str,
         api_key: str | None = None,
         safe_prompt: bool = True,
         temperature: float = 0.6,
@@ -80,7 +80,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
 
         self._client: Mistral | None = None
 
-        self.model_name = model_name
+        self.model = model
         self.api_key = api_key
         self.safe_prompt = safe_prompt
         self.temperature = temperature
@@ -89,10 +89,11 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
     @property
     def config(self) -> MistralAILLMConfig:
         return MistralAILLMConfig(
-            model=self.model_name,
+            model=self.model,
             safe_prompt=self.safe_prompt,
             temperature=self.temperature,
             timeout=self.timeout,
+            api_key=SecretStr(self.api_key),
         )
 
     @property
@@ -103,7 +104,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         if self._client:
             return self._client
 
-        self._client = Mistral(api_key=self.api_key)
+        self._client = Mistral(api_key=self.api_key, timeout_ms=int(self.timeout) * 1000)
         return self._client
 
     @override
@@ -157,7 +158,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         messages = tiny_prompt_to_mistralai_params(llm_input)
 
         res = self.__get_client().chat.complete(
-            model=self.model_name,
+            model=self.model,
             messages=messages,
             safe_prompt=self.safe_prompt,
             temperature=self.temperature,
@@ -176,7 +177,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         messages = tiny_prompt_to_mistralai_params(llm_input)
 
         res = await self.__get_client().chat.complete_async(
-            model=self.model_name,
+            model=self.model,
             messages=messages,
             safe_prompt=self.safe_prompt,
             temperature=self.temperature,
@@ -195,7 +196,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         set_llm_telemetry_attributes(self.config, llm_input)
 
         res = await self.__get_client().chat.stream_async(
-            model=self.model_name,
+            model=self.model,
             messages=messages,
             safe_prompt=self.safe_prompt,
             temperature=self.temperature,
@@ -225,7 +226,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         messages = tiny_prompt_to_mistralai_params(llm_input)
 
         res = self.__get_client().chat.parse(
-            model=self.model_name,
+            model=self.model,
             messages=messages,
             safe_prompt=self.safe_prompt,
             temperature=self.temperature,
@@ -249,7 +250,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         messages = tiny_prompt_to_mistralai_params(llm_input)
 
         res = await self.__get_client().chat.parse_async(
-            model=self.model_name,
+            model=self.model,
             messages=messages,
             safe_prompt=self.safe_prompt,
             temperature=self.temperature,
@@ -274,7 +275,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         messages = tiny_prompt_to_mistralai_params(llm_input)
 
         res = self.__get_client().chat.complete(
-            model=self.model_name,
+            model=self.model,
             messages=messages,
             tools=functions,
             tool_choice='auto',
@@ -297,7 +298,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         messages = tiny_prompt_to_mistralai_params(llm_input)
 
         res = await self.__get_client().chat.complete_async(
-            model=self.model_name,
+            model=self.model,
             messages=messages,
             tools=functions,
             tool_choice='auto',
@@ -321,7 +322,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         set_llm_telemetry_attributes(self.config, llm_input, tools=tools)
 
         res = await self.__get_client().chat.stream_async(
-            model=self.model_name,
+            model=self.model,
             messages=messages,
             tools=functions,
             tool_choice='auto',
@@ -350,7 +351,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         buf = StringIO()
 
         buf.write('OpenAI LLM Summary:\n')
-        buf.write(textwrap.indent(f'Model: {self.model_name}\n', '\t'))
+        buf.write(textwrap.indent(f'Model: {self.model}\n', '\t'))
         buf.write(textwrap.indent(f'Safe Prompt: {self.safe_prompt}\n', '\t'))
         buf.write(textwrap.indent(f'Temperature: {self.temperature}\n', '\t'))
         buf.write(textwrap.indent(f'Timeout: {self.timeout}\n', '\t'))

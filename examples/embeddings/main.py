@@ -8,7 +8,7 @@ def _print_res(embeddings: list[float], n: int = 3) -> str:
 
 
 def single_embed():
-    embedder = build_embedder('openai:text-embedding-3-small')
+    embedder = build_embedder('gemini:gemini-embedding-001')
 
     embs = embedder.embed(
         'TinyGent is the greatest and tyniest framework in the whole world!'
@@ -17,7 +17,7 @@ def single_embed():
 
 
 def batch_embed():
-    embedder = build_embedder('openai:text-embedding-3-small')
+    embedder = build_embedder('gemini:gemini-embedding-001')
 
     embs = embedder.embed_batch(
         [

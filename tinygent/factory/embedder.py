@@ -18,12 +18,20 @@ def build_embedder(
     if isinstance(embedder, str):
         model_provider, model_name = parse_model(embedder, provider)
 
-        embed_dict = {'model_name': model_name, 'type': model_provider, **kwargs}
+        embed_dict = {'model': model_name, 'type': model_provider, **kwargs}
 
         if model_provider == 'openai':
             from tiny_openai import OpenAIEmbedderConfig
 
             return OpenAIEmbedderConfig(**embed_dict).build()
+        elif model_provider == 'mistralai':
+            from tiny_mistralai import MistralAIEmbedderConfig
+
+            return MistralAIEmbedderConfig(**embed_dict).build()
+        elif model_provider == 'gemini':
+            from tiny_gemini import GeminiEmbedderConfig
+
+            return GeminiEmbedderConfig(**embed_dict).build()
         else:
             raise ValueError(f'Unsupported model provider: {model_provider}')
 

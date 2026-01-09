@@ -13,7 +13,7 @@ T = TypeVar('T', bound='AbstractEmbedder')
 class AbstractEmbedderConfig(TinyModelBuildable[T], Generic[T]):
     """Abstract base class for Embedder configuration."""
 
-    model_name: str
+    model: str
 
     api_key: SecretStr | None
 
@@ -32,7 +32,7 @@ class AbstractEmbedder(ABC):
 
     @property
     @abstractmethod
-    def model_name(self) -> str:
+    def model(self) -> str:
         """Returns current model name."""
         raise NotImplementedError('Subclasses must implement this method.')
 
