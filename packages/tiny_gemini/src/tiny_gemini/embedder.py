@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import os
 from typing import Literal
-from pydantic import Field, SecretStr
-from tinygent.datamodels.embedder import AbstractEmbedder
-from tinygent.datamodels.embedder import AbstractEmbedderConfig
 
 from google.genai.client import AsyncClient
 from google.genai.client import Client
+from pydantic import Field
+from pydantic import SecretStr
+
+from tinygent.datamodels.embedder import AbstractEmbedder
+from tinygent.datamodels.embedder import AbstractEmbedderConfig
 
 _SUPPORTED_MODELS: dict[str, int] = {
     'gemini-embedding-001': 3072,
@@ -89,8 +91,7 @@ class GeminiEmbedder(AbstractEmbedder):
 
     def embed(self, query: str) -> list[float]:
         res = self.__get_sync_client().models.embed_content(
-            model=self.model,
-            contents=query
+            model=self.model, contents=query
         )
         embedding = res.embeddings[0].values if res.embeddings else None
         if not embedding:
@@ -101,7 +102,7 @@ class GeminiEmbedder(AbstractEmbedder):
     def embed_batch(self, queries: list[str]) -> list[list[float]]:
         res = self.__get_sync_client().models.embed_content(
             model=self.model,
-            contents=queries,  # pyright: ignore
+            contents=queries,  # type: ignore[arg-type]
         )
 
         embeddings = []
@@ -113,8 +114,7 @@ class GeminiEmbedder(AbstractEmbedder):
 
     async def aembed(self, query: str) -> list[float]:
         res = await self.__get_async_client().models.embed_content(
-            model=self.model,
-            contents=query
+            model=self.model, contents=query
         )
         embedding = res.embeddings[0].values if res.embeddings else None
         if not embedding:
@@ -125,7 +125,7 @@ class GeminiEmbedder(AbstractEmbedder):
     async def aembed_batch(self, queries: list[str]) -> list[list[float]]:
         res = await self.__get_async_client().models.embed_content(
             model=self.model,
-            contents=queries,  # pyright: ignore
+            contents=queries,  # type: ignore[arg-type]
         )
 
         embeddings = []

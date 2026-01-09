@@ -121,14 +121,18 @@ class OpenAIEmbedder(AbstractEmbedder):
         if self.__sync_client:
             return self.__sync_client
 
-        self.__sync_client = OpenAI(api_key=self.api_key, base_url=self.base_url, timeout=self._timeout)
+        self.__sync_client = OpenAI(
+            api_key=self.api_key, base_url=self.base_url, timeout=self._timeout
+        )
         return self.__sync_client
 
     def __get_async_client(self) -> AsyncOpenAI:
         if self.__async_client:
             return self.__async_client
 
-        self.__async_client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url, timeout=self._timeout)
+        self.__async_client = AsyncOpenAI(
+            api_key=self.api_key, base_url=self.base_url, timeout=self._timeout
+        )
         return self.__async_client
 
     @tiny_trace('embed')

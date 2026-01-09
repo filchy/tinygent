@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from typing import Literal
+
 from mistralai import Mistral
 from pydantic import Field
 from pydantic import SecretStr
