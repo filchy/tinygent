@@ -25,7 +25,7 @@ _SUPPORTED_MODELS: dict[str, int] = {
 class OpenAIEmbedderConfig(AbstractEmbedderConfig['OpenAIEmbedder']):
     type: Literal['openai'] = Field(default='openai', frozen=True)
 
-    model_name: str = Field(default='text-embedding-3-small')
+    model: str = Field(default='text-embedding-3-small')
 
     api_key: SecretStr | None = Field(
         default_factory=lambda: (
@@ -37,20 +37,24 @@ class OpenAIEmbedderConfig(AbstractEmbedderConfig['OpenAIEmbedder']):
 
     base_url: str | None = Field(default=None)
 
+    timeout: float = Field(default=60.0)
+
     def build(self) -> OpenAIEmbedder:
         return OpenAIEmbedder(
-            model_name=self.model_name,
+            model=self.model,
             api_key=self.api_key.get_secret_value() if self.api_key else None,
             base_url=self.base_url,
+            timeout=self.timeout,
         )
 
 
 class OpenAIEmbedder(AbstractEmbedder):
     def __init__(
         self,
-        model_name: str = 'text-embedding-3-small',
+        model: str = 'text-embedding-3-small',
         api_key: str | None = None,
         base_url: str | None = None,
+        timeout: float = 60.0,
     ) -> None:
         if not api_key and not (api_key := os.getenv('OPENAI_API_KEY', None)):
             raise ValueError(
@@ -58,36 +62,38 @@ class OpenAIEmbedder(AbstractEmbedder):
                 " or 'OPENAI_API_KEY' env variable.",
             )
 
-        if model_name not in _SUPPORTED_MODELS:
+        if model not in _SUPPORTED_MODELS:
             raise ValueError(
-                f'Provided model name: {model_name} not in supported model names: {", ".join(_SUPPORTED_MODELS.keys())}'
+                f'Provided model name: {model} not in supported model names: {", ".join(_SUPPORTED_MODELS.keys())}'
             )
 
         self.api_key = api_key
         self.base_url = base_url
-        self._model_name = model_name
+        self._model = model
+        self._timeout = timeout
 
         self.__sync_client: OpenAI | None = None
         self.__async_client: AsyncOpenAI | None = None
 
     @property
+    def model(self) -> str:
+        return self._model
+
+    @property
     def config(self) -> OpenAIEmbedderConfig:
         return OpenAIEmbedderConfig(
-            model_name=self.model_name,
+            model=self.model,
             api_key=SecretStr(self.api_key),
             base_url=self.base_url,
+            timeout=self._timeout,
         )
 
     @property
-    def model_name(self) -> str:
-        return self._model_name
-
-    @property
     def embedding_dim(self) -> int:
-        v = _SUPPORTED_MODELS.get(self.model_name)
+        v = _SUPPORTED_MODELS.get(self.model)
         if not v:
             raise ValueError(
-                f'Provided model name: {self.model_name} not in supported model names: {", ".join(_SUPPORTED_MODELS.keys())}'
+                f'Provided model name: {self.model} not in supported model names: {", ".join(_SUPPORTED_MODELS.keys())}'
             )
         return v
 
@@ -115,21 +121,21 @@ class OpenAIEmbedder(AbstractEmbedder):
         if self.__sync_client:
             return self.__sync_client
 
-        self.__sync_client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+        self.__sync_client = OpenAI(api_key=self.api_key, base_url=self.base_url, timeout=self._timeout)
         return self.__sync_client
 
     def __get_async_client(self) -> AsyncOpenAI:
         if self.__async_client:
             return self.__async_client
 
-        self.__async_client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
+        self.__async_client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url, timeout=self._timeout)
         return self.__async_client
 
     @tiny_trace('embed')
     def embed(self, query: str) -> list[float]:
         res = self.__get_sync_client().embeddings.create(
             input=query,
-            model=self.model_name,
+            model=self.model,
         )
         embedding = res.data[0].embedding
         self.__set_telemetry_attributes(query, result_len=len(embedding))
@@ -139,7 +145,7 @@ class OpenAIEmbedder(AbstractEmbedder):
     def embed_batch(self, queries: list[str]) -> list[list[float]]:
         res = self.__get_sync_client().embeddings.create(
             input=queries,
-            model=self.model_name,
+            model=self.model,
         )
         embeddings = [emb.embedding for emb in res.data]
         self.__set_telemetry_attributes(queries, result_len=len(embeddings))
@@ -149,7 +155,7 @@ class OpenAIEmbedder(AbstractEmbedder):
     async def aembed(self, query: str) -> list[float]:
         res = await self.__get_async_client().embeddings.create(
             input=query,
-            model=self.model_name,
+            model=self.model,
         )
         embedding = res.data[0].embedding
         self.__set_telemetry_attributes(query, result_len=len(embedding))
@@ -159,7 +165,7 @@ class OpenAIEmbedder(AbstractEmbedder):
     async def aembed_batch(self, queries: list[str]) -> list[list[float]]:
         res = await self.__get_async_client().embeddings.create(
             input=queries,
-            model=self.model_name,
+            model=self.model,
         )
         embeddings = [emb.embedding for emb in res.data]
         self.__set_telemetry_attributes(queries, result_len=len(embeddings))
