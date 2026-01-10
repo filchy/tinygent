@@ -1,10 +1,10 @@
 import typing
 
-from langchain_core.outputs import Generation
+from anthropic.types import Message
+from anthropic.types import MessageParam
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration
-from anthropic.types import Message, message
-from anthropic.types import MessageParam
+from langchain_core.outputs import Generation
 
 from tinygent.datamodels.messages import TinyChatMessage
 from tinygent.datamodels.messages import TinyHumanMessage
@@ -13,7 +13,8 @@ from tinygent.datamodels.messages import TinyReasoningMessage
 from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.datamodels.messages import TinyToolResult
-from tinygent.types.io.llm_io_chunks import TinyChatMessageChunk, TinyLLMResultChunk
+from tinygent.types.io.llm_io_chunks import TinyChatMessageChunk
+from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 from tinygent.types.io.llm_io_result import TinyLLMResult
 
 if typing.TYPE_CHECKING:
@@ -47,7 +48,7 @@ def tiny_prompt_to_anthropic_params(
                             'type': 'redacted_thinking',
                             'data': f'<PLAN>\n{msg.content}\n</PLAN>',
                         }
-                    ]
+                    ],
                 )
             )
 
@@ -60,7 +61,7 @@ def tiny_prompt_to_anthropic_params(
                             'type': 'redacted_thinking',
                             'data': f'<REASONING>\n{msg.content}\n</REASONING>',
                         }
-                    ]
+                    ],
                 )
             )
 
@@ -125,7 +126,9 @@ def anthropic_result_to_tiny_result(resp: Message) -> TinyLLMResult:
     if tool_calls:
         additional_kwargs['tool_calls'] = tool_calls
 
-    ai_msg = AIMessage(content=text, additional_kwargs=additional_kwargs, **additional_kwargs)
+    ai_msg = AIMessage(
+        content=text, additional_kwargs=additional_kwargs, **additional_kwargs
+    )
     generations.append([ChatGeneration(message=ai_msg, text=text)])
 
     llm_output = {
@@ -144,5 +147,5 @@ def anthropic_chunk_to_tiny_chunk(chunk: str) -> TinyLLMResultChunk:
         type='message',
         message=TinyChatMessageChunk(
             content=chunk,
-        )
+        ),
     )

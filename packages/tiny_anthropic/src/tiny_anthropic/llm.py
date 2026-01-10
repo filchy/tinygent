@@ -2,25 +2,27 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 import os
-from typing import Literal, override
 import typing
+from typing import Literal
+from typing import override
 
+from anthropic import Anthropic
+from anthropic import AsyncAnthropic
 from anthropic.types import ToolParam
 from pydantic import Field
 from pydantic import SecretStr
-from anthropic import Anthropic
-from anthropic import AsyncAnthropic
 
+from tiny_anthropic.utils import anthropic_chunk_to_tiny_chunk
+from tiny_anthropic.utils import anthropic_result_to_tiny_result
+from tiny_anthropic.utils import tiny_prompt_to_anthropic_params
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.datamodels.messages import TinyToolCall
+from tinygent.llms.utils import group_chunks_for_telemetry
+from tinygent.llms.utils import set_llm_telemetry_attributes
+from tinygent.telemetry.decorators import tiny_trace
 from tinygent.telemetry.otel import set_tiny_attribute
 from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
-from tinygent.telemetry.decorators import tiny_trace
-from tinygent.llms.utils import group_chunks_for_telemetry, set_llm_telemetry_attributes
-
-from tiny_anthropic.utils import anthropic_chunk_to_tiny_chunk, anthropic_result_to_tiny_result
-from tiny_anthropic.utils import tiny_prompt_to_anthropic_params
 
 if typing.TYPE_CHECKING:
     from tinygent.datamodels.llm import LLMStructuredT
@@ -104,14 +106,18 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         if self.__sync_client:
             return self.__sync_client
 
-        self.__sync_client = Anthropic(api_key=self.api_key, base_url=self.base_url, timeout=self.timeout)
+        self.__sync_client = Anthropic(
+            api_key=self.api_key, base_url=self.base_url, timeout=self.timeout
+        )
         return self.__sync_client
 
     def __get_async_client(self) -> AsyncAnthropic:
         if self.__async_client:
             return self.__async_client
 
-        self.__async_client = AsyncAnthropic(api_key=self.api_key, base_url=self.base_url, timeout=self.timeout)
+        self.__async_client = AsyncAnthropic(
+            api_key=self.api_key, base_url=self.base_url, timeout=self.timeout
+        )
         return self.__async_client
 
     @override
@@ -130,7 +136,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
             }
             return mapping.get(py_type, 'string')  # default fallback
 
-        properties = {}
+        properties: dict[str, object] = {}
 
         if schema:
             for name, field in schema.model_fields.items():
@@ -151,7 +157,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
                 'type': 'object',
                 'properties': properties,
                 'required': info.required_fields,
-            }
+            },
         }
 
     def __create_client_kwargs(self, llm_input: TinyLLMInput) -> dict:
@@ -187,7 +193,9 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         return tiny_res
 
     @tiny_trace('stream_text')
-    async def stream_text(self, llm_input: TinyLLMInput) -> AsyncIterator[TinyLLMResultChunk]:
+    async def stream_text(
+        self, llm_input: TinyLLMInput
+    ) -> AsyncIterator[TinyLLMResultChunk]:
         kwargs = self.__create_client_kwargs(llm_input)
         set_llm_telemetry_attributes(self.config, llm_input)
 
@@ -274,16 +282,21 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         set_llm_telemetry_attributes(self.config, llm_input)
 
         async with self.__get_async_client().messages.stream(**kwargs) as stream:
+
             async def tiny_chunks() -> AsyncIterator[TinyLLMResultChunk]:
                 async for text in stream.text_stream:
-                    yield anthropic_chunk_to_tiny_chunk(text)  # INFO: here is yielding only TextBlock chunks (strings)
+                    yield anthropic_chunk_to_tiny_chunk(
+                        text
+                    )  # here is yielding only TextBlock chunks (strings)
 
                 final_message = await stream.get_final_message()
                 tiny_final_message = anthropic_result_to_tiny_result(final_message)
 
                 for generation in tiny_final_message.tiny_iter():
                     if isinstance(generation, TinyToolCall):
-                        yield TinyLLMResultChunk(type='tool_call', full_tool_call=generation)
+                        yield TinyLLMResultChunk(
+                            type='tool_call', full_tool_call=generation
+                        )
 
             accumulated_chunks: list[TinyLLMResultChunk] = []
             try:
@@ -292,6 +305,5 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
                     yield acc_chunk
             finally:
                 set_tiny_attribute(
-                    'result',
-                    group_chunks_for_telemetry(accumulated_chunks)
+                    'result', group_chunks_for_telemetry(accumulated_chunks)
                 )
