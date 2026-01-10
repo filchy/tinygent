@@ -12,9 +12,32 @@ from tinygent.telemetry.otel import set_tiny_attributes
 from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 
 if TYPE_CHECKING:
+    from tinygent.datamodels.embedder import AbstractEmbedderConfig
     from tinygent.datamodels.llm import AbstractLLMConfig
     from tinygent.datamodels.tool import AbstractTool
     from tinygent.types.io.llm_io_input import TinyLLMInput
+
+
+def set_embedder_telemetry_attributes(
+    config: AbstractEmbedderConfig,
+    query: str | list[str],
+    *,
+    embedding_dim: int,
+    result_len: int | None = None,
+) -> None:
+    """Unified telemetry attribute setter for all embedder methods."""
+    queries = [query] if isinstance(query, str) else query
+    attrs: dict[str, Any] = {
+        'model.config': json.dumps(config.model_dump(mode='json')),
+        'embedding.dim': embedding_dim,
+        'queries': queries,
+        'queries.len': len(queries),
+    }
+
+    if result_len is not None:
+        attrs['result.len'] = result_len
+
+    set_tiny_attributes(attrs)  # type: ignore[arg-type]
 
 
 def set_llm_telemetry_attributes(

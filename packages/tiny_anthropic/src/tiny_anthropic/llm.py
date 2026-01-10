@@ -18,6 +18,7 @@ from tiny_anthropic.utils import tiny_prompt_to_anthropic_params
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.datamodels.messages import TinyToolCall
+from tinygent.llms.utils import accumulate_llm_chunks
 from tinygent.llms.utils import group_chunks_for_telemetry
 from tinygent.llms.utils import set_llm_telemetry_attributes
 from tinygent.telemetry.decorators import tiny_trace
@@ -199,9 +200,21 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         kwargs = self.__create_client_kwargs(llm_input)
         set_llm_telemetry_attributes(self.config, llm_input)
 
-        async with self.__get_async_client().messages.stream(**kwargs) as stream:
-            async for text in stream.text_stream:
-                yield anthropic_chunk_to_tiny_chunk(text)
+        async def tiny_chunks() -> AsyncIterator[TinyLLMResultChunk]:
+            async with self.__get_async_client().messages.stream(**kwargs) as stream:
+                async for text in stream.text_stream:
+                    yield anthropic_chunk_to_tiny_chunk(text)
+
+        accumulated_chunks: list[TinyLLMResultChunk] = []
+        try:
+            async for acc_chunk in accumulate_llm_chunks(tiny_chunks()):
+                accumulated_chunks.append(acc_chunk)
+                yield acc_chunk
+        finally:
+            set_tiny_attribute(
+                'result',
+                group_chunks_for_telemetry(accumulated_chunks),
+            )
 
     @tiny_trace('generate_structured')
     def generate_structured(
@@ -254,7 +267,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         res = self.__get_sync_client().beta.messages.create(**kwargs)
 
         tiny_res = anthropic_result_to_tiny_result(res)
-        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string())
+        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string(), tools=tools)
         return tiny_res
 
     @tiny_trace('agenerate_with_tools')
@@ -268,7 +281,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         res = await self.__get_async_client().beta.messages.create(**kwargs)
 
         tiny_res = anthropic_result_to_tiny_result(res)
-        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string())
+        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string(), tools=tools)
         return tiny_res
 
     @tiny_trace('stream_with_tools')
@@ -305,5 +318,6 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
                     yield acc_chunk
             finally:
                 set_tiny_attribute(
-                    'result', group_chunks_for_telemetry(accumulated_chunks)
+                    'result',
+                    group_chunks_for_telemetry(accumulated_chunks),
                 )
