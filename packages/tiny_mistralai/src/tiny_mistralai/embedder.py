@@ -105,7 +105,10 @@ class MistralAIEmbedder(AbstractEmbedder):
         if not embedding:
             raise ValueError(f'Error while creating embeddings for query {query}')
         set_embedder_telemetry_attributes(
-            self.config, query, embedding_dim=self.embedding_dim, result_len=len(embedding)
+            self.config,
+            query,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embedding),
         )
         return embedding
 
@@ -123,7 +126,10 @@ class MistralAIEmbedder(AbstractEmbedder):
                 raise ValueError(f'Error while creating embeddings for query {q}')
             embeddings.append(e)
         set_embedder_telemetry_attributes(
-            self.config, queries, embedding_dim=self.embedding_dim, result_len=len(embeddings)
+            self.config,
+            queries,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embeddings),
         )
         return embeddings
 
@@ -139,7 +145,10 @@ class MistralAIEmbedder(AbstractEmbedder):
         if not embedding:
             raise ValueError(f'Error while creating embeddings for query {query}')
         set_embedder_telemetry_attributes(
-            self.config, query, embedding_dim=self.embedding_dim, result_len=len(embedding)
+            self.config,
+            query,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embedding),
         )
         return embedding
 
@@ -157,6 +166,9 @@ class MistralAIEmbedder(AbstractEmbedder):
                 raise ValueError(f'Error while creating embeddings for query {q}')
             embeddings.append(e)
         set_embedder_telemetry_attributes(
-            self.config, queries, embedding_dim=self.embedding_dim, result_len=len(embeddings)
+            self.config,
+            queries,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embeddings),
         )
         return embeddings

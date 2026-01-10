@@ -122,7 +122,10 @@ class OpenAIEmbedder(AbstractEmbedder):
         )
         embedding = res.data[0].embedding
         set_embedder_telemetry_attributes(
-            self.config, query, embedding_dim=self.embedding_dim, result_len=len(embedding)
+            self.config,
+            query,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embedding),
         )
         return embedding
 
@@ -134,7 +137,10 @@ class OpenAIEmbedder(AbstractEmbedder):
         )
         embeddings = [emb.embedding for emb in res.data]
         set_embedder_telemetry_attributes(
-            self.config, queries, embedding_dim=self.embedding_dim, result_len=len(embeddings)
+            self.config,
+            queries,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embeddings),
         )
         return embeddings
 
@@ -146,7 +152,10 @@ class OpenAIEmbedder(AbstractEmbedder):
         )
         embedding = res.data[0].embedding
         set_embedder_telemetry_attributes(
-            self.config, query, embedding_dim=self.embedding_dim, result_len=len(embedding)
+            self.config,
+            query,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embedding),
         )
         return embedding
 
@@ -158,6 +167,9 @@ class OpenAIEmbedder(AbstractEmbedder):
         )
         embeddings = [emb.embedding for emb in res.data]
         set_embedder_telemetry_attributes(
-            self.config, queries, embedding_dim=self.embedding_dim, result_len=len(embeddings)
+            self.config,
+            queries,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embeddings),
         )
         return embeddings

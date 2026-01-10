@@ -267,7 +267,9 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         res = self.__get_sync_client().beta.messages.create(**kwargs)
 
         tiny_res = anthropic_result_to_tiny_result(res)
-        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string(), tools=tools)
+        set_llm_telemetry_attributes(
+            self.config, llm_input, result=tiny_res.to_string(), tools=tools
+        )
         return tiny_res
 
     @tiny_trace('agenerate_with_tools')
@@ -281,7 +283,9 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         res = await self.__get_async_client().beta.messages.create(**kwargs)
 
         tiny_res = anthropic_result_to_tiny_result(res)
-        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string(), tools=tools)
+        set_llm_telemetry_attributes(
+            self.config, llm_input, result=tiny_res.to_string(), tools=tools
+        )
         return tiny_res
 
     @tiny_trace('stream_with_tools')
