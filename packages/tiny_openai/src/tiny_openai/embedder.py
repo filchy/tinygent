@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 from typing import Literal
 
@@ -11,8 +10,8 @@ from pydantic import SecretStr
 
 from tinygent.datamodels.embedder import AbstractEmbedder
 from tinygent.datamodels.embedder import AbstractEmbedderConfig
+from tinygent.llms.utils import set_embedder_telemetry_attributes
 from tinygent.telemetry.decorators import tiny_trace
-from tinygent.telemetry.otel import set_tiny_attributes
 
 # all supported models with its output embeddings size
 _SUPPORTED_MODELS: dict[str, int] = {
@@ -97,26 +96,6 @@ class OpenAIEmbedder(AbstractEmbedder):
             )
         return v
 
-    def __set_telemetry_attributes(
-        self,
-        query: str | list[str],
-        *,
-        result_len: int | None = None,
-    ) -> None:
-        """Unified telemetry attribute setter for all embedder methods."""
-        queries = [query] if isinstance(query, str) else query
-        attrs: dict[str, str | int | list[str]] = {
-            'model.config': json.dumps(self.config.model_dump(mode='json')),
-            'embedding.dim': self.embedding_dim,
-            'queries': queries,
-            'queries.len': len(queries),
-        }
-
-        if result_len is not None:
-            attrs['result.len'] = result_len
-
-        set_tiny_attributes(attrs)  # type: ignore[arg-type]
-
     def __get_sync_client(self) -> OpenAI:
         if self.__sync_client:
             return self.__sync_client
@@ -142,7 +121,12 @@ class OpenAIEmbedder(AbstractEmbedder):
             model=self.model,
         )
         embedding = res.data[0].embedding
-        self.__set_telemetry_attributes(query, result_len=len(embedding))
+        set_embedder_telemetry_attributes(
+            self.config,
+            query,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embedding),
+        )
         return embedding
 
     @tiny_trace('embed_batch')
@@ -152,7 +136,12 @@ class OpenAIEmbedder(AbstractEmbedder):
             model=self.model,
         )
         embeddings = [emb.embedding for emb in res.data]
-        self.__set_telemetry_attributes(queries, result_len=len(embeddings))
+        set_embedder_telemetry_attributes(
+            self.config,
+            queries,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embeddings),
+        )
         return embeddings
 
     @tiny_trace('aembed')
@@ -162,7 +151,12 @@ class OpenAIEmbedder(AbstractEmbedder):
             model=self.model,
         )
         embedding = res.data[0].embedding
-        self.__set_telemetry_attributes(query, result_len=len(embedding))
+        set_embedder_telemetry_attributes(
+            self.config,
+            query,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embedding),
+        )
         return embedding
 
     @tiny_trace('aembed_batch')
@@ -172,5 +166,10 @@ class OpenAIEmbedder(AbstractEmbedder):
             model=self.model,
         )
         embeddings = [emb.embedding for emb in res.data]
-        self.__set_telemetry_attributes(queries, result_len=len(embeddings))
+        set_embedder_telemetry_attributes(
+            self.config,
+            queries,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embeddings),
+        )
         return embeddings

@@ -36,6 +36,10 @@ def build_llm(
             from tiny_gemini import GeminiLLMConfig
 
             return GeminiLLMConfig(**llm_dict).build()
+        elif model_provider == 'anthropic':
+            from tiny_anthropic import ClaudeLLMConfig
+
+            return ClaudeLLMConfig(**llm_dict).build()
         else:
             raise ValueError(f'Unsupported model provider: {model_provider}')
 

@@ -10,6 +10,8 @@ from pydantic import SecretStr
 
 from tinygent.datamodels.embedder import AbstractEmbedder
 from tinygent.datamodels.embedder import AbstractEmbedderConfig
+from tinygent.llms.utils import set_embedder_telemetry_attributes
+from tinygent.telemetry.decorators import tiny_trace
 
 _SUPPORTED_MODELS: dict[str, int] = {
     'gemini-embedding-001': 3072,
@@ -89,6 +91,7 @@ class GeminiEmbedder(AbstractEmbedder):
         cli = self.__get_sync_client()
         return cli.aio
 
+    @tiny_trace('embed')
     def embed(self, query: str) -> list[float]:
         res = self.__get_sync_client().models.embed_content(
             model=self.model, contents=query
@@ -97,8 +100,15 @@ class GeminiEmbedder(AbstractEmbedder):
         if not embedding:
             raise ValueError(f'Error while creating embeddings for query {query}')
 
+        set_embedder_telemetry_attributes(
+            self.config,
+            query,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embedding),
+        )
         return embedding
 
+    @tiny_trace('embed_batch')
     def embed_batch(self, queries: list[str]) -> list[list[float]]:
         res = self.__get_sync_client().models.embed_content(
             model=self.model,
@@ -110,8 +120,15 @@ class GeminiEmbedder(AbstractEmbedder):
             if (e := r.values) is None:
                 raise ValueError(f'Error while creating embeddings for query {q}')
             embeddings.append(e)
+        set_embedder_telemetry_attributes(
+            self.config,
+            queries,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embeddings),
+        )
         return embeddings
 
+    @tiny_trace('aembed')
     async def aembed(self, query: str) -> list[float]:
         res = await self.__get_async_client().models.embed_content(
             model=self.model, contents=query
@@ -120,8 +137,15 @@ class GeminiEmbedder(AbstractEmbedder):
         if not embedding:
             raise ValueError(f'Error while creating embeddings for query {query}')
 
+        set_embedder_telemetry_attributes(
+            self.config,
+            query,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embedding),
+        )
         return embedding
 
+    @tiny_trace('aembed_batch')
     async def aembed_batch(self, queries: list[str]) -> list[list[float]]:
         res = await self.__get_async_client().models.embed_content(
             model=self.model,
@@ -133,4 +157,10 @@ class GeminiEmbedder(AbstractEmbedder):
             if (e := r.values) is None:
                 raise ValueError(f'Error while creating embeddings for query {q}')
             embeddings.append(e)
+        set_embedder_telemetry_attributes(
+            self.config,
+            queries,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embeddings),
+        )
         return embeddings

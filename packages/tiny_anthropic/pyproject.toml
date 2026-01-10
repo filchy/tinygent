@@ -3,19 +3,18 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "tiny-mistralai"
+name = "tiny-anthropic"
 version = "0.1.0"
 dependencies = [
-    "mistral-common>=1.8.5",
-    "mistralai>=1.9.11",
+    "anthropic>=0.75.0",
     "tinygent",
 ]
 
 [project.entry-points.components]
-tiny_mistralai = "tiny_mistralai.register"
+tiny_anthropic = "tiny_anthropic.register"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/tiny_mistralai"]
+packages = ["src/tiny_anthropic"]
 
 [tool.uv.sources]
 tinygent = { workspace = true }

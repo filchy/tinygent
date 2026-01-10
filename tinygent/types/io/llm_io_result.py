@@ -47,7 +47,8 @@ class TinyLLMResult(LLMResult):
                         call_id=tool_call['id'] or None,
                         metadata={'raw': tool_call},
                     )
-            elif content := message.content:
+
+            if content := message.content:
                 yield TinyChatMessage(
                     content=self.normalize_content(content), metadata={'raw': message}
                 )

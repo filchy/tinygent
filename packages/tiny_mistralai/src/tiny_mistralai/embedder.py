@@ -9,6 +9,8 @@ from pydantic import SecretStr
 
 from tinygent.datamodels.embedder import AbstractEmbedder
 from tinygent.datamodels.embedder import AbstractEmbedderConfig
+from tinygent.llms.utils import set_embedder_telemetry_attributes
+from tinygent.telemetry.decorators import tiny_trace
 
 _SUPPORTED_MODELS: dict[str, int] = {
     'mistral-embed': 1024,
@@ -91,6 +93,7 @@ class MistralAIEmbedder(AbstractEmbedder):
         self._client = Mistral(api_key=self.api_key, timeout_ms=int(self.timeout) * 1000)
         return self._client
 
+    @tiny_trace('embed')
     def embed(self, query: str) -> list[float]:
         res = self.__get_client().embeddings.create(
             model=self.model,
@@ -101,8 +104,15 @@ class MistralAIEmbedder(AbstractEmbedder):
         embedding = res.data[0].embedding
         if not embedding:
             raise ValueError(f'Error while creating embeddings for query {query}')
+        set_embedder_telemetry_attributes(
+            self.config,
+            query,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embedding),
+        )
         return embedding
 
+    @tiny_trace('embed_batch')
     def embed_batch(self, queries: list[str]) -> list[list[float]]:
         res = self.__get_client().embeddings.create(
             model=self.model,
@@ -115,8 +125,15 @@ class MistralAIEmbedder(AbstractEmbedder):
             if (e := r.embedding) is None:
                 raise ValueError(f'Error while creating embeddings for query {q}')
             embeddings.append(e)
+        set_embedder_telemetry_attributes(
+            self.config,
+            queries,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embeddings),
+        )
         return embeddings
 
+    @tiny_trace('aembed')
     async def aembed(self, query: str) -> list[float]:
         res = await self.__get_client().embeddings.create_async(
             model=self.model,
@@ -127,8 +144,15 @@ class MistralAIEmbedder(AbstractEmbedder):
         embedding = res.data[0].embedding
         if not embedding:
             raise ValueError(f'Error while creating embeddings for query {query}')
+        set_embedder_telemetry_attributes(
+            self.config,
+            query,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embedding),
+        )
         return embedding
 
+    @tiny_trace('aembed_batch')
     async def aembed_batch(self, queries: list[str]) -> list[list[float]]:
         res = await self.__get_client().embeddings.create_async(
             model=self.model,
@@ -141,4 +165,10 @@ class MistralAIEmbedder(AbstractEmbedder):
             if (e := r.embedding) is None:
                 raise ValueError(f'Error while creating embeddings for query {q}')
             embeddings.append(e)
+        set_embedder_telemetry_attributes(
+            self.config,
+            queries,
+            embedding_dim=self.embedding_dim,
+            result_len=len(embeddings),
+        )
         return embeddings
