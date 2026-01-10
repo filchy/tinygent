@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.entry-points.components]
-tiny_openai_llm = "tiny_openai.register"
+tiny_openai = "tiny_openai.register"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/tiny_openai"]

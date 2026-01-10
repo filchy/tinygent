@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [project.entry-points.components]
-tiny_gemini_llm = "tiny_gemini.register"
+tiny_gemini = "tiny_gemini.register"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/tiny_gemini"]

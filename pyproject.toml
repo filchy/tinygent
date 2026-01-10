@@ -28,6 +28,7 @@ dev = [
     "ruff>=0.12.11",
 ]
 brave = ["tiny-brave"]
+anthropic = ["tiny-anthropic"]
 openai = ["tiny-openai"]
 mistralai = ["tiny-mistralai"]
 gemini = ["tiny-gemini"]
@@ -53,6 +54,7 @@ members = ["packages/*", "."]
 
 [tool.uv.sources]
 tiny-brave = { workspace = true }
+tiny-anthropic = { workspace = true }
 tiny-openai = { workspace = true }
 tiny-mistralai = { workspace = true }
 tiny-gemini = { workspace = true }
