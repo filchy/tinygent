@@ -14,7 +14,8 @@ from typing import TypeVar
 
 from pydantic import Field
 
-from tinygent.agents.middleware.hooks import AgentHooks
+from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.agent import MiddlewareAgent
 from tinygent.datamodels.agent import AbstractAgent
 from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.llm import AbstractLLM
@@ -43,6 +44,8 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
 
     type: Any = 'base'
 
+    middleware: Sequence[AgentMiddleware] = Field(default_factory=list)
+
     llm: AbstractLLMConfig | AbstractLLM
     tools: Sequence[AbstractToolConfig | AbstractTool] = Field(default_factory=list)
     memory: AbstractMemoryConfig | AbstractMemory = Field(
@@ -54,16 +57,15 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
         raise NotImplementedError('Subclasses must implement this method.')
 
 
-class TinyBaseAgent(AbstractAgent):
+class TinyBaseAgent(AbstractAgent, MiddlewareAgent):
     def __init__(
         self,
         llm: AbstractLLM,
         memory: AbstractMemory,
         tools: Sequence[AbstractTool] = (),
-        **hooks_kwargs: Any,
+        middleware: Sequence[AgentMiddleware] = [],
     ) -> None:
-        AgentHooks.__init__(self, **hooks_kwargs)
-
+        MiddlewareAgent.__init__(self, middleware)
         self.llm = llm
         self.memory = memory
 
@@ -106,10 +108,10 @@ class TinyBaseAgent(AbstractAgent):
     def run_llm(
         self, run_id: str, fn: Callable, llm_input: TinyLLMInput, **kwargs
     ) -> Any:
-        self.on_before_llm_call(run_id=run_id, llm_input=llm_input)
+        self.before_llm_call(run_id=run_id, llm_input=llm_input)
         try:
             result = fn(llm_input=llm_input, **kwargs)
-            self.on_after_llm_call(run_id=run_id, llm_input=llm_input, result=result)
+            self.after_llm_call(run_id=run_id, llm_input=llm_input, result=result)
             return result
         except Exception as e:
             logger.warning('Error during llm call: %s', e)
@@ -128,7 +130,7 @@ class TinyBaseAgent(AbstractAgent):
         llm_input: TinyLLMInput,
         **kwargs: Any,
     ) -> AsyncGenerator[TinyLLMResultChunk, None]:
-        self.on_before_llm_call(run_id=run_id, llm_input=llm_input)
+        self.before_llm_call(run_id=run_id, llm_input=llm_input)
         try:
             result = fn(llm_input=llm_input, **kwargs)
 
@@ -141,7 +143,7 @@ class TinyBaseAgent(AbstractAgent):
                 all_chunks.append(chunk)
                 yield chunk
 
-            self.on_after_llm_call(run_id=run_id, llm_input=llm_input, result=None)
+            self.after_llm_call(run_id=run_id, llm_input=llm_input, result=None)
         except Exception as e:
             logger.warning('Error during llm stream call: %s', e)
             self.on_error(run_id=run_id, e=e)
@@ -159,12 +161,12 @@ class TinyBaseAgent(AbstractAgent):
         )
         logger.debug('Running tool %s(%s)', tool.info.name, call.arguments)
 
-        self.on_before_tool_call(run_id=run_id, tool=tool, args=call.arguments)
+        self.before_tool_call(run_id=run_id, tool=tool, args=call.arguments)
         try:
             result = tool(**call.arguments)
             call.metadata['executed'] = True
             call.result = result
-            self.on_after_tool_call(
+            self.after_tool_call(
                 run_id=run_id, tool=tool, args=call.arguments, result=result
             )
 

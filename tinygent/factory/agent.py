@@ -1,6 +1,8 @@
+from collections.abc import Sequence
 import logging
 from typing import overload
 
+from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.datamodels.agent import AbstractAgent
 from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.llm import AbstractLLM
@@ -19,6 +21,8 @@ logger = logging.getLogger(__name__)
 @overload
 def build_agent(
     agent: dict | AbstractAgentConfig,
+    *,
+    middleware: Sequence[AgentMiddleware] = [],
 ) -> AbstractAgent: ...
 
 
@@ -26,6 +30,7 @@ def build_agent(
 def build_agent(
     agent: dict | AbstractAgentConfig,
     *,
+    middleware: Sequence[AgentMiddleware] = [],
     llm: dict | AbstractLLM | AbstractLLMConfig | str | None = None,
     tools: list[dict | AbstractTool | AbstractToolConfig | str] | None = None,
     memory: dict | AbstractMemory | AbstractMemoryConfig | str | None = None,
@@ -36,6 +41,7 @@ def build_agent(
 def build_agent(
     agent: str,
     *,
+    middleware: Sequence[AgentMiddleware] = [],
     llm: dict | AbstractLLM | AbstractLLMConfig | str | None = None,
     llm_provider: str | None = None,
     llm_temperature: float | None = None,
@@ -47,6 +53,7 @@ def build_agent(
 def build_agent(
     agent: dict | AbstractAgentConfig | str,
     *,
+    middleware: Sequence[AgentMiddleware] = [],
     llm: dict | AbstractLLM | AbstractLLMConfig | str | None = None,
     llm_provider: str | None = None,
     llm_temperature: float | None = None,

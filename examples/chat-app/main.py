@@ -88,7 +88,7 @@ agent = TinyReActAgent(
 
 agent.on_answer = answer_hook
 agent.on_answer_chunk = answer_chunk_hook
-agent.on_after_tool_call = tool_call_hook
+agent.after_tool_call = tool_call_hook
 
 
 @tc.on_message

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 import logging
 from typing import AsyncGenerator
 from typing import Literal
@@ -7,6 +8,7 @@ import uuid
 
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
+from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import AllTinyMessages
@@ -82,6 +84,7 @@ class TinyReActAgentConfig(TinyBaseAgentConfig['TinyReActAgent']):
             self.prompt_template = get_prompt_template()
 
         return TinyReActAgent(
+            middleware=self.middleware,
             prompt_template=self.prompt_template,
             llm=self.llm if isinstance(self.llm, AbstractLLM) else build_llm(self.llm),
             tools=[
@@ -107,9 +110,9 @@ class TinyReActAgent(TinyBaseAgent):
         memory: AbstractMemory,
         tools: list[AbstractTool] = [],
         max_iterations: int = 10,
-        **kwargs,
+        middleware: Sequence[AgentMiddleware] = [],
     ) -> None:
-        super().__init__(llm=llm, tools=tools, memory=memory, **kwargs)
+        super().__init__(llm=llm, tools=tools, memory=memory, middleware=middleware)
 
         class TinyReactIteration(TinyModel):
             iteration_number: int
