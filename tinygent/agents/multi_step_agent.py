@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Generator, Sequence
+from collections.abc import Generator
+from collections.abc import Sequence
 import logging
 from typing import Any
 from typing import AsyncGenerator

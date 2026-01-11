@@ -82,10 +82,10 @@ class LLMCallTimingMiddleware(AgentMiddleware):
     def before_llm_call(self, *, run_id: str, llm_input: TinyLLMInput) -> None:
         self.call_start_times[run_id] = time.time()
         self.total_calls += 1
-        
+
         # Count messages in input
         message_count = len(llm_input.messages) if llm_input.messages else 0
-        
+
         print(
             TinyColorPrinter.custom(
                 'LLM CALL START',
@@ -101,7 +101,7 @@ class LLMCallTimingMiddleware(AgentMiddleware):
         if start_time:
             duration = time.time() - start_time
             self.call_durations.append(duration)
-            
+
             print(
                 TinyColorPrinter.custom(
                     'LLM CALL END',
@@ -114,7 +114,7 @@ class LLMCallTimingMiddleware(AgentMiddleware):
         """Return statistics about LLM calls."""
         if not self.call_durations:
             return {'total_calls': 0, 'avg_duration': 0, 'total_duration': 0}
-        
+
         return {
             'total_calls': self.total_calls,
             'avg_duration': sum(self.call_durations) / len(self.call_durations),
@@ -136,7 +136,7 @@ class ToolCallAuditMiddleware(AgentMiddleware):
     ) -> None:
         key = f'{run_id}:{tool.info.name}'
         self.tool_start_times[key] = time.time()
-        
+
         print(
             TinyColorPrinter.custom(
                 'TOOL CALL',
@@ -156,7 +156,7 @@ class ToolCallAuditMiddleware(AgentMiddleware):
         key = f'{run_id}:{tool.info.name}'
         start_time = self.tool_start_times.pop(key, None)
         duration = time.time() - start_time if start_time else 0
-        
+
         audit_entry = {
             'run_id': run_id,
             'tool_name': tool.info.name,
@@ -166,7 +166,7 @@ class ToolCallAuditMiddleware(AgentMiddleware):
             'timestamp': time.time(),
         }
         self.tool_calls.append(audit_entry)
-        
+
         print(
             TinyColorPrinter.custom(
                 'TOOL RESULT',

@@ -14,8 +14,8 @@ from typing import TypeVar
 
 from pydantic import Field
 
-from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.agents.middleware.agent import MiddlewareAgent
+from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.datamodels.agent import AbstractAgent
 from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.llm import AbstractLLM

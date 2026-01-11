@@ -14,9 +14,7 @@ class MiddlewareAgent:
     def _overrides(m: AgentMiddleware, name: str) -> bool:
         base_attr = getattr(AgentMiddleware, name, None)
         if base_attr is None:
-            raise AttributeError(
-                f'{name!r} is not a method of AgentMiddleware'
-            )
+            raise AttributeError(f'{name!r} is not a method of AgentMiddleware')
         return getattr(m.__class__, name) is not base_attr
 
     def _dispatch(self, name: str, **kwargs: Any) -> None:
@@ -24,9 +22,7 @@ class MiddlewareAgent:
             if self._overrides(m, name):
                 getattr(m, name)(**kwargs)
 
-    def before_llm_call(
-        self, *, run_id: str, llm_input: TinyLLMInput
-    ) -> None:
+    def before_llm_call(self, *, run_id: str, llm_input: TinyLLMInput) -> None:
         self._dispatch(
             'before_llm_call',
             run_id=run_id,
@@ -80,36 +76,28 @@ class MiddlewareAgent:
             plan=plan,
         )
 
-    def on_reasoning(
-        self, *, run_id: str, reasoning: str
-    ) -> None:
+    def on_reasoning(self, *, run_id: str, reasoning: str) -> None:
         self._dispatch(
             'on_reasoning',
             run_id=run_id,
             reasoning=reasoning,
         )
 
-    def on_tool_reasoning(
-        self, *, run_id: str, reasoning: str
-    ) -> None:
+    def on_tool_reasoning(self, *, run_id: str, reasoning: str) -> None:
         self._dispatch(
             'on_tool_reasoning',
             run_id=run_id,
             reasoning=reasoning,
         )
 
-    def on_answer(
-        self, *, run_id: str, answer: str
-    ) -> None:
+    def on_answer(self, *, run_id: str, answer: str) -> None:
         self._dispatch(
             'on_answer',
             run_id=run_id,
             answer=answer,
         )
 
-    def on_answer_chunk(
-        self, *, run_id: str, chunk: str, idx: str
-    ) -> None:
+    def on_answer_chunk(self, *, run_id: str, chunk: str, idx: str) -> None:
         self._dispatch(
             'on_answer_chunk',
             run_id=run_id,
