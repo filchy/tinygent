@@ -1,17 +1,75 @@
 from pathlib import Path
+from typing import Any
 
 from tinygent.agents.map_agent import MapPromptTemplate
 from tinygent.agents.map_agent import TinyMAPAgent
+from tinygent.agents.middleware.base import AgentMiddleware, register_middleware
 from tinygent.factory import build_llm
 from tinygent.logging import setup_logger
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.types.io.llm_io_input import TinyLLMInput
+from tinygent.utils.color_printer import TinyColorPrinter
 from tinygent.utils.yaml import tiny_yaml_load
 
 logger = setup_logger('debug')
 
 
+@register_middleware('plan_progress')
+class PlanProgressMiddleware(AgentMiddleware):
+    """Middleware that tracks planning progress in MAP agent."""
+
+    def __init__(self) -> None:
+        self.plans: list[str] = []
+        self.llm_calls = 0
+
+    def on_plan(self, *, run_id: str, plan: str) -> None:
+        self.plans.append(plan)
+        print(
+            TinyColorPrinter.custom(
+                'PLAN UPDATE',
+                f'[Run: {run_id[:8]}...] Plan #{len(self.plans)}:\n{plan}',
+                color='CYAN',
+            )
+        )
+
+    def before_llm_call(self, *, run_id: str, llm_input: TinyLLMInput) -> None:
+        self.llm_calls += 1
+        print(
+            TinyColorPrinter.custom(
+                'MAP LLM CALL',
+                f'[Run: {run_id[:8]}...] LLM Call #{self.llm_calls}',
+                color='BLUE',
+            )
+        )
+
+    def on_answer(self, *, run_id: str, answer: str) -> None:
+        print(
+            TinyColorPrinter.custom(
+                'MAP ANSWER',
+                f'[Run: {run_id[:8]}...]\n{answer}',
+                color='GREEN',
+            )
+        )
+
+    def on_error(self, *, run_id: str, e: Exception) -> None:
+        print(
+            TinyColorPrinter.error(
+                f'[Run: {run_id[:8]}...] MAP Error: {e}'
+            )
+        )
+
+    def get_summary(self) -> dict[str, Any]:
+        """Return summary of planning progress."""
+        return {
+            'total_plans': len(self.plans),
+            'total_llm_calls': self.llm_calls,
+        }
+
+
 async def main():
     map_agent_prompt = tiny_yaml_load(str(Path(__file__).parent / 'prompts.yaml'))
+
+    plan_middleware = PlanProgressMiddleware()
 
     agent = TinyMAPAgent(
         llm=build_llm('openai:gpt-4o-mini', temperature=0.1),
@@ -21,6 +79,7 @@ async def main():
         max_branches_per_layer=2,
         max_layer_depth=2,
         max_recurrsion=3,
+        middleware=[plan_middleware],
     )
 
     result = agent.run(
@@ -30,6 +89,11 @@ async def main():
     logger.info('[RESULT] %s', result)
     logger.info('[MEMORY] %s', agent.memory.load_variables())
     logger.info('[AGENT] %s', str(agent))
+
+    print('\nPlan Progress Summary:')
+    summary = plan_middleware.get_summary()
+    for key, value in summary.items():
+        print(f'\t{key}: {value}')
 
 
 if __name__ == '__main__':

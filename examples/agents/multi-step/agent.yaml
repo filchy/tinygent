@@ -21,3 +21,6 @@ tools:
   - type: reasoning
     name: get_weather
     prompt: 'Explain why are you using this tool and what information you expect to get from it.'
+
+middleware:
+  - step_counter

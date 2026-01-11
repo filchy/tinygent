@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import Field
 
-from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import AgentMiddleware, register_middleware
 from tinygent.agents.multi_step_agent import ActionPromptTemplate
 from tinygent.agents.multi_step_agent import FallbackAnswerPromptTemplate
 from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
@@ -40,6 +40,7 @@ def add_numbers(data: CalculateInput) -> str:
     return f'The sum of {data.a} and {data.b} is {result}'
 
 
+@register_middleware('answer_logger')
 class AnswerLoggingMiddleware(AgentMiddleware):
     """Middleware that logs the final answer with formatting."""
 
@@ -71,6 +72,7 @@ class AnswerLoggingMiddleware(AgentMiddleware):
         return self.answers
 
 
+@register_middleware('llm_timing')
 class LLMCallTimingMiddleware(AgentMiddleware):
     """Middleware that tracks LLM call timing and statistics."""
 
@@ -124,6 +126,7 @@ class LLMCallTimingMiddleware(AgentMiddleware):
         }
 
 
+@register_middleware('tool_audit')
 class ToolCallAuditMiddleware(AgentMiddleware):
     """Middleware that audits all tool calls with detailed logging."""
 

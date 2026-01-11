@@ -27,3 +27,6 @@ squad:
   - name: geoghraphic_agent
     description: An agent that provides geographic information.
     agent: !include squad/geoghraphic_agent.yaml
+
+middleware:
+  - squad_delegation
