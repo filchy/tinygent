@@ -7,6 +7,7 @@ from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.factory.helper import check_modules
 from tinygent.factory.helper import parse_config
+from tinygent.factory.helper import parse_model
 from tinygent.runtime.global_registry import GlobalRegistry
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ def build_cross_encoder(
     *,
     score_range: tuple[float, float] | None = None,
     llm: dict | AbstractLLM | AbstractLLMConfig | str | None = None,
+    provider: str | None = None,
 ) -> AbstractCrossEncoder: ...
 
 
@@ -33,6 +35,7 @@ def build_cross_encoder(
     *,
     score_range: tuple[float, float] | None = None,
     llm: dict | AbstractLLM | AbstractLLMConfig | str | None = None,
+    provider: str | None = None,
     llm_provider: str | None = None,
     llm_temperature: float | None = None,
 ) -> AbstractCrossEncoder: ...
@@ -43,6 +46,7 @@ def build_cross_encoder(
     *,
     score_range: tuple[float, float] | None = None,
     llm: dict | AbstractLLM | AbstractLLMConfig | str | None = None,
+    provider: str | None = None,
     llm_provider: str | None = None,
     llm_temperature: float | None = None,
     **kwargs,
@@ -51,6 +55,20 @@ def build_cross_encoder(
     check_modules()
 
     if isinstance(crossencoder, str):
+        # Handle provider:model pattern (e.g., "voyageai:rerank-2.5")
+        # But also support simple type names like "llm"
+        if ':' in crossencoder or provider is not None:
+            model_provider, model_name = parse_model(crossencoder, provider)
+
+            ce_dict = {'model': model_name, 'type': model_provider, **kwargs}
+
+            if model_provider == 'voyageai':
+                from tiny_voyageai import VoyageAICrossEncoderConfig
+
+                return VoyageAICrossEncoderConfig(**ce_dict).build()
+            else:
+                raise ValueError(f'Unsupported cross-encoder provider: {model_provider}')
+
         crossencoder = {'type': crossencoder, **kwargs}
 
     if isinstance(crossencoder, AbstractCrossEncoderConfig):

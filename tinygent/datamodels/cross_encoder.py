@@ -34,7 +34,7 @@ class AbstractCrossEncoder(ABC):
 
     @abstractmethod
     async def predict(
-        self, pairs: list[tuple[str, str]]
+        self, pairs: Iterable[tuple[str, str]]
     ) -> list[tuple[tuple[str, str], float]]:
         """Predict scores for a pair of senteces."""
         raise NotImplementedError('Subclasses must implement this method.')

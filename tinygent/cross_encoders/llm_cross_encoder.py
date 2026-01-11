@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import Iterable
 from typing import Literal
@@ -8,8 +7,11 @@ from typing import Literal
 from pydantic import model_validator
 from typing_extensions import Self
 
+from tinygent.runtime.executors import run_in_semaphore
 from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
 from tinygent.datamodels.cross_encoder import AbstractCrossEncoderConfig
+from tinygent.telemetry.decorators import tiny_trace
+from tinygent.telemetry.utils import set_cross_encoder_telemetry_attributes
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.datamodels.messages import TinyHumanMessage
@@ -94,6 +96,14 @@ class LLMCrossEncoder(AbstractCrossEncoder):
         self.prompt_template = prompt_template
         self.score_range = _validate_score_range(score_range)
 
+    @property
+    def config(self) -> LLMCrossEncoderConfig:
+        return LLMCrossEncoderConfig(
+            llm=self.llm.config,
+            prompt_template=self.prompt_template,
+            score_range=self.score_range,
+        )
+
     async def _single_rank(self, query: str, text: str) -> tuple[tuple[str, str], float]:
         class CrossEncoderResult(TinyModel):
             score: float
@@ -119,14 +129,35 @@ class LLMCrossEncoder(AbstractCrossEncoder):
         )
         return ((query, text), result.score)
 
+    @tiny_trace('rank')
     async def rank(
         self, query: str, texts: Iterable[str]
     ) -> list[tuple[tuple[str, str], float]]:
-        tasks = [self._single_rank(query, text) for text in texts]
-        return await asyncio.gather(*tasks)
+        texts_list = list(texts)
+        tasks = [self._single_rank(query, text) for text in texts_list]
+        result = await run_in_semaphore(*tasks)
 
+        set_cross_encoder_telemetry_attributes(
+            self.config,
+            query=query,
+            texts=texts_list,
+            result=result,
+        )
+
+        return result
+
+    @tiny_trace('predict')
     async def predict(
-        self, pairs: list[tuple[str, str]]
+        self, pairs: Iterable[tuple[str, str]]
     ) -> list[tuple[tuple[str, str], float]]:
-        tasks = [self._single_rank(p[0], p[1]) for p in pairs]
-        return await asyncio.gather(*tasks)
+        pairs_list = list(pairs)
+        tasks = [self._single_rank(p[0], p[1]) for p in pairs_list]
+        result = await run_in_semaphore(*tasks)
+
+        set_cross_encoder_telemetry_attributes(
+            self.config,
+            pairs=pairs_list,
+            result=result,
+        )
+
+        return result

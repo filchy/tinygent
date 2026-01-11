@@ -10,7 +10,7 @@ from pydantic import SecretStr
 
 from tinygent.datamodels.embedder import AbstractEmbedder
 from tinygent.datamodels.embedder import AbstractEmbedderConfig
-from tinygent.llms.utils import set_embedder_telemetry_attributes
+from tinygent.telemetry.utils import set_embedder_telemetry_attributes
 from tinygent.telemetry.decorators import tiny_trace
 
 # all supported models with its output embeddings size
@@ -121,6 +121,7 @@ class OpenAIEmbedder(AbstractEmbedder):
             model=self.model,
         )
         embedding = res.data[0].embedding
+
         set_embedder_telemetry_attributes(
             self.config,
             query,
@@ -136,6 +137,7 @@ class OpenAIEmbedder(AbstractEmbedder):
             model=self.model,
         )
         embeddings = [emb.embedding for emb in res.data]
+
         set_embedder_telemetry_attributes(
             self.config,
             queries,
@@ -151,6 +153,7 @@ class OpenAIEmbedder(AbstractEmbedder):
             model=self.model,
         )
         embedding = res.data[0].embedding
+
         set_embedder_telemetry_attributes(
             self.config,
             query,
@@ -166,6 +169,7 @@ class OpenAIEmbedder(AbstractEmbedder):
             model=self.model,
         )
         embeddings = [emb.embedding for emb in res.data]
+
         set_embedder_telemetry_attributes(
             self.config,
             queries,

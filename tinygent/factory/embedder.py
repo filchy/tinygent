@@ -32,6 +32,10 @@ def build_embedder(
             from tiny_gemini import GeminiEmbedderConfig
 
             return GeminiEmbedderConfig(**embed_dict).build()
+        elif model_provider == 'voyageai':
+            from tiny_voyageai import VoyageAIEmbedderConfig
+
+            return VoyageAIEmbedderConfig(**embed_dict).build()
         else:
             raise ValueError(f'Unsupported model provider: {model_provider}')
 
