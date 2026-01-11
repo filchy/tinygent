@@ -14,7 +14,7 @@ def _print_results(results: list[tuple[tuple[str, str], float]], title: str):
 
 async def single_ranking():
     """Demonstrate ranking multiple texts against a single query."""
-    cross_encoder = build_cross_encoder('llm', llm='openai:gpt-4o-mini')
+    cross_encoder = build_cross_encoder('voyageai:rerank-2.5')
 
     query = 'How to build AI agents?'
     texts = [

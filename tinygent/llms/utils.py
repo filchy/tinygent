@@ -3,69 +3,11 @@ from __future__ import annotations
 from collections import defaultdict
 from io import StringIO
 import json
-from typing import TYPE_CHECKING
 from typing import Any
 from typing import AsyncIterator
 
 from tinygent.datamodels.messages import TinyToolCall
-from tinygent.telemetry.otel import set_tiny_attributes
 from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
-
-if TYPE_CHECKING:
-    from tinygent.datamodels.embedder import AbstractEmbedderConfig
-    from tinygent.datamodels.llm import AbstractLLMConfig
-    from tinygent.datamodels.tool import AbstractTool
-    from tinygent.types.io.llm_io_input import TinyLLMInput
-
-
-def set_embedder_telemetry_attributes(
-    config: AbstractEmbedderConfig,
-    query: str | list[str],
-    *,
-    embedding_dim: int,
-    result_len: int | None = None,
-) -> None:
-    """Unified telemetry attribute setter for all embedder methods."""
-    queries = [query] if isinstance(query, str) else query
-    attrs: dict[str, Any] = {
-        'model.config': json.dumps(config.model_dump(mode='json')),
-        'embedding.dim': embedding_dim,
-        'queries': queries,
-        'queries.len': len(queries),
-    }
-
-    if result_len is not None:
-        attrs['result.len'] = result_len
-
-    set_tiny_attributes(attrs)  # type: ignore[arg-type]
-
-
-def set_llm_telemetry_attributes(
-    config: AbstractLLMConfig,
-    llm_input: TinyLLMInput,
-    *,
-    result: str | list[str] | None = None,
-    tools: list[AbstractTool] | None = None,
-    output_schema: type | None = None,
-) -> None:
-    """Unified telemetry attribute setter for all LLM methods."""
-    attrs: dict[str, Any] = {
-        'model.config': json.dumps(config.model_dump(mode='json')),
-        'messages': [m.tiny_str for m in llm_input.messages],
-        'messages.len': len(llm_input.messages),
-    }
-
-    if tools is not None:
-        attrs['tools'] = [tool.info.name for tool in tools]
-        attrs['tools.len'] = len(tools)
-
-    if output_schema is not None:
-        attrs['output_schema'] = output_schema.__name__
-
-    if result is not None:
-        attrs['result'] = result
-
-    set_tiny_attributes(attrs)  # type: ignore[arg-type]
 
 
 def group_chunks_for_telemetry(chunks: list[TinyLLMResultChunk]) -> list[str]:

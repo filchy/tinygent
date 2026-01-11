@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tiny-voyageai"
+version = "0.1.0"
+dependencies = [
+    "tinygent",
+    "voyageai>=0.3.7",
+]
+
+[project.entry-points.components]
+tiny_voyageai = "tiny_voyageai.register"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tiny_voyageai"]
+
+[tool.uv.sources]
+tinygent = { workspace = true }

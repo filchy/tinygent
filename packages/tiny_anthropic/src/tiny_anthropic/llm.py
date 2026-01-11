@@ -20,9 +20,9 @@ from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.llms.utils import accumulate_llm_chunks
 from tinygent.llms.utils import group_chunks_for_telemetry
-from tinygent.llms.utils import set_llm_telemetry_attributes
 from tinygent.telemetry.decorators import tiny_trace
 from tinygent.telemetry.otel import set_tiny_attribute
+from tinygent.telemetry.utils import set_llm_telemetry_attributes
 from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 
 if typing.TYPE_CHECKING:
