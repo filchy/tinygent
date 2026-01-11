@@ -2,11 +2,11 @@ import json
 from typing import Any
 from typing import Iterable
 
-from tinygent.telemetry.otel import set_tiny_attributes
 from tinygent.datamodels.cross_encoder import AbstractCrossEncoderConfig
 from tinygent.datamodels.embedder import AbstractEmbedderConfig
 from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.datamodels.tool import AbstractTool
+from tinygent.telemetry.otel import set_tiny_attributes
 from tinygent.types.io.llm_io_input import TinyLLMInput
 
 
@@ -87,9 +87,9 @@ def set_cross_encoder_telemetry_attributes(
         attrs['pairs.len'] = len(pairs_list)
 
     if result is not None:
-        attrs['result'] = json.dumps([
-            {'query': r[0][0], 'text': r[0][1], 'score': r[1]} for r in result
-        ])
+        attrs['result'] = json.dumps(
+            [{'query': r[0][0], 'text': r[0][1], 'score': r[1]} for r in result]
+        )
         attrs['result.scores'] = [r[1] for r in result]
         attrs['result.len'] = len(result)
 

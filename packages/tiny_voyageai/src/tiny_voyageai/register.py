@@ -8,7 +8,9 @@ def _register_voyageai() -> None:
 
     registry = GlobalRegistry().get_registry()
 
-    registry.register_crossencoder('voyageai', VoyageAICrossEncoderConfig, VoyageAICrossEncoder)
+    registry.register_crossencoder(
+        'voyageai', VoyageAICrossEncoderConfig, VoyageAICrossEncoder
+    )
     registry.register_embedder('voyageai', VoyageAIEmbedderConfig, VoyageAIEmbedder)
 
 

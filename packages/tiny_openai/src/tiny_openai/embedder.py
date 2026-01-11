@@ -10,8 +10,8 @@ from pydantic import SecretStr
 
 from tinygent.datamodels.embedder import AbstractEmbedder
 from tinygent.datamodels.embedder import AbstractEmbedderConfig
-from tinygent.telemetry.utils import set_embedder_telemetry_attributes
 from tinygent.telemetry.decorators import tiny_trace
+from tinygent.telemetry.utils import set_embedder_telemetry_attributes
 
 # all supported models with its output embeddings size
 _SUPPORTED_MODELS: dict[str, int] = {

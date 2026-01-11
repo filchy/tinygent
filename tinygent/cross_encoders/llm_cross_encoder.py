@@ -7,16 +7,16 @@ from typing import Literal
 from pydantic import model_validator
 from typing_extensions import Self
 
-from tinygent.runtime.executors import run_in_semaphore
 from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
 from tinygent.datamodels.cross_encoder import AbstractCrossEncoderConfig
-from tinygent.telemetry.decorators import tiny_trace
-from tinygent.telemetry.utils import set_cross_encoder_telemetry_attributes
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.factory.llm import build_llm
+from tinygent.runtime.executors import run_in_semaphore
+from tinygent.telemetry.decorators import tiny_trace
+from tinygent.telemetry.utils import set_cross_encoder_telemetry_attributes
 from tinygent.types.base import TinyModel
 from tinygent.types.io.llm_io_input import TinyLLMInput
 from tinygent.types.prompt_template import TinyPromptTemplate

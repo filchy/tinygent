@@ -1,15 +1,15 @@
 import os
 from typing import Literal
+
 from pydantic import Field
 from pydantic import SecretStr
-
 from voyageai.client import Client
 from voyageai.client_async import AsyncClient
 
 from tinygent.datamodels.embedder import AbstractEmbedder
 from tinygent.datamodels.embedder import AbstractEmbedderConfig
-from tinygent.telemetry.utils import set_embedder_telemetry_attributes
 from tinygent.telemetry.decorators import tiny_trace
+from tinygent.telemetry.utils import set_embedder_telemetry_attributes
 
 _SUPPORTED_MODELS: dict[str, int] = {
     'voyage-3-large': 1024,
@@ -101,14 +101,18 @@ class VoyageAIEmbedder(AbstractEmbedder):
         if self._sync_client:
             return self._sync_client
 
-        self._sync_client = Client(api_key=self.api_key, timeout=self.timeout, base_url=self.base_url)
+        self._sync_client = Client(
+            api_key=self.api_key, timeout=self.timeout, base_url=self.base_url
+        )
         return self._sync_client
 
     def __get_async_client(self) -> AsyncClient:
         if self._async_client:
             return self._async_client
 
-        self._async_client = AsyncClient(api_key=self.api_key, timeout=self.timeout, base_url=self.base_url)
+        self._async_client = AsyncClient(
+            api_key=self.api_key, timeout=self.timeout, base_url=self.base_url
+        )
         return self._async_client
 
     @tiny_trace('embed')

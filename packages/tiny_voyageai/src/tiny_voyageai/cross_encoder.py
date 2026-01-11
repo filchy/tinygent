@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from collections import defaultdict
 import os
-from typing import Literal
 from typing import Iterable
+from typing import Literal
 
 from pydantic import Field
 from pydantic import SecretStr
-
 from voyageai.client_async import AsyncClient
 
 from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
@@ -77,7 +76,9 @@ class VoyageAICrossEncoder(AbstractCrossEncoder):
         if self._async_client:
             return self._async_client
 
-        self._async_client = AsyncClient(api_key=self.api_key, timeout=self.timeout, base_url=self.base_url)
+        self._async_client = AsyncClient(
+            api_key=self.api_key, timeout=self.timeout, base_url=self.base_url
+        )
         return self._async_client
 
     async def _rank_internal(
@@ -85,7 +86,9 @@ class VoyageAICrossEncoder(AbstractCrossEncoder):
     ) -> list[tuple[tuple[str, str], float]]:
         """Internal rank method without telemetry, used by predict."""
         texts_list = list(texts)
-        ranks = await self.__get_async_client().rerank(query, texts_list, model=self.model)
+        ranks = await self.__get_async_client().rerank(
+            query, texts_list, model=self.model
+        )
 
         return [
             (
@@ -100,7 +103,9 @@ class VoyageAICrossEncoder(AbstractCrossEncoder):
         self, query: str, texts: Iterable[str]
     ) -> list[tuple[tuple[str, str], float]]:
         texts_list = list(texts)
-        ranks = await self.__get_async_client().rerank(query, texts_list, model=self.model)
+        ranks = await self.__get_async_client().rerank(
+            query, texts_list, model=self.model
+        )
 
         result = [
             (
@@ -130,8 +135,7 @@ class VoyageAICrossEncoder(AbstractCrossEncoder):
             query_text_map[q].append(t)
 
         tasks = [
-            self._rank_internal(query, text)
-            for query, text in query_text_map.items()
+            self._rank_internal(query, text) for query, text in query_text_map.items()
         ]
 
         results = await run_in_semaphore(*tasks)
