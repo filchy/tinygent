@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+from collections.abc import Sequence
 import logging
 from typing import Any
 from typing import AsyncGenerator
@@ -9,6 +10,7 @@ import uuid
 
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
+from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import AllTinyMessages
@@ -94,6 +96,7 @@ class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
             self.prompt_template = get_prompt_template()
 
         return TinyMultiStepAgent(
+            middleware=self.middleware,
             llm=self.llm if isinstance(self.llm, AbstractLLM) else build_llm(self.llm),
             tools=[
                 tool if isinstance(tool, AbstractTool) else build_tool(tool)
@@ -121,9 +124,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
         tools: list[AbstractTool] = [],
         max_iterations: int = 15,
         plan_interval: int = 5,
-        **kwargs,
+        middleware: Sequence[AgentMiddleware] = [],
     ) -> None:
-        super().__init__(llm=llm, tools=tools, memory=memory, **kwargs)
+        super().__init__(llm=llm, tools=tools, memory=memory, middleware=middleware)
 
         self._iteration_number: int = 1
         self._planned_steps: list[TinyPlanMessage] = []

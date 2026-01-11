@@ -14,3 +14,6 @@ llm:
 
 memory:
   type: buffer
+
+middleware:
+  - plan_progress

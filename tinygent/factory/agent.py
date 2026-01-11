@@ -1,6 +1,8 @@
+from collections.abc import Sequence
 import logging
 from typing import overload
 
+from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.datamodels.agent import AbstractAgent
 from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.llm import AbstractLLM
@@ -26,6 +28,7 @@ def build_agent(
 def build_agent(
     agent: dict | AbstractAgentConfig,
     *,
+    middleware: Sequence[AgentMiddleware | str] = [],
     llm: dict | AbstractLLM | AbstractLLMConfig | str | None = None,
     tools: list[dict | AbstractTool | AbstractToolConfig | str] | None = None,
     memory: dict | AbstractMemory | AbstractMemoryConfig | str | None = None,
@@ -36,6 +39,7 @@ def build_agent(
 def build_agent(
     agent: str,
     *,
+    middleware: Sequence[AgentMiddleware | str] = [],
     llm: dict | AbstractLLM | AbstractLLMConfig | str | None = None,
     llm_provider: str | None = None,
     llm_temperature: float | None = None,
@@ -47,6 +51,7 @@ def build_agent(
 def build_agent(
     agent: dict | AbstractAgentConfig | str,
     *,
+    middleware: Sequence[AgentMiddleware | str] = [],
     llm: dict | AbstractLLM | AbstractLLMConfig | str | None = None,
     llm_provider: str | None = None,
     llm_temperature: float | None = None,
@@ -98,6 +103,11 @@ def build_agent(
         agent['memory'] = (
             memory if isinstance(memory, AbstractMemory) else build_memory(memory)
         )
+
+    if middleware:
+        from tinygent.factory.middleware import build_middleware
+
+        agent['middleware'] = [build_middleware(m) for m in middleware]
 
     agent_config = parse_config(
         agent, lambda: GlobalRegistry.get_registry().get_agents()

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 import logging
 from typing import AsyncGenerator
@@ -13,6 +14,7 @@ from pydantic import model_validator
 
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
+from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.datamodels.agent import AbstractAgent
 from tinygent.datamodels.agent import AbstractAgentConfig
 from tinygent.datamodels.llm import AbstractLLM
@@ -105,6 +107,7 @@ class TinySquadAgentConfig(TinyBaseAgentConfig['TinySquadAgent']):
             self.prompt_template = get_prompt_template()
 
         return TinySquadAgent(
+            middleware=self.middleware,
             prompt_template=self.prompt_template,
             llm=self.llm if isinstance(self.llm, AbstractLLM) else build_llm(self.llm),
             tools=[
@@ -137,9 +140,9 @@ class TinySquadAgent(TinyBaseAgent):
         memory: AbstractMemory,
         tools: list[AbstractTool] = [],
         squad: list[AgentSquadMember] = [],
-        **kwargs,
+        middleware: Sequence[AgentMiddleware] = [],
     ) -> None:
-        super().__init__(llm=llm, tools=tools, memory=memory, **kwargs)
+        super().__init__(llm=llm, tools=tools, memory=memory, middleware=middleware)
 
         self._squad = [self._normalize_squad_member(member) for member in squad]
 

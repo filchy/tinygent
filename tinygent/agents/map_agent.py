@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Sequence
 import logging
 from typing import AsyncGenerator
 from typing import Literal
@@ -8,6 +9,7 @@ import uuid
 
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
+from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.messages import AllTinyMessages
@@ -191,6 +193,7 @@ class TinyMAPAgentConfig(TinyBaseAgentConfig['TinyMAPAgent']):
 
         return TinyMAPAgent(
             prompt_template=self.prompt_template,
+            middleware=self.middleware,
             llm=self.llm if isinstance(self.llm, AbstractLLM) else build_llm(self.llm),
             tools=[
                 tool if isinstance(tool, AbstractTool) else build_tool(tool)
@@ -221,9 +224,9 @@ class TinyMAPAgent(TinyBaseAgent):
         max_layer_depth: int,
         max_recurrsion: int = 5,
         tools: list[AbstractTool] = [],
-        **kwargs,
+        middleware: Sequence[AgentMiddleware] = [],
     ) -> None:
-        super().__init__(llm=llm, tools=tools, memory=memory, **kwargs)
+        super().__init__(llm=llm, tools=tools, memory=memory, middleware=middleware)
 
         self.max_plan_length = max_plan_length
         self.max_branches_per_layer = max_branches_per_layer
