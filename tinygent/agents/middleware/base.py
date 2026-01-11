@@ -54,4 +54,5 @@ def register_middleware(name: str):
             cls,
         )
         return cls
+
     return decorator

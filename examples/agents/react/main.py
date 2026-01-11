@@ -99,11 +99,7 @@ class ReActCycleMiddleware(AgentMiddleware):
         )
 
     def on_error(self, *, run_id: str, e: Exception) -> None:
-        print(
-            TinyColorPrinter.error(
-                f'[Iteration #{self.iteration}] Error: {e}'
-            )
-        )
+        print(TinyColorPrinter.error(f'[Iteration #{self.iteration}] Error: {e}'))
 
     def get_cycle_log(self) -> list[dict[str, Any]]:
         """Return the complete cycle log."""
@@ -111,7 +107,9 @@ class ReActCycleMiddleware(AgentMiddleware):
 
     def get_summary(self) -> dict[str, Any]:
         """Return summary of ReAct cycles."""
-        tools_used = [c.get('action', {}).get('tool') for c in self.cycles if 'action' in c]
+        tools_used = [
+            c.get('action', {}).get('tool') for c in self.cycles if 'action' in c
+        ]
         return {
             'total_iterations': self.iteration,
             'completed_cycles': len(self.cycles),

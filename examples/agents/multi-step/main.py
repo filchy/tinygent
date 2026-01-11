@@ -3,7 +3,8 @@ from typing import Any
 
 from pydantic import Field
 
-from tinygent.agents.middleware.base import AgentMiddleware, register_middleware
+from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import register_middleware
 from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
 from tinygent.datamodels.tool import AbstractTool
@@ -72,12 +73,14 @@ class StepCounterMiddleware(AgentMiddleware):
         args: dict[str, Any],
         result: Any,
     ) -> None:
-        self.tool_calls.append({
-            'step': self.current_step,
-            'tool': tool.info.name,
-            'args': args,
-            'result': str(result)[:100],
-        })
+        self.tool_calls.append(
+            {
+                'step': self.current_step,
+                'tool': tool.info.name,
+                'args': args,
+                'result': str(result)[:100],
+            }
+        )
         print(
             TinyColorPrinter.custom(
                 'TOOL COMPLETE',

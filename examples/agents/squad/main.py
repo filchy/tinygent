@@ -100,7 +100,9 @@ class SquadDelegationMiddleware(AgentMiddleware):
         args: dict[str, Any],
         result: Any,
     ) -> None:
-        result_preview = str(result)[:100] + '...' if len(str(result)) > 100 else str(result)
+        result_preview = (
+            str(result)[:100] + '...' if len(str(result)) > 100 else str(result)
+        )
         print(
             TinyColorPrinter.custom(
                 'RESULT',
@@ -119,11 +121,7 @@ class SquadDelegationMiddleware(AgentMiddleware):
         )
 
     def on_error(self, *, run_id: str, e: Exception) -> None:
-        print(
-            TinyColorPrinter.error(
-                f'[Run: {run_id[:8]}...] Squad Error: {e}'
-            )
-        )
+        print(TinyColorPrinter.error(f'[Run: {run_id[:8]}...] Squad Error: {e}'))
 
     def get_summary(self) -> dict[str, Any]:
         """Return summary of squad coordination."""

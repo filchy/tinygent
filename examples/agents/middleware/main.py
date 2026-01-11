@@ -3,7 +3,8 @@ from typing import Any
 
 from pydantic import Field
 
-from tinygent.agents.middleware.base import AgentMiddleware, register_middleware
+from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import register_middleware
 from tinygent.agents.multi_step_agent import ActionPromptTemplate
 from tinygent.agents.multi_step_agent import FallbackAnswerPromptTemplate
 from tinygent.agents.multi_step_agent import MultiStepPromptTemplate

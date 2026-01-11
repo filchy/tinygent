@@ -3,7 +3,8 @@ from typing import Any
 
 from tinygent.agents.map_agent import MapPromptTemplate
 from tinygent.agents.map_agent import TinyMAPAgent
-from tinygent.agents.middleware.base import AgentMiddleware, register_middleware
+from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import register_middleware
 from tinygent.factory import build_llm
 from tinygent.logging import setup_logger
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
@@ -52,11 +53,7 @@ class PlanProgressMiddleware(AgentMiddleware):
         )
 
     def on_error(self, *, run_id: str, e: Exception) -> None:
-        print(
-            TinyColorPrinter.error(
-                f'[Run: {run_id[:8]}...] MAP Error: {e}'
-            )
-        )
+        print(TinyColorPrinter.error(f'[Run: {run_id[:8]}...] MAP Error: {e}'))
 
     def get_summary(self) -> dict[str, Any]:
         """Return summary of planning progress."""
