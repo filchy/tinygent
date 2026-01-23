@@ -105,17 +105,17 @@ class TinyBaseAgent(AbstractAgent, MiddlewareAgent):
         return tool
 
     @tiny_trace('run_llm')
-    def run_llm(
+    async def run_llm(
         self, run_id: str, fn: Callable, llm_input: TinyLLMInput, **kwargs
     ) -> Any:
-        self.before_llm_call(run_id=run_id, llm_input=llm_input)
+        await self.before_llm_call(run_id=run_id, llm_input=llm_input)
         try:
             result = fn(llm_input=llm_input, **kwargs)
-            self.after_llm_call(run_id=run_id, llm_input=llm_input, result=result)
+            await self.after_llm_call(run_id=run_id, llm_input=llm_input, result=result)
             return result
         except Exception as e:
             logger.warning('Error during llm call: %s', e)
-            self.on_error(run_id=run_id, e=e)
+            await self.on_error(run_id=run_id, e=e)
             raise
 
     @tiny_trace('run_llm_stream')
@@ -130,7 +130,7 @@ class TinyBaseAgent(AbstractAgent, MiddlewareAgent):
         llm_input: TinyLLMInput,
         **kwargs: Any,
     ) -> AsyncGenerator[TinyLLMResultChunk, None]:
-        self.before_llm_call(run_id=run_id, llm_input=llm_input)
+        await self.before_llm_call(run_id=run_id, llm_input=llm_input)
         try:
             result = fn(llm_input=llm_input, **kwargs)
 
@@ -143,14 +143,14 @@ class TinyBaseAgent(AbstractAgent, MiddlewareAgent):
                 all_chunks.append(chunk)
                 yield chunk
 
-            self.after_llm_call(run_id=run_id, llm_input=llm_input, result=None)
+            await self.after_llm_call(run_id=run_id, llm_input=llm_input, result=None)
         except Exception as e:
             logger.warning('Error during llm stream call: %s', e)
-            self.on_error(run_id=run_id, e=e)
+            await self.on_error(run_id=run_id, e=e)
             raise
 
     @tiny_trace('run_tool')
-    def run_tool(
+    async def run_tool(
         self, run_id: str, tool: AbstractTool, call: TinyToolCall
     ) -> TinyToolResult:
         set_tiny_attributes(
@@ -161,12 +161,12 @@ class TinyBaseAgent(AbstractAgent, MiddlewareAgent):
         )
         logger.debug('Running tool %s(%s)', tool.info.name, call.arguments)
 
-        self.before_tool_call(run_id=run_id, tool=tool, args=call.arguments)
+        await self.before_tool_call(run_id=run_id, tool=tool, args=call.arguments)
         try:
             result = tool(**call.arguments)
             call.metadata['executed'] = True
             call.result = result
-            self.after_tool_call(
+            await self.after_tool_call(
                 run_id=run_id, tool=tool, args=call.arguments, result=result
             )
 
@@ -186,7 +186,7 @@ class TinyBaseAgent(AbstractAgent, MiddlewareAgent):
             logger.warning(
                 'Error during tool call %s(%s)', tool.info.name, call.arguments
             )
-            self.on_error(run_id=run_id, e=e)
+            await self.on_error(run_id=run_id, e=e)
             raise
 
     def __str__(self) -> str:
