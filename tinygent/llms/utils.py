@@ -6,8 +6,8 @@ import json
 from typing import Any
 from typing import AsyncIterator
 
-from tinygent.datamodels.messages import TinyToolCall
-from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
+from tinygent.core.datamodels.messages import TinyToolCall
+from tinygent.core.types.io.llm_io_chunks import TinyLLMResultChunk
 
 
 def group_chunks_for_telemetry(chunks: list[TinyLLMResultChunk]) -> list[str]:

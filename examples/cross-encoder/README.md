@@ -200,7 +200,7 @@ cross_encoder = build_cross_encoder(config)
 
 ```python
 from tinygent.cross_encoders.llm_cross_encoder import LLMCrossEncoderPromptTemplate
-from tinygent.types.prompt_template import TinyPromptTemplate
+from tinygent.core.types.prompt_template import TinyPromptTemplate
 
 custom_prompt = LLMCrossEncoderPromptTemplate(
     ranking=TinyPromptTemplate.UserSystem(
@@ -321,7 +321,7 @@ For production systems, consider:
 You can implement your own cross-encoder by inheriting from `AbstractCrossEncoder`:
 
 ```python
-from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
+from tinygent.core.datamodels.cross_encoder import AbstractCrossEncoder
 
 class MyCustomCrossEncoder(AbstractCrossEncoder):
     def __init__(self, model_name: str):

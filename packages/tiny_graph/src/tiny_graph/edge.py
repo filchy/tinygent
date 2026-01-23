@@ -8,7 +8,7 @@ from pydantic import Field
 from tiny_graph.driver.base import BaseDriver
 from tiny_graph.helper import generate_uuid
 from tiny_graph.helper import get_current_timestamp
-from tinygent.types.base import TinyModel
+from tinygent.core.types.base import TinyModel
 
 
 class TinyEdge(TinyModel, ABC):

@@ -7,7 +7,7 @@ from tiny_graph.graph.multi_layer_graph.nodes import TinyClusterNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEventNode
 from tiny_graph.types.provider import GraphProvider
-from tinygent.types.base import TinyModel
+from tinygent.core.types.base import TinyModel
 
 
 class EdgeSearchMethods(Enum):

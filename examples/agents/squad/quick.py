@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from tinygent.cli.utils import discover_and_register_components
-from tinygent.factory import build_agent
+from tinygent.core.factory import build_agent
 from tinygent.logging import setup_logger
 from tinygent.utils.yaml import tiny_yaml_load
 

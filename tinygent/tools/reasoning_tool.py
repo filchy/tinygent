@@ -11,11 +11,11 @@ from typing import overload
 from pydantic import Field
 from pydantic import create_model
 
-from tinygent.datamodels.tool import AbstractTool
-from tinygent.datamodels.tool import AbstractToolConfig
-from tinygent.runtime.tool_catalog import GlobalToolCatalog
+from tinygent.core.datamodels.tool import AbstractTool
+from tinygent.core.datamodels.tool import AbstractToolConfig
+from tinygent.core.runtime.tool_catalog import GlobalToolCatalog
+from tinygent.core.types.base import TinyModel
 from tinygent.tools.tool import Tool
-from tinygent.types.base import TinyModel
 
 T = TypeVar('T', bound=TinyModel)
 

@@ -1,6 +1,6 @@
+from tinygent.core.runtime.global_registry import GlobalRegistry
 from tinygent.cross_encoders.llm_cross_encoder import LLMCrossEncoder
 from tinygent.cross_encoders.llm_cross_encoder import LLMCrossEncoderConfig
-from tinygent.runtime.global_registry import GlobalRegistry
 
 
 def _register_crossencoders() -> None:

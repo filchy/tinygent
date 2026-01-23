@@ -1,8 +1,8 @@
 from typing import Any
 from typing import TypeVar
 
-from tinygent.datamodels.tool import AbstractTool
-from tinygent.types.io.llm_io_input import TinyLLMInput
+from tinygent.core.datamodels.tool import AbstractTool
+from tinygent.core.types.io.llm_io_input import TinyLLMInput
 
 T = TypeVar('T', bound='AgentMiddleware')
 
@@ -47,7 +47,7 @@ class AgentMiddleware:
 
 def register_middleware(name: str):
     def decorator(cls: type[T]) -> type[T]:
-        from tinygent.runtime.middleware_catalog import GlobalMiddlewareCatalog
+        from tinygent.core.runtime.middleware_catalog import GlobalMiddlewareCatalog
 
         GlobalMiddlewareCatalog().get_active_catalog().register(
             name,

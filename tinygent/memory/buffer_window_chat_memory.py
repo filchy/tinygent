@@ -3,8 +3,8 @@ from typing import Literal
 
 from pydantic import Field
 
-from tinygent.datamodels.memory import AbstractMemoryConfig
-from tinygent.datamodels.messages import AllTinyMessages
+from tinygent.core.datamodels.memory import AbstractMemoryConfig
+from tinygent.core.datamodels.messages import AllTinyMessages
 from tinygent.memory import BaseChatMemory
 
 

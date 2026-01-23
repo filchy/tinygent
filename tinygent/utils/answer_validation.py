@@ -1,4 +1,4 @@
-from tinygent.datamodels.messages import BaseMessage
+from tinygent.core.datamodels.messages import BaseMessage
 
 
 def is_final_answer(message: BaseMessage) -> bool:

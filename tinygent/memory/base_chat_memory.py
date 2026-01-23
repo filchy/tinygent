@@ -5,11 +5,11 @@ from io import StringIO
 import typing
 
 from tinygent.core.chat_history import BaseChatHistory
-from tinygent.datamodels.memory import AbstractMemory
+from tinygent.core.datamodels.memory import AbstractMemory
 from tinygent.utils.pydantic_utils import tiny_deep_copy
 
 if typing.TYPE_CHECKING:
-    from tinygent.datamodels.messages import AllTinyMessages
+    from tinygent.core.datamodels.messages import AllTinyMessages
 
 
 class BaseChatMemory(AbstractMemory, ABC):

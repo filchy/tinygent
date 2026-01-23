@@ -8,7 +8,7 @@ from pydantic import model_validator
 from tiny_brave.constants import MAX_QUERY_LENGTH
 from tiny_brave.constants import MAX_QUERY_TERMS
 from tiny_brave.exceptions import TinyBraveClientError
-from tinygent.types.base import TinyModel
+from tinygent.core.types.base import TinyModel
 
 
 class BaseSearchRequest(TinyModel):

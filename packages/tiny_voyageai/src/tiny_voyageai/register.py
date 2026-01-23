@@ -1,5 +1,5 @@
 def _register_voyageai() -> None:
-    from tinygent.runtime.global_registry import GlobalRegistry
+    from tinygent.core.runtime.global_registry import GlobalRegistry
 
     from .cross_encoder import VoyageAICrossEncoder
     from .cross_encoder import VoyageAICrossEncoderConfig

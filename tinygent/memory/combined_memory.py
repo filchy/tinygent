@@ -5,10 +5,10 @@ from typing import Literal
 
 from pydantic import Field
 
-from tinygent.datamodels.memory import AbstractMemory
-from tinygent.datamodels.memory import AbstractMemoryConfig
-from tinygent.datamodels.messages import AllTinyMessages
-from tinygent.factory.memory import build_memory
+from tinygent.core.datamodels.memory import AbstractMemory
+from tinygent.core.datamodels.memory import AbstractMemoryConfig
+from tinygent.core.datamodels.messages import AllTinyMessages
+from tinygent.core.factory.memory import build_memory
 from tinygent.memory.base_chat_memory import BaseChatMemory
 
 

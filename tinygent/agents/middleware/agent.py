@@ -4,8 +4,8 @@ import logging
 from typing import Any
 
 from tinygent.agents.middleware.base import AgentMiddleware
-from tinygent.datamodels.tool import AbstractTool
-from tinygent.types.io.llm_io_input import TinyLLMInput
+from tinygent.core.datamodels.tool import AbstractTool
+from tinygent.core.types.io.llm_io_input import TinyLLMInput
 
 logger = logging.getLogger(__name__)
 

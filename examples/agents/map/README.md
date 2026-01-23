@@ -169,7 +169,7 @@ tiny \
 ```python
 from pathlib import Path
 from tinygent.agents.map_agent import MapPromptTemplate, TinyMAPAgent
-from tinygent.factory import build_llm
+from tinygent.core.factory import build_llm
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.utils.yaml import tiny_yaml_load
 

@@ -9,7 +9,7 @@ This example demonstrates how to use the `@tool` and `@register_tool` decorators
 
 ## Requirements
 
-Each tool **must accept zero or one argument**, and if it does accept an argument, it must be a subclass of `tinygent.types.TinyModel`.
+Each tool **must accept zero or one argument**, and if it does accept an argument, it must be a subclass of `tinygent.core.types.TinyModel`.
 
 This design allows:
 
@@ -23,7 +23,7 @@ This design allows:
 
 ```python
 from pydantic import Field
-from tinygent.types.base import TinyModel
+from tinygent.core.types.base import TinyModel
 
 class AddInput(TinyModel):
     a: int = Field(..., description='First number to add')
@@ -99,7 +99,7 @@ def add(data: AddInput) -> int:
     """Adds two numbers together."""
     return data.a + data.b
 
-from tinygent.runtime.tool_catalog import GlobalToolCatalog
+from tinygent.core.runtime.tool_catalog import GlobalToolCatalog
 
 registry = GlobalToolCatalog().get_active_catalog()
 add_tool = registry.get_tool('add')
@@ -209,7 +209,7 @@ print(list(count(n=3)))
 print(list(async_count({"n": 4})))
 
 # Access from global registry (registered tools)
-from tinygent.runtime.tool_catalog import GlobalToolCatalog
+from tinygent.core.runtime.tool_catalog import GlobalToolCatalog
 registry = GlobalToolCatalog.get_registry()
 
 print(registry.get_tool("greet")({"name": "TinyGent"}))

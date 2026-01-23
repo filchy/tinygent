@@ -6,7 +6,7 @@ from tinygent.agents.react_agent import TinyReActAgent
 from tinygent.agents.react_agent import TinyReActAgentConfig
 from tinygent.agents.squad_agent import TinySquadAgent
 from tinygent.agents.squad_agent import TinySquadAgentConfig
-from tinygent.runtime.global_registry import GlobalRegistry
+from tinygent.core.runtime.global_registry import GlobalRegistry
 
 
 def _register_agents() -> None:

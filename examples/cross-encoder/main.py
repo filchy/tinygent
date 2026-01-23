@@ -1,6 +1,6 @@
 import asyncio
 
-from tinygent.factory.cross_encoder import build_cross_encoder
+from tinygent.core.factory.cross_encoder import build_cross_encoder
 
 
 def _print_results(results: list[tuple[tuple[str, str], float]], title: str):

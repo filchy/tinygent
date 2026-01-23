@@ -29,8 +29,8 @@
 ## Example
 
 ```python
-from tinygent.datamodels.messages import TinyChatMessage, TinyHumanMessage, TinyPlanMessage
-from tinygent.factory.llm import build_llm
+from tinygent.core.datamodels.messages import TinyChatMessage, TinyHumanMessage, TinyPlanMessage
+from tinygent.core.factory.llm import build_llm
 from tinygent.memory import BufferSummaryChatMemory
 
 memory = BufferSummaryChatMemory(

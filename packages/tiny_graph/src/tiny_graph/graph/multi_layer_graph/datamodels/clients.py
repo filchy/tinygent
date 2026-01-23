@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
 from tiny_graph.driver.base import BaseDriver
-from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
-from tinygent.datamodels.embedder import AbstractEmbedder
-from tinygent.datamodels.llm import AbstractLLM
+from tinygent.core.datamodels.cross_encoder import AbstractCrossEncoder
+from tinygent.core.datamodels.embedder import AbstractEmbedder
+from tinygent.core.datamodels.llm import AbstractLLM
 
 
 @dataclass

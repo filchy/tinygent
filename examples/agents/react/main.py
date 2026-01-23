@@ -7,12 +7,12 @@ from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.agents.middleware.base import register_middleware
 from tinygent.agents.react_agent import ReActPromptTemplate
 from tinygent.agents.react_agent import TinyReActAgent
-from tinygent.datamodels.tool import AbstractTool
-from tinygent.factory import build_llm
+from tinygent.core.datamodels.tool import AbstractTool
+from tinygent.core.factory import build_llm
+from tinygent.core.types.base import TinyModel
 from tinygent.logging import setup_logger
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.tools.tool import register_tool
-from tinygent.types.base import TinyModel
 from tinygent.utils.color_printer import TinyColorPrinter
 from tinygent.utils.yaml import tiny_yaml_load
 

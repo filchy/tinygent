@@ -29,7 +29,7 @@ from tiny_graph.graph.multi_layer_graph.search.search_utils import entity_fullte
 from tiny_graph.graph.multi_layer_graph.search.search_utils import (
     entity_similarity_search,
 )
-from tinygent.runtime.executors import run_in_semaphore
+from tinygent.core.runtime.executors import run_in_semaphore
 
 
 async def search(

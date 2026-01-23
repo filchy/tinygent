@@ -1,5 +1,5 @@
 def _register_gemini() -> None:
-    from tinygent.runtime.global_registry import GlobalRegistry
+    from tinygent.core.runtime.global_registry import GlobalRegistry
 
     from .llm import GeminiLLM
     from .llm import GeminiLLMConfig

@@ -8,10 +8,10 @@ from google.genai.client import Client
 from pydantic import Field
 from pydantic import SecretStr
 
-from tinygent.datamodels.embedder import AbstractEmbedder
-from tinygent.datamodels.embedder import AbstractEmbedderConfig
-from tinygent.telemetry.decorators import tiny_trace
-from tinygent.telemetry.utils import set_embedder_telemetry_attributes
+from tinygent.core.datamodels.embedder import AbstractEmbedder
+from tinygent.core.datamodels.embedder import AbstractEmbedderConfig
+from tinygent.core.telemetry.decorators import tiny_trace
+from tinygent.core.telemetry.utils import set_embedder_telemetry_attributes
 
 _SUPPORTED_MODELS: dict[str, int] = {
     'gemini-embedding-001': 3072,

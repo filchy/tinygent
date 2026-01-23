@@ -16,22 +16,22 @@ from pydantic import SecretStr
 from tiny_anthropic.utils import anthropic_chunk_to_tiny_chunk
 from tiny_anthropic.utils import anthropic_result_to_tiny_result
 from tiny_anthropic.utils import tiny_prompt_to_anthropic_params
-from tinygent.datamodels.llm import AbstractLLM
-from tinygent.datamodels.llm import AbstractLLMConfig
-from tinygent.datamodels.messages import AllTinyMessages
-from tinygent.datamodels.messages import TinyToolCall
+from tinygent.core.datamodels.llm import AbstractLLM
+from tinygent.core.datamodels.llm import AbstractLLMConfig
+from tinygent.core.datamodels.messages import AllTinyMessages
+from tinygent.core.datamodels.messages import TinyToolCall
+from tinygent.core.telemetry.decorators import tiny_trace
+from tinygent.core.telemetry.otel import set_tiny_attribute
+from tinygent.core.telemetry.utils import set_llm_telemetry_attributes
+from tinygent.core.types.io.llm_io_chunks import TinyLLMResultChunk
 from tinygent.llms.utils import accumulate_llm_chunks
 from tinygent.llms.utils import group_chunks_for_telemetry
-from tinygent.telemetry.decorators import tiny_trace
-from tinygent.telemetry.otel import set_tiny_attribute
-from tinygent.telemetry.utils import set_llm_telemetry_attributes
-from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 
 if typing.TYPE_CHECKING:
-    from tinygent.datamodels.llm import LLMStructuredT
-    from tinygent.datamodels.tool import AbstractTool
-    from tinygent.types.io.llm_io_input import TinyLLMInput
-    from tinygent.types.io.llm_io_result import TinyLLMResult
+    from tinygent.core.datamodels.llm import LLMStructuredT
+    from tinygent.core.datamodels.tool import AbstractTool
+    from tinygent.core.types.io.llm_io_input import TinyLLMInput
+    from tinygent.core.types.io.llm_io_result import TinyLLMResult
 
 _anthropic_sturcured_outputs_beta = 'structured-outputs-2025-11-13'
 _anthropic_tool_use_beta = 'advanced-tool-use-2025-11-20'

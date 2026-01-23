@@ -12,15 +12,15 @@ from tinygent.agents.react_agent import TinyReActAgent
 from tinygent.agents.squad_agent import AgentSquadMember
 from tinygent.agents.squad_agent import SquadPromptTemplate
 from tinygent.agents.squad_agent import TinySquadAgent
-from tinygent.datamodels.tool import AbstractTool
-from tinygent.factory import build_llm
+from tinygent.core.datamodels.tool import AbstractTool
+from tinygent.core.factory import build_llm
+from tinygent.core.types.base import TinyModel
+from tinygent.core.types.io.llm_io_input import TinyLLMInput
 from tinygent.logging import setup_logger
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.memory.buffer_window_chat_memory import BufferWindowChatMemory
 from tinygent.tools.reasoning_tool import register_reasoning_tool
 from tinygent.tools.tool import register_tool
-from tinygent.types.base import TinyModel
-from tinygent.types.io.llm_io_input import TinyLLMInput
 from tinygent.utils.color_printer import TinyColorPrinter
 from tinygent.utils.yaml import tiny_yaml_load
 

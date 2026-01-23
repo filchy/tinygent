@@ -8,22 +8,24 @@ from pydantic import Field
 from pydantic import model_validator
 from typing_extensions import Self
 
-from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
-from tinygent.datamodels.cross_encoder import AbstractCrossEncoderConfig
-from tinygent.datamodels.llm import AbstractLLM
-from tinygent.datamodels.llm import AbstractLLMConfig
-from tinygent.datamodels.messages import TinyHumanMessage
-from tinygent.datamodels.messages import TinySystemMessage
-from tinygent.factory.llm import build_llm
-from tinygent.prompts.cross_encoders.factory.llm_cross_encoder import get_prompt_template
-from tinygent.prompts.cross_encoders.template.llm_cross_encoder import (
+from tinygent.core.datamodels.cross_encoder import AbstractCrossEncoder
+from tinygent.core.datamodels.cross_encoder import AbstractCrossEncoderConfig
+from tinygent.core.datamodels.llm import AbstractLLM
+from tinygent.core.datamodels.llm import AbstractLLMConfig
+from tinygent.core.datamodels.messages import TinyHumanMessage
+from tinygent.core.datamodels.messages import TinySystemMessage
+from tinygent.core.factory.llm import build_llm
+from tinygent.core.prompts.cross_encoders.factory.llm_cross_encoder import (
+    get_prompt_template,
+)
+from tinygent.core.prompts.cross_encoders.template.llm_cross_encoder import (
     LLMCrossEncoderPromptTemplate,
 )
-from tinygent.runtime.executors import run_in_semaphore
-from tinygent.telemetry.decorators import tiny_trace
-from tinygent.telemetry.utils import set_cross_encoder_telemetry_attributes
-from tinygent.types.base import TinyModel
-from tinygent.types.io.llm_io_input import TinyLLMInput
+from tinygent.core.runtime.executors import run_in_semaphore
+from tinygent.core.telemetry.decorators import tiny_trace
+from tinygent.core.telemetry.utils import set_cross_encoder_telemetry_attributes
+from tinygent.core.types.base import TinyModel
+from tinygent.core.types.io.llm_io_input import TinyLLMInput
 from tinygent.utils.jinja_utils import render_template
 
 logger = logging.getLogger(__name__)

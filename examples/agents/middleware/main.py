@@ -6,16 +6,18 @@ from pydantic import Field
 from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.agents.middleware.base import register_middleware
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
-from tinygent.datamodels.tool import AbstractTool
-from tinygent.factory import build_llm
+from tinygent.core.datamodels.tool import AbstractTool
+from tinygent.core.factory import build_llm
+from tinygent.core.prompts.agents.template.multi_agent import ActionPromptTemplate
+from tinygent.core.prompts.agents.template.multi_agent import (
+    FallbackAnswerPromptTemplate,
+)
+from tinygent.core.prompts.agents.template.multi_agent import MultiStepPromptTemplate
+from tinygent.core.prompts.agents.template.multi_agent import PlanPromptTemplate
+from tinygent.core.types.base import TinyModel
+from tinygent.core.types.io.llm_io_input import TinyLLMInput
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
-from tinygent.prompts.agents.template.multi_agent import ActionPromptTemplate
-from tinygent.prompts.agents.template.multi_agent import FallbackAnswerPromptTemplate
-from tinygent.prompts.agents.template.multi_agent import MultiStepPromptTemplate
-from tinygent.prompts.agents.template.multi_agent import PlanPromptTemplate
 from tinygent.tools import reasoning_tool
-from tinygent.types.base import TinyModel
-from tinygent.types.io.llm_io_input import TinyLLMInput
 from tinygent.utils.color_printer import TinyColorPrinter
 
 
