@@ -1,17 +1,13 @@
-<div align="center" style="display: flex; align-items: center; justify-content: center; gap: 20px;">
-
-  <picture style="display: flex; align-items: center;">
-    <source media="(prefers-color-scheme: light)" srcset="docs/dark-avatar.png">
-    <source media="(prefers-color-scheme: dark)" srcset="docs/light-avatar.png">
-    <img alt="TinyCorp avatar" src="docs/light-avatar.png" style="height: 120px; width: auto;">
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/images/logo-light.png">
+    <source media="(prefers-color-scheme: light)" srcset=".github/images/logo-dark.png">
+    <img alt="TinyGent Logo" src=".github/images/logo-dark.png" width="60%">
   </picture>
 
-  <picture style="display: flex; align-items: center;">
-    <source media="(prefers-color-scheme: light)" srcset="docs/dark-logo.png">
-    <source media="(prefers-color-scheme: dark)" srcset="docs/light-logo.png">
-    <img alt="TinyCorp logo" src="docs/light-logo.png" style="height: 120px; width: auto;">
-  </picture>
-
+  <div align="center">
+    <h3>Tiny platform for amazing agents.</h3>
+  </div>
 </div>
 
 ___
