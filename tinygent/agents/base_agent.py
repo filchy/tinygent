@@ -42,11 +42,11 @@ logger = logging.getLogger(__name__)
 class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
     """Configuration for BaseAgent."""
 
-    type: Any = 'base'
+    type: Any = Field(default='base')
 
     middleware: Sequence[AgentMiddleware] = Field(default_factory=list)
 
-    llm: AbstractLLMConfig | AbstractLLM
+    llm: AbstractLLMConfig | AbstractLLM = Field(...)
     tools: Sequence[AbstractToolConfig | AbstractTool] = Field(default_factory=list)
     memory: AbstractMemoryConfig | AbstractMemory = Field(
         default_factory=BufferChatMemoryConfig

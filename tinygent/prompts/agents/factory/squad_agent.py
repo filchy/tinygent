@@ -1,5 +1,5 @@
-from tinygent.agents.squad_agent import ClassifierPromptTemplate
-from tinygent.agents.squad_agent import SquadPromptTemplate
+from tinygent.prompts.agents.template.squad_agent import ClassifierPromptTemplate
+from tinygent.prompts.agents.template.squad_agent import SquadPromptTemplate
 
 
 def get_prompt_template() -> SquadPromptTemplate:

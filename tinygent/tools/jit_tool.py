@@ -9,6 +9,8 @@ from typing import Literal
 from typing import TypeVar
 from typing import overload
 
+from pydantic import Field
+
 from tinygent.datamodels.tool import AbstractTool
 from tinygent.datamodels.tool import AbstractToolConfig
 from tinygent.datamodels.tool_info import ToolInfo
@@ -22,9 +24,9 @@ T = TypeVar('T', bound=TinyModel)
 class JITInstructionToolConfig(AbstractToolConfig['JITInstructionTool'], Generic[T]):
     """Configuration for JIT instruction tools."""
 
-    type: Literal['jit'] = 'jit'
+    type: Literal['jit'] = Field(default='jit', frozen=True)
 
-    instruction: str
+    instruction: str = Field(...)
 
     def build(self) -> 'JITInstructionTool':
         raw_tool = GlobalToolCatalog().get_active_catalog().get_tool(self.name)

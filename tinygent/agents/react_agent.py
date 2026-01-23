@@ -6,6 +6,8 @@ from typing import AsyncGenerator
 from typing import Literal
 import uuid
 
+from pydantic import Field
+
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
 from tinygent.agents.middleware.base import AgentMiddleware
@@ -22,6 +24,8 @@ from tinygent.datamodels.tool import AbstractTool
 from tinygent.factory.llm import build_llm
 from tinygent.factory.memory import build_memory
 from tinygent.factory.tool import build_tool
+from tinygent.prompts.agents.factory.react_agent import get_prompt_template
+from tinygent.prompts.agents.template.react_agent import ReActPromptTemplate
 from tinygent.runtime.executors import run_async_in_executor
 from tinygent.telemetry.decorators import tiny_trace
 from tinygent.telemetry.otel import set_tiny_attributes
@@ -30,59 +34,22 @@ from tinygent.tools.reasoning_tool import ReasoningTool
 from tinygent.types.base import TinyModel
 from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 from tinygent.types.io.llm_io_input import TinyLLMInput
-from tinygent.types.prompt_template import TinyPromptTemplate
 from tinygent.utils import render_template
 
 logger = logging.getLogger(__name__)
 
-
-class ReasonPromptTemplate(TinyPromptTemplate):
-    """Used to define the reasoning step."""
-
-    init: str
-    update: str
-
-    _template_fields = {'init': {'task'}, 'update': {'task', 'overview'}}
-
-
-class ActionPromptTemplate(TinyPromptTemplate):
-    """Used to define the final answer or action."""
-
-    action: str
-
-    _template_fields = {'action': {'reasoning', 'tools'}}
-
-
-class FallbackPromptTemplate(TinyPromptTemplate):
-    """Used to define the fallback if agent don't answer in time."""
-
-    fallback_answer: str
-
-    _template_fields = {'fallback_answer': {'task', 'overview'}}
-
-
-class ReActPromptTemplate(TinyModel):
-    """Prompt template for ReAct Agent."""
-
-    reason: ReasonPromptTemplate
-    action: ActionPromptTemplate
-    fallback: FallbackPromptTemplate
+_DEFAULT_PROMPT = get_prompt_template()
 
 
 class TinyReActAgentConfig(TinyBaseAgentConfig['TinyReActAgent']):
     """Configuration for ReAct Agent."""
 
-    type: Literal['react'] = 'react'
+    type: Literal['react'] = Field(default='react', frozen=True)
 
-    prompt_template: ReActPromptTemplate | None = None
-    max_iterations: int = 10
+    prompt_template: ReActPromptTemplate = Field(default=_DEFAULT_PROMPT)
+    max_iterations: int = Field(default=10)
 
     def build(self) -> TinyReActAgent:
-        if not self.prompt_template:
-            from ..prompts.agents.react_agent import get_prompt_template
-
-            self.prompt_template = get_prompt_template()
-
         return TinyReActAgent(
             middleware=self.middleware,
             prompt_template=self.prompt_template,
@@ -106,8 +73,8 @@ class TinyReActAgent(TinyBaseAgent):
     def __init__(
         self,
         llm: AbstractLLM,
-        prompt_template: ReActPromptTemplate,
         memory: AbstractMemory,
+        prompt_template: ReActPromptTemplate = _DEFAULT_PROMPT,
         tools: list[AbstractTool] = [],
         max_iterations: int = 10,
         middleware: Sequence[AgentMiddleware] = [],

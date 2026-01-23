@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from functools import lru_cache
 import os
 import typing
+from typing import Iterable
 from typing import Literal
 
 from google.genai.client import AsyncClient
@@ -20,6 +22,7 @@ from tiny_gemini.utils import tiny_attributes_to_gemini_config
 from tiny_gemini.utils import tiny_prompt_to_gemini_params
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
+from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.llms.utils import accumulate_llm_chunks
 from tinygent.llms.utils import group_chunks_for_telemetry
 from tinygent.telemetry.decorators import tiny_trace
@@ -70,7 +73,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
                 " or 'GEMINI_API_KEY' env variable.",
             )
 
-        self._sync_client: Client | None = Client(api_key=api_key)
+        self._sync_client: Client | None = None
 
         self.model = model
         self.temperature = temperature
@@ -139,6 +142,15 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         )
 
         return ToolDict(function_declarations=[func_declaration])
+
+    @lru_cache(maxsize=100_000)
+    def _count_tokens(self, model: str, text: str) -> int:
+        return (
+            self.__get_sync_client()
+            .models.count_tokens(model=model, contents=text)
+            .total_tokens
+            or 0
+        )
 
     @tiny_trace('generate_text')
     def generate_text(self, llm_input: TinyLLMInput) -> TinyLLMResult:
@@ -362,3 +374,6 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
                 'result',
                 group_chunks_for_telemetry(accumulated_chunks),
             )
+
+    def count_tokens_in_messages(self, messages: Iterable[AllTinyMessages]) -> int:
+        return sum([self._count_tokens(self.model, m.tiny_str) for m in messages])

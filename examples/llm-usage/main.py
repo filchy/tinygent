@@ -1,6 +1,7 @@
 from pydantic import Field
 
 from tinygent.datamodels.messages import TinyHumanMessage
+from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.factory import build_llm
 from tinygent.tools import reasoning_tool
 from tinygent.tools import tool
@@ -29,6 +30,25 @@ def capitalize(data: CapitalizeInput) -> str:
 
 class SummaryResponse(TinyModel):
     summary: str
+
+
+def count_tokens():
+    llm = build_llm('anthropic:claude-sonnet-4-5')
+
+    llm_input = TinyLLMInput(
+        messages=[
+            TinySystemMessage(content='You are helpful tiny assistant.'),
+            TinyHumanMessage(content='Tell me a joke about programmers.'),
+        ]
+    )
+
+    result = llm.count_tokens_in_messages(
+        llm_input=llm_input,
+    )
+
+    print(
+        f'[NUMBER OF TOKENS] {result} for {"\n".join([m.tiny_str for m in llm_input.messages])}'
+    )
 
 
 def basic_generation():
@@ -135,6 +155,7 @@ async def tool_call_streaming():
 if __name__ == '__main__':
 
     async def main():
+        count_tokens()
         basic_generation()
         structured_generation()
         generation_with_tools()

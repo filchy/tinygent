@@ -7,6 +7,8 @@ from typing import AsyncGenerator
 from typing import Literal
 import uuid
 
+from pydantic import Field
+
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
 from tinygent.agents.middleware.base import AgentMiddleware
@@ -20,15 +22,18 @@ from tinygent.datamodels.tool import AbstractTool
 from tinygent.factory.llm import build_llm
 from tinygent.factory.memory import build_memory
 from tinygent.factory.tool import build_tool
+from tinygent.prompts.agents.factory.map_agent import get_prompt_template
+from tinygent.prompts.agents.template.map_agent import MapPromptTemplate
 from tinygent.runtime.executors import run_async_in_executor
 from tinygent.telemetry.decorators import tiny_trace
 from tinygent.telemetry.otel import set_tiny_attributes
 from tinygent.types.base import TinyModel
 from tinygent.types.io.llm_io_input import TinyLLMInput
-from tinygent.types.prompt_template import TinyPromptTemplate
 from tinygent.utils.jinja_utils import render_template
 
 logger = logging.getLogger(__name__)
+
+_DEFAULT_PROMPT = get_prompt_template()
 
 
 class TinyMAPActionProposal(TinyModel):
@@ -97,100 +102,22 @@ class TinyMAPMonitorValidity(TinyModel):
         return 'Valid response' if self.is_valid else 'NOT-Valid response'
 
 
-class OrchestratorPromptTemplate(TinyPromptTemplate, TinyPromptTemplate.UserSystem):
-    """Used to define orchestrator prompt template."""
-
-    _template_fields = {'user': {'question', 'answer'}}
-
-
-class MonitorPrompTemplate(TinyPromptTemplate):
-    """Used to define monitor prompt template."""
-
-    init: TinyPromptTemplate.UserSystem
-
-    continuos: TinyPromptTemplate.UserSystem
-
-    _template_fields = {
-        'init.user': {'question', 'answer'},
-        'continuos.user': {'question', 'answer', 'previous_questions'},
-    }
-
-
-class ActorPromptTemplate(TinyPromptTemplate):
-    """Used to define actor prompt template."""
-
-    init: TinyPromptTemplate.UserSystem
-
-    init_fixer: TinyPromptTemplate.UserSystem
-
-    continuos: TinyPromptTemplate.UserSystem
-
-    continuos_fixer: TinyPromptTemplate.UserSystem
-
-    evaluator: TinyPromptTemplate.UserSystem
-
-    _template_fields = {
-        'init.user': {'question'},
-        'init_fixer.user': {'question', 'validation'},
-        'continuos.user': {'question', 'previous_questions'},
-        'continuos_fixer.user': {'question', 'validation'},
-        'evaluator.user': {'state', 'subgoal'},
-    }
-
-
-class ActionProposalPromptTemplate(TinyModel):
-    """Used to define action proposal module prompt template."""
-
-    actor: ActorPromptTemplate
-
-    monitor: MonitorPrompTemplate
-
-
-class TaskDecomposerPromptTemplate(TinyPromptTemplate, TinyPromptTemplate.UserSystem):
-    """Used to define task decomposer prompt template."""
-
-    _template_fields = {'user': {'question', 'max_subquestions'}}
-
-
-class PredictorPromptTemplate(TinyPromptTemplate, TinyPromptTemplate.UserSystem):
-    """Used to define predictor prompt template."""
-
-    _template_fields = {'user': {'state', 'proposed_action'}}
-
-
-class MapPromptTemplate(TinyModel):
-    """Prompt template for MAP Agent."""
-
-    task_decomposer: TaskDecomposerPromptTemplate
-
-    action_proposal: ActionProposalPromptTemplate
-
-    predictor: PredictorPromptTemplate
-
-    orchestrator: OrchestratorPromptTemplate
-
-
 class TinyMAPAgentConfig(TinyBaseAgentConfig['TinyMAPAgent']):
     """Configuration for the TinyMAPAgent."""
 
-    type: Literal['map'] = 'map'
+    type: Literal['map'] = Field(default='map')
 
-    prompt_template: MapPromptTemplate | None = None
+    prompt_template: MapPromptTemplate = Field(_DEFAULT_PROMPT)
 
-    max_plan_length: int = 4
+    max_plan_length: int = Field(default=4)
 
-    max_branches_per_layer: int = 3
+    max_branches_per_layer: int = Field(default=3)
 
-    max_layer_depth: int = 2
+    max_layer_depth: int = Field(default=2)
 
-    max_recurrsion: int = 5
+    max_recurrsion: int = Field(default=5)
 
     def build(self) -> TinyMAPAgent:
-        if not self.prompt_template:
-            from ..prompts.agents.map_agent import get_prompt_template
-
-            self.prompt_template = get_prompt_template()
-
         return TinyMAPAgent(
             prompt_template=self.prompt_template,
             middleware=self.middleware,
@@ -216,12 +143,12 @@ class TinyMAPAgent(TinyBaseAgent):
 
     def __init__(
         self,
-        prompt_template: MapPromptTemplate,
         llm: AbstractLLM,
         memory: AbstractMemory,
         max_plan_length: int,
         max_branches_per_layer: int,
         max_layer_depth: int,
+        prompt_template: MapPromptTemplate = _DEFAULT_PROMPT,
         max_recurrsion: int = 5,
         tools: list[AbstractTool] = [],
         middleware: Sequence[AgentMiddleware] = [],

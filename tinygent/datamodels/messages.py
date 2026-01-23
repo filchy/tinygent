@@ -26,6 +26,7 @@ TinyMessageType = TypeVar(
     Literal['human'],
     Literal['plan'],
     Literal['reasoning'],
+    Literal['summary'],
 )
 
 
@@ -88,6 +89,20 @@ class TinyReasoningMessage(BaseMessage[Literal['reasoning']]):
     @property
     def tiny_str(self) -> str:
         return f'AI Reasoning: {self.content}'
+
+
+class TinySummaryMessage(BaseMessage[Literal['summary']]):
+    """Message representing the AI's summary."""
+
+    type: Literal['summary'] = 'summary'
+    """The type of the message."""
+
+    content: str
+    """The content of the summary message."""
+
+    @property
+    def tiny_str(self) -> str:
+        return f'AI Summary: {self.content}'
 
 
 class TinyChatMessage(BaseMessage[Literal['chat']]):
@@ -251,6 +266,7 @@ TinyAIMessage = (
     | TinyChatMessage
     | TinyToolCall
     | TinySquadMemberMessage
+    | TinySummaryMessage
 )
 
 AllTinyMessages = Annotated[
@@ -263,6 +279,7 @@ AllTinyMessages = Annotated[
         | TinyHumanMessage
         | TinySystemMessage
         | TinyToolResult
+        | TinySummaryMessage
     ),
     Field(discriminator='type'),
 ]

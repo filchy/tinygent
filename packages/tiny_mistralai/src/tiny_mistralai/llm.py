@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from functools import lru_cache
 from io import StringIO
 import json
 import os
 import textwrap
 import typing
+from typing import Iterable
 from typing import Literal
 from typing import override
 
@@ -14,12 +16,16 @@ from mistralai import Mistral
 from mistralai import Tool
 from pydantic import Field
 from pydantic import SecretStr
+from transformers import AutoTokenizer
+from transformers import PreTrainedTokenizerBase
 
 from tiny_mistralai.utils import mistralai_chunk_to_tiny_chunks
+from tiny_mistralai.utils import mistralai_family_to_tokenizer
 from tiny_mistralai.utils import mistralai_result_to_tiny_result
 from tiny_mistralai.utils import tiny_prompt_to_mistralai_params
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
+from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.llms.utils import accumulate_llm_chunks
 from tinygent.llms.utils import group_chunks_for_telemetry
 from tinygent.telemetry.decorators import tiny_trace
@@ -66,7 +72,7 @@ class MistralAILLMConfig(AbstractLLMConfig['MistralAILLM']):
 class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
     def __init__(
         self,
-        model: str,
+        model: str = 'mistral-medium-latest',
         api_key: str | None = None,
         safe_prompt: bool = True,
         temperature: float = 0.6,
@@ -149,6 +155,18 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
                 },
             ),
         )
+
+    @staticmethod
+    @lru_cache(maxsize=None)
+    def _get_encoding(model: str) -> PreTrainedTokenizerBase:
+        return AutoTokenizer.from_pretrained(
+            mistralai_family_to_tokenizer(model), use_fast=True
+        )
+
+    @staticmethod
+    @lru_cache(maxsize=100_000)
+    def _count_tokens(model: str, text: str) -> int:
+        return len(MistralAILLM._get_encoding(model).encode(text))
 
     @tiny_trace('generate_text')
     def generate_text(
@@ -346,6 +364,11 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
                 'result',
                 group_chunks_for_telemetry(accumulated_chunks),
             )
+
+    def count_tokens_in_messages(self, messages: Iterable[AllTinyMessages]) -> int:
+        return sum(
+            [MistralAILLM._count_tokens(self.model, m.tiny_str) for m in messages]
+        )
 
     def __str__(self) -> str:
         buf = StringIO()

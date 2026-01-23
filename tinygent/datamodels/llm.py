@@ -5,10 +5,13 @@ from abc import abstractmethod
 from collections.abc import AsyncIterator
 import typing
 from typing import Generic
+from typing import Iterable
 from typing import TypeVar
 
+from pydantic import Field
 from pydantic import SecretStr
 
+from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.types.base import TinyModel
 from tinygent.types.builder import TinyModelBuildable
 
@@ -28,9 +31,9 @@ class AbstractLLMConfig(TinyModelBuildable[T], Generic[T]):
 
     model: str
 
-    api_key: SecretStr | None
+    api_key: SecretStr | None = Field(default=None)
 
-    timeout: float = 60.0
+    timeout: float = Field(default=60.0)
 
     def build(self) -> T:
         """Build the LLM instance from the configuration."""
@@ -110,4 +113,9 @@ class AbstractLLM(ABC, Generic[LLMConfigT]):
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> AsyncIterator[TinyLLMResultChunk]:
         """Stream text generation using the given LLM input and tools."""
+        raise NotImplementedError('Subclasses must implement this method.')
+
+    @abstractmethod
+    def count_tokens_in_messages(self, messages: Iterable[AllTinyMessages]) -> int:
+        """Count number of tokens from the message."""
         raise NotImplementedError('Subclasses must implement this method.')

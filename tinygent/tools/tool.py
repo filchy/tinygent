@@ -11,6 +11,8 @@ from typing import TypeVar
 from typing import cast
 from typing import overload
 
+from pydantic import Field
+
 from tinygent.datamodels.tool import AbstractTool
 from tinygent.datamodels.tool import AbstractToolConfig
 from tinygent.datamodels.tool_info import ToolInfo
@@ -28,7 +30,7 @@ R = TypeVar('R')
 class ToolConfig(AbstractToolConfig['Tool[T, R]'], Generic[T, R]):
     """Configuration for simple tools."""
 
-    type: Literal['simple'] = 'simple'
+    type: Literal['simple'] = Field(default='simple', frozen=True)
 
     def build(self) -> 'Tool[T, R]':
         raw_tool = GlobalToolCatalog().get_active_catalog().get_tool(self.name)
