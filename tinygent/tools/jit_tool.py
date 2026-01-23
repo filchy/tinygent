@@ -71,7 +71,7 @@ class JITInstructionTool(AbstractTool):
         yield {self.__instruction_field_name: self._jit_instruction}
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        tool_result = self.raw(*args, **kwargs)
+        tool_result = self._inner(*args, **kwargs)
 
         if isinstance(tool_result, GeneratorType):
             return self._wrap_generator(tool_result)

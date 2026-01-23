@@ -18,12 +18,11 @@ from tinygent.core.datamodels.tool import AbstractToolConfig
 from tinygent.core.datamodels.tool_info import ToolInfo
 from tinygent.core.runtime.executors import run_async_in_executor
 from tinygent.core.runtime.tool_catalog import GlobalToolCatalog
-from tinygent.core.types.base import TinyModel
 from tinygent.utils.schema_validator import validate_schema
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T', bound=TinyModel)
+T = TypeVar('T')
 R = TypeVar('R')
 
 
@@ -54,7 +53,7 @@ class Tool(AbstractTool, Generic[T, R]):
         self.__original_fn = fn
 
         self._cached_fn: Callable[..., Any] | Callable[..., Awaitable[Any]] | None = None
-        self._info: ToolInfo[T, R] = ToolInfo.from_callable(
+        self._info: ToolInfo[R] = ToolInfo.from_callable(
             fn, use_cache=use_cache, cache_size=cache_size
         )
 
@@ -86,7 +85,7 @@ class Tool(AbstractTool, Generic[T, R]):
         return self.__original_fn
 
     @property
-    def info(self) -> ToolInfo[T, R]:
+    def info(self) -> ToolInfo[R]:
         return self._info
 
     def clear_cache(self) -> None:

@@ -18,6 +18,28 @@ ___
 
 Tinygent is a tiny agentic framework - lightweight, easy to use (hopefully), and efficient (also hopefully ;-0) library for building and deploying generative AI applications. It provides a simple interface for working with various models and tools, making it ideal for developers who want to quickly prototype and deploy AI solutions.
 
+## Create an agent
+
+```python
+# uv sync --extra openai
+
+from tinygent.tools.tool import tool
+from tinygent.core.factory import build_agent
+
+@tool
+def get_weather(location: str) -> str:
+    """Get the current weather in a given location."""
+    return f"The weather in {location} is sunny with a high of 75°F."
+
+agent = build_agent(
+    'react',
+    llm='openai:gpt-4o-mini',
+    tools=[get_weather],
+)
+
+print(agent.run('What is the weather like in Prague?'))
+```
+
 ## Getting Started
 
 ### Prerequisites
