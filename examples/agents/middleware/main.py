@@ -5,14 +5,14 @@ from pydantic import Field
 
 from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.agents.middleware.base import register_middleware
-from tinygent.agents.multi_step_agent import ActionPromptTemplate
-from tinygent.agents.multi_step_agent import FallbackAnswerPromptTemplate
-from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
-from tinygent.agents.multi_step_agent import PlanPromptTemplate
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
 from tinygent.datamodels.tool import AbstractTool
 from tinygent.factory import build_llm
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.prompts.agents.template.multi_agent import ActionPromptTemplate
+from tinygent.prompts.agents.template.multi_agent import FallbackAnswerPromptTemplate
+from tinygent.prompts.agents.template.multi_agent import MultiStepPromptTemplate
+from tinygent.prompts.agents.template.multi_agent import PlanPromptTemplate
 from tinygent.tools import reasoning_tool
 from tinygent.types.base import TinyModel
 from tinygent.types.io.llm_io_input import TinyLLMInput
@@ -245,9 +245,9 @@ def main() -> None:
 
     print('\n' + '=' * 60)
     print('Running agent with 3 custom middlewares:')
-    print('  1. AnswerLoggingMiddleware - Logs final answers')
-    print('  2. LLMCallTimingMiddleware - Tracks LLM call timing')
-    print('  3. ToolCallAuditMiddleware - Audits tool calls')
+    print('\t1. AnswerLoggingMiddleware - Logs final answers')
+    print('\t2. LLMCallTimingMiddleware - Tracks LLM call timing')
+    print('\t3. ToolCallAuditMiddleware - Audits tool calls')
     print('=' * 60 + '\n')
 
     result = agent.run('Say hello to Alice and then add 5 and 7')
@@ -260,17 +260,17 @@ def main() -> None:
     stats = timing_middleware.get_stats()
     for key, value in stats.items():
         if isinstance(value, float):
-            print(f'   {key}: {value:.3f}s')
+            print(f'\t{key}: {value:.3f}s')
         else:
-            print(f'   {key}: {value}')
+            print(f'\t{key}: {value}')
 
     print('\nTool Call Audit Log:')
     for entry in audit_middleware.get_audit_log():
-        print(f'   - {entry["tool_name"]}: {entry["args"]} -> {entry["result"]}')
+        print(f'\t- {entry["tool_name"]}: {entry["args"]} -> {entry["result"]}')
 
     print('\nAll Answers Collected:')
     for i, ans in enumerate(answer_middleware.get_all_answers(), 1):
-        print(f'   {i}. {ans[:100]}...' if len(ans) > 100 else f'   {i}. {ans}')
+        print(f'\t{i}. {ans[:100]}...' if len(ans) > 100 else f'\t{i}. {ans}')
 
 
 if __name__ == '__main__':

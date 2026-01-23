@@ -158,7 +158,9 @@ class TinySquadAgent(TinyBaseAgent):
         return selected_member
 
     @tiny_trace('classify_query')
-    def _classify_query(self, run_id: str, input_text: str) -> ClassificationQueryResult:
+    async def _classify_query(
+        self, run_id: str, input_text: str
+    ) -> ClassificationQueryResult:
         logger.debug('[CLASSIFY QUERY] classifying query: %s', input_text)
 
         _ValidMemberNames = Literal[tuple([member.name for member in self._squad])]  # type: ignore
@@ -192,7 +194,7 @@ class TinySquadAgent(TinyBaseAgent):
             )
         )
 
-        response = self.run_llm(
+        response = await self.run_llm(
             run_id=run_id,
             fn=self.llm.generate_structured,
             llm_input=messages,
@@ -237,7 +239,7 @@ class TinySquadAgent(TinyBaseAgent):
         self.memory.save_context(TinyHumanMessage(content=input_text))
 
         try:
-            classification_result = self._classify_query(
+            classification_result = await self._classify_query(
                 run_id=run_id, input_text=input_text
             )
             selected_member = self._get_squad_member(
@@ -261,7 +263,7 @@ class TinySquadAgent(TinyBaseAgent):
                 )
                 self.memory.save_context(TinyHumanMessage(content=final_answer))
         except Exception as e:
-            self.on_error(run_id=run_id, e=e)
+            await self.on_error(run_id=run_id, e=e)
             raise e
 
     def reset(self) -> None:
@@ -298,7 +300,7 @@ class TinySquadAgent(TinyBaseAgent):
             async for output in self._run_agent(run_id=run_id, input_text=input_text):
                 final_answer += output
 
-            self.on_answer(run_id=run_id, answer=final_answer)
+            await self.on_answer(run_id=run_id, answer=final_answer)
             return final_answer
 
         return run_async_in_executor(_run)
@@ -319,7 +321,7 @@ class TinySquadAgent(TinyBaseAgent):
         async def _generator():
             idx = 0
             async for res in self._run_agent(run_id=run_id, input_text=input_text):
-                self.on_answer_chunk(run_id=run_id, chunk=res, idx=str(idx))
+                await self.on_answer_chunk(run_id=run_id, chunk=res, idx=str(idx))
                 idx += 1
                 yield res
 

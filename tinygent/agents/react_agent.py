@@ -103,7 +103,7 @@ class TinyReActAgent(TinyBaseAgent):
         self.max_iterations = max_iterations
 
     @tiny_trace('react_agent_reasoning')
-    def _stream_reasoning(
+    async def _stream_reasoning(
         self, run_id: str, task: str
     ) -> TinyChatMessage | TinyReasoningMessage:
         class TinyReasoningOutcome(TinyModel):
@@ -131,7 +131,7 @@ class TinyReActAgent(TinyBaseAgent):
             TinySystemMessage(content=render_template(template, variables)),
         )
 
-        result = self.run_llm(
+        result = await self.run_llm(
             run_id=run_id,
             fn=self.llm.generate_structured,
             llm_input=messages,
@@ -240,7 +240,7 @@ class TinyReActAgent(TinyBaseAgent):
                 logger.debug('--- ITERATION %d ---', self._iteration_number)
 
                 try:
-                    reasoning_result = self._stream_reasoning(
+                    reasoning_result = await self._stream_reasoning(
                         run_id=run_id, task=input_text
                     )
                     logger.debug(
@@ -284,7 +284,7 @@ class TinyReActAgent(TinyBaseAgent):
                                 full_tc = msg.full_tool_call
                                 called_tool = self.get_tool(full_tc.tool_name)
                                 if called_tool:
-                                    tool_result = self.run_tool(
+                                    tool_result = await self.run_tool(
                                         run_id=run_id, tool=called_tool, call=full_tc
                                     )
 
@@ -302,7 +302,7 @@ class TinyReActAgent(TinyBaseAgent):
                                             self._iteration_number,
                                             reasoning,
                                         )
-                                        self.on_tool_reasoning(
+                                        await self.on_tool_reasoning(
                                             run_id=run_id, reasoning=reasoning
                                         )
                                 else:
@@ -333,7 +333,7 @@ class TinyReActAgent(TinyBaseAgent):
                         )
                 except Exception as e:
                     logger.warning('Error happen during main react loop %s', e)
-                    self.on_error(run_id=run_id, e=e)
+                    await self.on_error(run_id=run_id, e=e)
                     raise e
                 finally:
                     self._iteration_number += 1
@@ -394,7 +394,7 @@ class TinyReActAgent(TinyBaseAgent):
             async for output in self._run_agent(run_id=run_id, input_text=input_text):
                 final_answer += output
 
-            self.on_answer(run_id=run_id, answer=final_answer)
+            await self.on_answer(run_id=run_id, answer=final_answer)
             return final_answer
 
         return run_async_in_executor(_run)
@@ -415,7 +415,7 @@ class TinyReActAgent(TinyBaseAgent):
         async def _generator():
             idx = 0
             async for res in self._run_agent(run_id=run_id, input_text=input_text):
-                self.on_answer_chunk(run_id=run_id, chunk=res, idx=str(idx))
+                await self.on_answer_chunk(run_id=run_id, chunk=res, idx=str(idx))
                 idx += 1
                 yield res
 

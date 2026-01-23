@@ -1,9 +1,13 @@
 from collections.abc import Sequence
+import inspect
+import logging
 from typing import Any
 
 from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.datamodels.tool import AbstractTool
 from tinygent.types.io.llm_io_input import TinyLLMInput
+
+logger = logging.getLogger(__name__)
 
 
 class MiddlewareAgent:
@@ -17,43 +21,49 @@ class MiddlewareAgent:
             raise AttributeError(f'{name!r} is not a method of AgentMiddleware')
         return getattr(m.__class__, name) is not base_attr
 
-    def _dispatch(self, name: str, **kwargs: Any) -> None:
+    async def _dispatch(self, name: str, **kwargs: Any) -> None:
         for m in self.middleware:
-            if self._overrides(m, name):
-                getattr(m, name)(**kwargs)
+            if not self._overrides(m, name):
+                continue
 
-    def before_llm_call(self, *, run_id: str, llm_input: TinyLLMInput) -> None:
-        self._dispatch(
+            fn = getattr(m, name)
+            result = fn(**kwargs)
+
+            if inspect.isawaitable(result):
+                await result
+
+    async def before_llm_call(self, *, run_id: str, llm_input: TinyLLMInput) -> None:
+        await self._dispatch(
             'before_llm_call',
             run_id=run_id,
             llm_input=llm_input,
         )
 
-    def after_llm_call(
+    async def after_llm_call(
         self, *, run_id: str, llm_input: TinyLLMInput, result: Any
     ) -> None:
-        self._dispatch(
+        await self._dispatch(
             'after_llm_call',
             run_id=run_id,
             llm_input=llm_input,
             result=result,
         )
 
-    def before_tool_call(
+    async def before_tool_call(
         self,
         *,
         run_id: str,
         tool: AbstractTool,
         args: dict[str, Any],
     ) -> None:
-        self._dispatch(
+        await self._dispatch(
             'before_tool_call',
             run_id=run_id,
             tool=tool,
             args=args,
         )
 
-    def after_tool_call(
+    async def after_tool_call(
         self,
         *,
         run_id: str,
@@ -61,7 +71,7 @@ class MiddlewareAgent:
         args: dict[str, Any],
         result: Any,
     ) -> None:
-        self._dispatch(
+        await self._dispatch(
             'after_tool_call',
             run_id=run_id,
             tool=tool,
@@ -69,44 +79,44 @@ class MiddlewareAgent:
             result=result,
         )
 
-    def on_plan(self, *, run_id: str, plan: str) -> None:
-        self._dispatch(
+    async def on_plan(self, *, run_id: str, plan: str) -> None:
+        await self._dispatch(
             'on_plan',
             run_id=run_id,
             plan=plan,
         )
 
-    def on_reasoning(self, *, run_id: str, reasoning: str) -> None:
-        self._dispatch(
+    async def on_reasoning(self, *, run_id: str, reasoning: str) -> None:
+        await self._dispatch(
             'on_reasoning',
             run_id=run_id,
             reasoning=reasoning,
         )
 
-    def on_tool_reasoning(self, *, run_id: str, reasoning: str) -> None:
-        self._dispatch(
+    async def on_tool_reasoning(self, *, run_id: str, reasoning: str) -> None:
+        await self._dispatch(
             'on_tool_reasoning',
             run_id=run_id,
             reasoning=reasoning,
         )
 
-    def on_answer(self, *, run_id: str, answer: str) -> None:
-        self._dispatch(
+    async def on_answer(self, *, run_id: str, answer: str) -> None:
+        await self._dispatch(
             'on_answer',
             run_id=run_id,
             answer=answer,
         )
 
-    def on_answer_chunk(self, *, run_id: str, chunk: str, idx: str) -> None:
-        self._dispatch(
+    async def on_answer_chunk(self, *, run_id: str, chunk: str, idx: str) -> None:
+        await self._dispatch(
             'on_answer_chunk',
             run_id=run_id,
             chunk=chunk,
             idx=idx,
         )
 
-    def on_error(self, *, run_id: str, e: Exception) -> None:
-        self._dispatch(
+    async def on_error(self, *, run_id: str, e: Exception) -> None:
+        await self._dispatch(
             'on_error',
             run_id=run_id,
             e=e,

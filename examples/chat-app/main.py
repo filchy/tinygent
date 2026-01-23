@@ -8,6 +8,7 @@ from tiny_brave import NewsSearchApiResponse
 from tiny_brave import NewsSearchRequest
 from tiny_brave import brave_news_search
 import tiny_chat as tc
+from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.agents.react_agent import ReActPromptTemplate
 from tinygent.agents.react_agent import TinyReActAgent
 from tinygent.cli.utils import discover_and_register_components
@@ -35,44 +36,48 @@ async def brave_news(data: BraveNewsConfig):
     return result
 
 
-async def answer_hook(*, run_id: str, answer: str):
-    await tc.AgentMessage(
-        id=run_id,
-        content=answer,
-    ).send()
+class ChatClientMiddleware(AgentMiddleware):
+    async def on_answer(self, *, run_id: str, answer: str) -> None:
+        await tc.AgentMessage(
+            id=run_id,
+            content=answer,
+        ).send()
 
+    async def on_answer_chunk(self, *, run_id: str, chunk: str, idx: str) -> None:
+        await tc.AgentMessageChunk(
+            id=run_id,
+            content=chunk,
+        ).send()
 
-async def answer_chunk_hook(*, run_id: str, chunk: str, idx: str):
-    await tc.AgentMessageChunk(
-        id=run_id,
-        content=chunk,
-    ).send()
+    async def after_tool_call(
+        self,
+        *,
+        run_id: str,
+        tool: AbstractTool,
+        args: dict[str, Any],
+        result: Any,
+    ) -> None:
+        await tc.AgentToolCallMessage(
+            id=str(uuid.uuid4()),
+            parent_id=run_id,
+            tool_name=tool.info.name,
+            tool_args=args,
+            content=result,
+        ).send()
 
+        try:
+            news_response = NewsSearchApiResponse.model_validate(result)
+            for article in news_response.results:
+                await tc.AgentSourceMessage(
+                    parent_id=run_id,
+                    name=article.title,
+                    url=article.url,
+                    favicon=article.meta_url.favicon if article.meta_url else None,
+                    description=article.description,
+                ).send()
 
-async def tool_call_hook(
-    *, run_id: str, tool: AbstractTool, args: dict[str, Any], result: Any
-):
-    await tc.AgentToolCallMessage(
-        id=str(uuid.uuid4()),
-        parent_id=run_id,
-        tool_name=tool.info.name,
-        tool_args=args,
-        content=result,
-    ).send()
-
-    try:
-        news_response = NewsSearchApiResponse.model_validate(result)
-        for article in news_response.results:
-            await tc.AgentSourceMessage(
-                parent_id=run_id,
-                name=article.title,
-                url=article.url,
-                favicon=article.meta_url.favicon if article.meta_url else None,
-                description=article.description,
-            ).send()
-
-    except Exception:
-        logger.exception('Failed to parse tool call.')
+        except Exception:
+            logger.exception('Failed to parse tool call.')
 
 
 agent = TinyReActAgent(
@@ -84,11 +89,8 @@ agent = TinyReActAgent(
             str(Path(__file__).parent.parent / 'agents' / 'react' / 'prompts.yaml')
         )
     ),
+    middleware=[ChatClientMiddleware()],
 )
-
-agent.on_answer = answer_hook
-agent.on_answer_chunk = answer_chunk_hook
-agent.after_tool_call = tool_call_hook
 
 
 @tc.on_message

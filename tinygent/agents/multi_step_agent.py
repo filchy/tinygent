@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import AsyncGenerator
 from collections.abc import Sequence
 import logging
 from typing import Any
-from typing import AsyncGenerator
 from typing import Literal
 import uuid
 
@@ -99,9 +98,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
         self.fallback_prompt = prompt_template.fallback
 
     @tiny_trace('multi_step_agent_steps_creation')
-    def _stream_steps(
+    async def _stream_steps(
         self, run_id: str, task: str
-    ) -> Generator[TinyPlanMessage | TinyReasoningMessage]:
+    ) -> AsyncGenerator[TinyPlanMessage | TinyReasoningMessage]:
         class TinyReasonedSteps(TinyModel):
             planned_steps: list[str]
             reasoning: str
@@ -136,7 +135,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
             ),
         )
 
-        result = self.run_llm(
+        result = await self.run_llm(
             run_id=run_id,
             fn=self.llm.generate_structured,
             llm_input=messages,
@@ -251,14 +250,14 @@ class TinyMultiStepAgent(TinyBaseAgent):
                     plan_generator = self._stream_steps(run_id=run_id, task=input_text)
                     self._planned_steps = []
 
-                    for planner_msg in plan_generator:
+                    async for planner_msg in plan_generator:
                         if isinstance(planner_msg, TinyPlanMessage):
                             logger.debug(
                                 '[%d. ITERATION - Plan]: %s',
                                 self._iteration_number,
                                 planner_msg.content,
                             )
-                            self.on_plan(run_id=run_id, plan=planner_msg.content)
+                            await self.on_plan(run_id=run_id, plan=planner_msg.content)
                             self._planned_steps.append(planner_msg)
 
                         if isinstance(planner_msg, TinyReasoningMessage):
@@ -267,7 +266,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                                 self._iteration_number,
                                 planner_msg.content,
                             )
-                            self.on_reasoning(
+                            await self.on_reasoning(
                                 run_id=run_id, reasoning=planner_msg.content
                             )
                         self.memory.save_context(planner_msg)
@@ -292,7 +291,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                             self.memory.save_context(tool_call)
                             if called_tool:
                                 self.memory.save_context(
-                                    self.run_tool(
+                                    await self.run_tool(
                                         run_id=run_id, tool=called_tool, call=tool_call
                                     )
                                 )
@@ -310,7 +309,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                                     self._iteration_number,
                                     reasoning,
                                 )
-                                self.on_tool_reasoning(
+                                await self.on_tool_reasoning(
                                     run_id=run_id, reasoning=reasoning
                                 )
 
@@ -329,7 +328,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                             )
                         break
                 except Exception as e:
-                    self.on_error(run_id=run_id, e=e)
+                    await self.on_error(run_id=run_id, e=e)
                     raise e
                 finally:
                     self._iteration_number += 1
@@ -394,7 +393,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
             async for res in self._run_agent(input_text, run_id):
                 final_answer += res
 
-            self.on_answer(run_id=run_id, answer=final_answer)
+            await self.on_answer(run_id=run_id, answer=final_answer)
             return final_answer
 
         return run_async_in_executor(_run)
@@ -415,7 +414,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
         async def _generator():
             idx = 0
             async for res in self._run_agent(run_id=run_id, input_text=input_text):
-                self.on_answer_chunk(run_id=run_id, chunk=res, idx=str(idx))
+                await self.on_answer_chunk(run_id=run_id, chunk=res, idx=str(idx))
                 idx += 1
                 yield res
 
