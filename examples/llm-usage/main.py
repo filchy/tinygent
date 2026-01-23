@@ -33,26 +33,22 @@ class SummaryResponse(TinyModel):
 
 
 def count_tokens():
-    llm = build_llm('anthropic:claude-sonnet-4-5')
+    llm = build_llm('openai:gpt-4o-mini')
 
-    llm_input = TinyLLMInput(
-        messages=[
-            TinySystemMessage(content='You are helpful tiny assistant.'),
-            TinyHumanMessage(content='Tell me a joke about programmers.'),
-        ]
-    )
+    messages = [
+        TinySystemMessage(content='You are helpful tiny assistant.'),
+        TinyHumanMessage(content='Tell me a joke about programmers.'),
+    ]
 
     result = llm.count_tokens_in_messages(
-        llm_input=llm_input,
+        messages=messages,
     )
 
-    print(
-        f'[NUMBER OF TOKENS] {result} for {"\n".join([m.tiny_str for m in llm_input.messages])}'
-    )
+    print(f'[NUMBER OF TOKENS] {result} for {"\n".join([m.tiny_str for m in messages])}')
 
 
 def basic_generation():
-    llm = build_llm('openai:gpt-4o')
+    llm = build_llm('openai:gpt-4o-mini')
 
     result = llm.generate_text(
         llm_input=TinyLLMInput(
@@ -67,7 +63,7 @@ def basic_generation():
 
 
 def structured_generation():
-    llm = build_llm('openai:gpt-4o')
+    llm = build_llm('openai:gpt-4o-mini')
 
     result = llm.generate_structured(
         llm_input=TinyLLMInput(
@@ -84,7 +80,7 @@ def structured_generation():
 
 
 def generation_with_tools():
-    llm = build_llm('openai:gpt-4o')
+    llm = build_llm('openai:gpt-4o-mini')
 
     tools_list = [add, capitalize]
     tools = {tool.info.name: tool for tool in tools_list}
@@ -109,7 +105,7 @@ def generation_with_tools():
 
 
 async def async_generation():
-    llm = build_llm('openai:gpt-4o')
+    llm = build_llm('openai:gpt-4o-mini')
 
     result = await llm.agenerate_text(
         llm_input=TinyLLMInput(
@@ -122,7 +118,7 @@ async def async_generation():
 
 
 async def text_streaming():
-    llm = build_llm('openai:gpt-4o')
+    llm = build_llm('openai:gpt-4o-mini')
 
     async for chunk in llm.stream_text(
         llm_input=TinyLLMInput(
@@ -135,7 +131,7 @@ async def text_streaming():
 
 
 async def tool_call_streaming():
-    llm = build_llm('openai:gpt-4o')
+    llm = build_llm('openai:gpt-4o-mini')
 
     tools = [add, capitalize]
 
