@@ -58,6 +58,9 @@ class ToolInfo(Generic[R]):
     cache_size: int | None = None
     """The maximum size of the cache, if caching is enabled."""
 
+    uses_auto_schema: bool = False
+    """Indicates if the input schema was auto-generated from regular function parameters."""
+
     @classmethod
     def build_input_model_from_fn(
         cls,
@@ -124,6 +127,7 @@ class ToolInfo(Generic[R]):
         sig = inspect.signature(fn)
 
         input_schema = cls.build_input_model_from_fn(fn)
+        uses_auto_schema = input_schema is not None
         if input_schema is None:
             param = next(iter(sig.parameters.values()))
             input_schema = cast(type[TinyModel], param.annotation)
@@ -167,6 +171,7 @@ class ToolInfo(Generic[R]):
             input_schema=input_schema,
             output_schema=output_schema,
             required_fields=required_fields,
+            uses_auto_schema=uses_auto_schema,
             **extra_kwargs,
         )
 

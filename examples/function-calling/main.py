@@ -2,11 +2,12 @@ from pydantic import Field
 
 from tinygent.core.datamodels.messages import TinyHumanMessage
 from tinygent.core.factory import build_llm
-from tinygent.core.types.base import TinyModel
+from tinygent.core.types.base import TinyModel  # Only needed for Variant 1
 from tinygent.core.types.io.llm_io_input import TinyLLMInput
 from tinygent.tools.tool import tool
 
 
+# Variant 1: TinyModel descriptor (explicit schema with field descriptions)
 class GetWeatherInput(TinyModel):
     location: str = Field(..., description='The location to get the weather for.')
 
@@ -18,15 +19,12 @@ def get_weather(data: GetWeatherInput) -> str:
     return f'The weather in {data.location} is sunny with a high of 75°F.'
 
 
-class GetTimeInput(TinyModel):
-    location: str = Field(..., description='The location to get the time for.')
-
-
+# Variant 2: Regular parameters (auto-generated schema)
 @tool
-def get_time(data: GetTimeInput) -> str:
+def get_time(location: str) -> str:
     """Get the current time in a given location."""
 
-    return f'The current time in {data.location} is 2:00 PM.'
+    return f'The current time in {location} is 2:00 PM.'
 
 
 if __name__ == '__main__':
