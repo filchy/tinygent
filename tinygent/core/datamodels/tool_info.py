@@ -5,20 +5,24 @@ from dataclasses import field
 from dataclasses import fields
 import inspect
 import sys
+from typing import Any
 from typing import Callable
 from typing import Generic
 from typing import TextIO
 from typing import TypeVar
 from typing import cast
+from typing import get_type_hints
+
+from pydantic import Field
 
 from tinygent.core.types.base import TinyModel
 
-P = TypeVar('P', bound=TinyModel)
+P = TypeVar('P')
 R = TypeVar('R')
 
 
 @dataclass
-class ToolInfo(Generic[P, R]):
+class ToolInfo(Generic[R]):
     """Metadata about a tool."""
 
     name: str
@@ -39,7 +43,7 @@ class ToolInfo(Generic[P, R]):
     is_async_generator: bool
     """Indicates if the tool function is an async generator (yields values asynchronously)."""
 
-    input_schema: type[P] | None
+    input_schema: type[TinyModel] | None
     """The Pydantic model class representing the input schema for the tool."""
 
     output_schema: type[TinyModel] | None
@@ -54,13 +58,64 @@ class ToolInfo(Generic[P, R]):
     cache_size: int | None = None
     """The maximum size of the cache, if caching is enabled."""
 
+    uses_auto_schema: bool = False
+    """Indicates if the input schema was auto-generated from regular function parameters."""
+
+    @classmethod
+    def build_input_model_from_fn(
+        cls,
+        fn: Callable[..., Any],
+    ) -> type[TinyModel] | None:
+        sig = inspect.signature(fn)
+        params = list(sig.parameters.values())
+
+        # zero-arg function results in empty TinyModel
+        if not params:
+            return type(
+                f'{fn.__name__.title()}Input',
+                (TinyModel,),
+                {},
+            )
+
+        if (
+            len(params) == 1
+            and isinstance(params[0].annotation, type)
+            and issubclass(params[0].annotation, TinyModel)
+        ):
+            return None  # already got TinyModel as single param input so no need to do anything.
+
+        hints = get_type_hints(fn)
+        annotations: dict[str, Any] = {}
+        namespace: dict[str, Any] = {}
+
+        for p in params:
+            if p.kind in (
+                inspect.Parameter.VAR_POSITIONAL,
+                inspect.Parameter.VAR_KEYWORD,
+            ):
+                raise TypeError(f"Tool '{fn.__name__}' cannot use *args or **kwargs")
+
+            annotation = hints.get(p.name, Any)
+            default = p.default if p.default is not inspect.Parameter.empty else ...
+
+            annotations[p.name] = annotation
+            namespace[p.name] = Field(default)
+
+        namespace['__annotations__'] = annotations
+
+        return type(
+            f'{fn.__name__.title()}Input',
+            (TinyModel,),
+            namespace,
+        )
+
     @property
     def is_cachable(self) -> bool:
         """Indicates if the tool is cachable (not a generator or async generator)."""
         return not (self.is_generator or self.is_async_generator)
 
     @classmethod
-    def from_callable(cls, fn: Callable[[P], R], *args, **kwargs) -> ToolInfo[P, R]:
+    def from_callable(cls, fn: Callable[..., R], *args, **kwargs) -> ToolInfo[R]:
         """Create a ToolInfo instance from a callable function."""
         name = fn.__name__
         description = inspect.getdoc(fn) or ''
@@ -70,24 +125,13 @@ class ToolInfo(Generic[P, R]):
         is_async_generator = inspect.isasyncgenfunction(fn)
 
         sig = inspect.signature(fn)
-        parameters = list(sig.parameters.values())
 
-        if len(parameters) != 1:
-            raise ValueError(
-                f"Tool '{name}' must accept exactly one TinyModel argument."
-            )
+        input_schema = cls.build_input_model_from_fn(fn)
+        uses_auto_schema = input_schema is not None
+        if input_schema is None:
+            param = next(iter(sig.parameters.values()))
+            input_schema = cast(type[TinyModel], param.annotation)
 
-        param = parameters[0]
-        param_annotation = param.annotation
-
-        if (
-            param_annotation is inspect.Parameter.empty
-            or not isinstance(param_annotation, type)
-            or not issubclass(param_annotation, TinyModel)
-        ):
-            raise TypeError(f"Parameter of tool '{name}' must be a TinyModel.")
-
-        input_schema = cast(type[P], param_annotation)
         required_fields = [
             fname
             for fname, field in input_schema.model_fields.items()  # type: ignore[attr-defined]
@@ -127,6 +171,7 @@ class ToolInfo(Generic[P, R]):
             input_schema=input_schema,
             output_schema=output_schema,
             required_fields=required_fields,
+            uses_auto_schema=uses_auto_schema,
             **extra_kwargs,
         )
 

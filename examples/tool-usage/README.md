@@ -7,28 +7,54 @@ This example demonstrates how to use the `@tool` and `@register_tool` decorators
 
 ---
 
-## Requirements
+## Tool Parameter Variants
 
-Each tool **must accept zero or one argument**, and if it does accept an argument, it must be a subclass of `tinygent.core.types.TinyModel`.
+TinyGent supports **two ways** to define tool parameters:
 
-This design allows:
+### Variant 1: TinyModel Descriptor (Explicit Schema)
 
-1. **Schema validation** — arguments validated against Pydantic (`TinyModel`).
-2. **LLM compatibility** — tools have OpenAI-compatible schemas for function calling.
-3. **Optional auto-registration** — tools are globally available if you use `@register_tool`.
-
----
-
-### Example Input Schema
+Pass a single `TinyModel` subclass as the only argument. This gives you full control over field descriptions and validation.
 
 ```python
 from pydantic import Field
 from tinygent.core.types.base import TinyModel
+from tinygent.tools.tool import tool
 
 class AddInput(TinyModel):
     a: int = Field(..., description='First number to add')
     b: int = Field(..., description='Second number to add')
+
+@tool
+def add(data: AddInput) -> int:
+    """Adds two numbers together."""
+    return data.a + data.b
 ```
+
+### Variant 2: Regular Parameters (Auto-Generated Schema)
+
+Pass parameters directly like any normal function. TinyGent **auto-generates** a `TinyModel` schema from your type hints.
+
+```python
+from tinygent.tools.tool import tool
+
+@tool
+def multiply(a: int, b: int) -> int:
+    """Multiplies two numbers together."""
+    return a * b
+```
+
+### When to Use Which?
+
+| Variant | Best For | Pros | Cons |
+|---------|----------|------|------|
+| **TinyModel** | Complex tools, detailed schemas | Full control over field descriptions, validation rules | More boilerplate |
+| **Regular params** | Simple utilities, quick prototyping | Minimal code, familiar syntax | Field descriptions derived from param names only |
+
+Both variants:
+
+1. **Schema validation** — arguments validated against Pydantic.
+2. **LLM compatibility** — tools have OpenAI-compatible schemas for function calling.
+3. **Optional auto-registration** — tools are globally available if you use `@register_tool`.
 
 ---
 
@@ -76,6 +102,7 @@ These hooks make it possible to monitor, debug, or extend tool usage.
 
 Creates a `Tool` instance but does **not** register it.
 
+**Using TinyModel:**
 ```python
 from tinygent.tools.tool import tool
 
@@ -87,10 +114,24 @@ def local_add(data: AddInput) -> int:
 print(local_add(AddInput(a=1, b=2)))  # works directly
 ```
 
+**Using regular parameters:**
+```python
+from tinygent.tools.tool import tool
+
+@tool
+def multiply(a: int, b: int) -> int:
+    """Multiplies two numbers."""
+    return a * b
+
+print(multiply(a=3, b=4))  # -> 12
+print(multiply({'a': 3, 'b': 4}))  # also works with dict
+```
+
 ### `@register_tool`
 
 Creates a `Tool` instance **and registers it** into the global registry.
 
+**Using TinyModel:**
 ```python
 from tinygent.tools import register_tool
 
@@ -98,6 +139,16 @@ from tinygent.tools import register_tool
 def add(data: AddInput) -> int:
     """Adds two numbers together."""
     return data.a + data.b
+```
+
+**Using regular parameters:**
+```python
+from tinygent.tools import register_tool
+
+@register_tool(use_cache=True)
+def subtract(a: int, b: int) -> int:
+    """Subtracts b from a."""
+    return a - b
 
 from tinygent.core.runtime.tool_catalog import GlobalToolCatalog
 

@@ -20,6 +20,15 @@ def add(data: AddInput) -> int:
     return data.a + data.b
 
 
+# Variant 2: Regular parameters (auto-generated schema)
+# No need to define a TinyModel class - schema is auto-generated from type hints.
+@register_tool(use_cache=True)
+def multiply(a: int, b: int) -> int:
+    """Multiplies two numbers together."""
+
+    return a * b
+
+
 class GreetInput(TinyModel):
     name: str = Field(..., description='The name to greet.')
 
@@ -55,6 +64,16 @@ async def async_count(data: AsyncCountInput):
         yield i
 
 
+# Another example with @tool decorator using regular parameters
+@tool
+def divide(a: float, b: float) -> float:
+    """Divides a by b."""
+
+    if b == 0:
+        return float('inf')
+    return a / b
+
+
 class SearchInput(TinyModel):
     query: str = Field(..., description='Search query')
 
@@ -75,12 +94,14 @@ if __name__ == '__main__':
     header_print('Tool Summaries')
 
     add.info.print_summary()
+    multiply.info.print_summary()  # Regular params variant
     greet.info.print_summary()
     count.info.print_summary()
     async_count.info.print_summary()
+    divide.info.print_summary()  # Regular params variant
 
     # Execute the tools directly
-    header_print('Direct Executions')
+    header_print('Direct Executions (TinyModel variant)')
 
     classic_print(add(AddInput(a=1, b=2)))
 
@@ -89,6 +110,14 @@ if __name__ == '__main__':
     classic_print(list(count(n=3)))
 
     classic_print(list(async_count({'n': 4})))
+
+    # Execute tools with regular params variant
+    header_print('Direct Executions (Regular params variant)')
+
+    classic_print(multiply(a=3, b=4))  # kwargs
+    classic_print(multiply({'a': 5, 'b': 6}))  # dict
+    classic_print(divide(a=10, b=3))  # kwargs
+    classic_print(divide({'a': 20, 'b': 4}))  # dict
 
     # Global registry
     header_print('Global Registry Executions')

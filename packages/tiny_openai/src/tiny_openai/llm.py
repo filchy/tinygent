@@ -149,10 +149,12 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
                     if isinstance(field.annotation, type)
                     else type(field.annotation)
                 )
-                properties[name] = {
-                    'type': map_type(field_type),
-                    'description': field.description,
-                }
+
+                prop = {'type': map_type(field_type)}
+                if field.description:
+                    prop['description'] = field.description
+
+                properties[name] = prop
 
         return ChatCompletionFunctionToolParam(
             type='function',
@@ -162,7 +164,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
                 'parameters': {
                     'type': 'object',
                     'properties': properties,
-                    'required': list(properties.keys()),
+                    'required': info.required_fields,
                     'additionalProperties': False,
                 },
                 'strict': True,

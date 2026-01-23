@@ -21,7 +21,11 @@ uv run examples/function-calling/main.py
 
 ## 1) Define a couple of tools
 
-Each tool accepts a single Pydantic model as input. The `@tool` decorator wraps the function and returns a `Tool` instance. These are not automatically registered globally — you explicitly pass them to the LLM when needed.
+TinyGent supports **two ways** to define tool parameters. The `@tool` decorator wraps the function and returns a `Tool` instance. These are not automatically registered globally — you explicitly pass them to the LLM when needed.
+
+### Variant 1: TinyModel Descriptor (Explicit Schema)
+
+Pass a single `TinyModel` subclass for full control over field descriptions:
 
 ```python
 from pydantic import Field
@@ -37,17 +41,23 @@ class GetWeatherInput(TinyModel):
 def get_weather(data: GetWeatherInput) -> str:
     """Get the current weather in a given location."""
     return f"The weather in {data.location} is sunny with a high of 75°F."
+```
 
+### Variant 2: Regular Parameters (Auto-Generated Schema)
 
-class GetTimeInput(TinyModel):
-    location: str = Field(..., description='The location to get the time for.')
+Pass parameters directly like any normal function — TinyGent auto-generates the schema:
+
+```python
+from tinygent.tools.tool import tool
 
 
 @tool
-def get_time(data: GetTimeInput) -> str:
+def get_time(location: str) -> str:
     """Get the current time in a given location."""
-    return f"The current time in {data.location} is 2:00 PM."
+    return f"The current time in {location} is 2:00 PM."
 ```
+
+Both variants work identically with LLM function calling — the schema is generated automatically.
 
 ---
 

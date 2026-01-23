@@ -138,10 +138,12 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
                     if isinstance(field.annotation, type)
                     else type(field.annotation)
                 )
-                properties[name] = {
-                    'type': map_type(field_type),
-                    'description': field.description,
-                }
+
+                prop = {'type': map_type(field_type)}
+                if field.description:
+                    prop['description'] = field.description
+
+                properties[name] = prop
 
         return Tool(
             type='function',

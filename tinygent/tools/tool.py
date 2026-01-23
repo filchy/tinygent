@@ -18,21 +18,19 @@ from tinygent.core.datamodels.tool import AbstractToolConfig
 from tinygent.core.datamodels.tool_info import ToolInfo
 from tinygent.core.runtime.executors import run_async_in_executor
 from tinygent.core.runtime.tool_catalog import GlobalToolCatalog
-from tinygent.core.types.base import TinyModel
 from tinygent.utils.schema_validator import validate_schema
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T', bound=TinyModel)
 R = TypeVar('R')
 
 
-class ToolConfig(AbstractToolConfig['Tool[T, R]'], Generic[T, R]):
+class ToolConfig(AbstractToolConfig['Tool[R]'], Generic[R]):
     """Configuration for simple tools."""
 
     type: Literal['simple'] = Field(default='simple', frozen=True)
 
-    def build(self) -> 'Tool[T, R]':
+    def build(self) -> 'Tool[R]':
         raw_tool = GlobalToolCatalog().get_active_catalog().get_tool(self.name)
 
         return Tool(
@@ -42,19 +40,19 @@ class ToolConfig(AbstractToolConfig['Tool[T, R]'], Generic[T, R]):
         )
 
 
-class Tool(AbstractTool, Generic[T, R]):
+class Tool(AbstractTool, Generic[R]):
     """A simple tool wrapping a callable function."""
 
     def __init__(
         self,
-        fn: Callable[[T], R],
+        fn: Callable[..., R],
         use_cache: bool = False,
         cache_size: int | None = None,
     ) -> None:
         self.__original_fn = fn
 
         self._cached_fn: Callable[..., Any] | Callable[..., Awaitable[Any]] | None = None
-        self._info: ToolInfo[T, R] = ToolInfo.from_callable(
+        self._info: ToolInfo[R] = ToolInfo.from_callable(
             fn, use_cache=use_cache, cache_size=cache_size
         )
 
@@ -82,11 +80,11 @@ class Tool(AbstractTool, Generic[T, R]):
         self._fn = self._cached_fn or self.__original_fn
 
     @property
-    def raw(self) -> Callable[[T], R]:
+    def raw(self) -> Callable[..., R]:
         return self.__original_fn
 
     @property
-    def info(self) -> ToolInfo[T, R]:
+    def info(self) -> ToolInfo[R]:
         return self._info
 
     def clear_cache(self) -> None:
@@ -119,6 +117,15 @@ class Tool(AbstractTool, Generic[T, R]):
             elif not parsed_args and kwargs:
                 parsed_args = [validate_schema(kwargs, input_model_cls)]
                 kwargs = {}
+
+        # If using auto-generated schema from regular params, unpack model to kwargs
+        if (
+            self.info.uses_auto_schema
+            and parsed_args
+            and hasattr(parsed_args[0], 'model_dump')
+        ):
+            kwargs = parsed_args[0].model_dump()
+            parsed_args = []
 
         logger.debug(
             'Running tool: %s with args: %s, kwargs: %s',
@@ -163,22 +170,22 @@ class Tool(AbstractTool, Generic[T, R]):
 
 
 @overload
-def tool(fn: Callable[[T], R]) -> Tool[T, R]: ...
+def tool(fn: Callable[..., R]) -> Tool[R]: ...
 
 
 @overload
 def tool(
     *, use_cache: bool = False, cache_size: int = 128
-) -> Callable[[Callable[[T], R]], Tool[T, R]]: ...
+) -> Callable[[Callable[..., R]], Tool[R]]: ...
 
 
 def tool(
-    fn: Callable[[T], R] | None = None,
+    fn: Callable[..., R] | None = None,
     *,
     use_cache: bool = False,
     cache_size: int = 128,
-) -> Tool[T, R] | Callable[[Callable[[T], R]], Tool[T, R]]:
-    def wrapper(f: Callable[[T], R]) -> Tool[T, R]:
+) -> Tool[R] | Callable[[Callable[..., R]], Tool[R]]:
+    def wrapper(f: Callable[..., R]) -> Tool[R]:
         tool_instance = Tool(f, use_cache=use_cache, cache_size=cache_size)
         return tool_instance
 
@@ -188,23 +195,23 @@ def tool(
 
 
 @overload
-def register_tool(fn: Callable[[T], Any]) -> Tool[T, Any]: ...
+def register_tool(fn: Callable[..., Any]) -> Tool[Any]: ...
 
 
 @overload
 def register_tool(
     *, use_cache: bool = False, cache_size: int = 128, hidden: bool = False
-) -> Callable[[Callable[[T], Any]], Tool[T, Any]]: ...
+) -> Callable[[Callable[..., Any]], Tool[Any]]: ...
 
 
 def register_tool(
-    fn: Callable[[T], Any] | None = None,
+    fn: Callable[..., Any] | None = None,
     *,
     use_cache: bool = False,
     cache_size: int = 128,
     hidden: bool = False,
-) -> Tool[T, Any] | Callable[[Callable[[T], Any]], Tool[T, Any]]:
-    def wrapper(f: Callable[[T], Any]) -> Tool[T, Any]:
+) -> Tool[Any] | Callable[[Callable[..., Any]], Tool[Any]]:
+    def wrapper(f: Callable[..., Any]) -> Tool[Any]:
         GlobalToolCatalog().get_active_catalog().register(
             f, use_cache=use_cache, cache_size=cache_size, hidden=hidden
         )
