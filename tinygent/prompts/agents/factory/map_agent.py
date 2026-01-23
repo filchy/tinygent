@@ -1,10 +1,10 @@
-from tinygent.agents.map_agent import ActionProposalPromptTemplate
-from tinygent.agents.map_agent import ActorPromptTemplate
-from tinygent.agents.map_agent import MapPromptTemplate
-from tinygent.agents.map_agent import MonitorPrompTemplate
-from tinygent.agents.map_agent import OrchestratorPromptTemplate
-from tinygent.agents.map_agent import PredictorPromptTemplate
-from tinygent.agents.map_agent import TaskDecomposerPromptTemplate
+from tinygent.prompts.agents.template.map_agent import ActionProposalPromptTemplate
+from tinygent.prompts.agents.template.map_agent import ActorPromptTemplate
+from tinygent.prompts.agents.template.map_agent import MapPromptTemplate
+from tinygent.prompts.agents.template.map_agent import MonitorPrompTemplate
+from tinygent.prompts.agents.template.map_agent import OrchestratorPromptTemplate
+from tinygent.prompts.agents.template.map_agent import PredictorPromptTemplate
+from tinygent.prompts.agents.template.map_agent import TaskDecomposerPromptTemplate
 from tinygent.types.prompt_template import TinyPromptTemplate
 
 

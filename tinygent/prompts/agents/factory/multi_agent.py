@@ -1,7 +1,7 @@
-from tinygent.agents.multi_step_agent import ActionPromptTemplate
-from tinygent.agents.multi_step_agent import FallbackAnswerPromptTemplate
-from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
-from tinygent.agents.multi_step_agent import PlanPromptTemplate
+from tinygent.prompts.agents.template.multi_agent import ActionPromptTemplate
+from tinygent.prompts.agents.template.multi_agent import FallbackAnswerPromptTemplate
+from tinygent.prompts.agents.template.multi_agent import MultiStepPromptTemplate
+from tinygent.prompts.agents.template.multi_agent import PlanPromptTemplate
 
 
 def get_prompt_template() -> MultiStepPromptTemplate:

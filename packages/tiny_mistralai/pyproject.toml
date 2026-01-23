@@ -9,6 +9,7 @@ dependencies = [
     "mistral-common>=1.8.5",
     "mistralai>=1.9.11",
     "tinygent",
+    "transformers>=4.57.6",
 ]
 
 [project.entry-points.components]

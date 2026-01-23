@@ -233,3 +233,33 @@ def mistralai_chunk_to_tiny_chunks(chunk: CompletionChunk) -> list[TinyLLMResult
         )
 
     return results
+
+
+def mistralai_family_to_tokenizer(model: str) -> str:
+    m = model.lower()
+
+    if m.startswith('codestral'):
+        return 'mistralai/Codestral-22B-v0.1'
+
+    if m.startswith('ministral'):
+        return 'mistralai/Ministral-8B-Instruct-2410'
+
+    if m.startswith('pixtral'):
+        return 'mistralai/Pixtral-12B-2409'
+
+    if m.startswith('devstral'):
+        return 'mistralai/Mistral-7B-Instruct-v0.2'
+
+    if m.startswith('magistral'):
+        if 'small' in m:
+            return 'mistralai/Mistral-7B-Instruct-v0.2'
+        return 'mistralai/Mixtral-8x7B-Instruct-v0.1'
+
+    if m.startswith('mistral'):
+        if 'large' in m:
+            return 'mistralai/Mixtral-8x22B-Instruct-v0.1'
+        if 'medium' in m:
+            return 'mistralai/Mixtral-8x7B-Instruct-v0.1'
+        return 'mistralai/Mistral-7B-Instruct-v0.2'
+
+    return 'mistralai/Mistral-7B-Instruct-v0.2'

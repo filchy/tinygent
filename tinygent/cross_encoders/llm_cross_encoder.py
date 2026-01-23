@@ -4,6 +4,7 @@ import logging
 from typing import Iterable
 from typing import Literal
 
+from pydantic import Field
 from pydantic import model_validator
 from typing_extensions import Self
 
@@ -14,15 +15,20 @@ from tinygent.datamodels.llm import AbstractLLMConfig
 from tinygent.datamodels.messages import TinyHumanMessage
 from tinygent.datamodels.messages import TinySystemMessage
 from tinygent.factory.llm import build_llm
+from tinygent.prompts.cross_encoders.factory.llm_cross_encoder import get_prompt_template
+from tinygent.prompts.cross_encoders.template.llm_cross_encoder import (
+    LLMCrossEncoderPromptTemplate,
+)
 from tinygent.runtime.executors import run_in_semaphore
 from tinygent.telemetry.decorators import tiny_trace
 from tinygent.telemetry.utils import set_cross_encoder_telemetry_attributes
 from tinygent.types.base import TinyModel
 from tinygent.types.io.llm_io_input import TinyLLMInput
-from tinygent.types.prompt_template import TinyPromptTemplate
 from tinygent.utils.jinja_utils import render_template
 
 logger = logging.getLogger(__name__)
+
+_DEFAULT_PROMPT = get_prompt_template()
 
 
 def _validate_score_range(score_range: tuple[float, float]) -> tuple[float, float]:
@@ -48,24 +54,14 @@ def _validate_score_range(score_range: tuple[float, float]) -> tuple[float, floa
     return score_range
 
 
-class LLMCrossEncoderPromptTemplate(TinyPromptTemplate):
-    """Prompt template for LLM Cross-encoder."""
-
-    ranking: TinyPromptTemplate.UserSystem
-
-    _template_fields = {
-        'ranking.user': {'query', 'text', 'min_range_val', 'max_range_val'}
-    }
-
-
 class LLMCrossEncoderConfig(AbstractCrossEncoderConfig['LLMCrossEncoder']):
-    type: Literal['llm'] = 'llm'
+    type: Literal['llm'] = Field(default='llm', frozen=True)
 
-    prompt_template: LLMCrossEncoderPromptTemplate | None = None
+    prompt_template: LLMCrossEncoderPromptTemplate = Field(default=_DEFAULT_PROMPT)
 
-    llm: AbstractLLMConfig | AbstractLLM
+    llm: AbstractLLMConfig | AbstractLLM = Field(...)
 
-    score_range: tuple[float, float] = (-5.0, 5.0)
+    score_range: tuple[float, float] = Field(default=(-5.0, 5.0))
 
     @model_validator(mode='after')
     def validate_(self) -> Self:
@@ -73,11 +69,6 @@ class LLMCrossEncoderConfig(AbstractCrossEncoderConfig['LLMCrossEncoder']):
         return self
 
     def build(self) -> LLMCrossEncoder:
-        if not self.prompt_template:
-            from ..prompts.cross_encoders.llm_cross_encoder import get_prompt_template
-
-            self.prompt_template = get_prompt_template()
-
         return LLMCrossEncoder(
             llm=self.llm if isinstance(self.llm, AbstractLLM) else build_llm(self.llm),
             prompt_template=self.prompt_template,
@@ -89,7 +80,7 @@ class LLMCrossEncoder(AbstractCrossEncoder):
     def __init__(
         self,
         llm: AbstractLLM,
-        prompt_template: LLMCrossEncoderPromptTemplate,
+        prompt_template: LLMCrossEncoderPromptTemplate = _DEFAULT_PROMPT,
         score_range: tuple[float, float] = (-5.0, 5.0),
     ) -> None:
         self.llm = llm

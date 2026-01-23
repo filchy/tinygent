@@ -1,5 +1,6 @@
 from abc import ABC
 from abc import abstractmethod
+from typing import Any
 from typing import Generic
 from typing import TypeVar
 
@@ -33,7 +34,7 @@ class AbstractMemory(ABC):
         raise NotImplementedError('Subclasses must implement this method.')
 
     @abstractmethod
-    def load_variables(self) -> dict[str, str]:
+    def load_variables(self) -> dict[str, Any]:
         """Load variables from memory."""
         raise NotImplementedError('Subclasses must implement this method.')
 

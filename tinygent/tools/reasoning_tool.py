@@ -23,9 +23,9 @@ T = TypeVar('T', bound=TinyModel)
 class ReasoningToolConfig(AbstractToolConfig['ReasoningTool'], Generic[T]):
     """Configuration for reasoning tools."""
 
-    type: Literal['reasoning'] = 'reasoning'
+    type: Literal['reasoning'] = Field(default='reasoning', frozen=True)
 
-    prompt: str
+    prompt: str = Field(...)
 
     def build(self) -> 'ReasoningTool':
         raw_tool = GlobalToolCatalog().get_active_catalog().get_tool(self.name)

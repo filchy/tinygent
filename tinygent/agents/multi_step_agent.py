@@ -8,6 +8,8 @@ from typing import AsyncGenerator
 from typing import Literal
 import uuid
 
+from pydantic import Field
+
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
 from tinygent.agents.middleware.base import AgentMiddleware
@@ -25,6 +27,8 @@ from tinygent.datamodels.tool import AbstractTool
 from tinygent.factory.llm import build_llm
 from tinygent.factory.memory import build_memory
 from tinygent.factory.tool import build_tool
+from tinygent.prompts.agents.factory.multi_agent import get_prompt_template
+from tinygent.prompts.agents.template.multi_agent import MultiStepPromptTemplate
 from tinygent.runtime.executors import run_async_in_executor
 from tinygent.telemetry.decorators import tiny_trace
 from tinygent.telemetry.otel import set_tiny_attributes
@@ -33,68 +37,23 @@ from tinygent.tools.reasoning_tool import ReasoningTool
 from tinygent.types.base import TinyModel
 from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 from tinygent.types.io.llm_io_input import TinyLLMInput
-from tinygent.types.prompt_template import TinyPromptTemplate
 from tinygent.utils import render_template
 
 logger = logging.getLogger(__name__)
 
-
-class PlanPromptTemplate(TinyPromptTemplate):
-    """Used to generate or update the plan."""
-
-    init_plan: str
-    update_plan: str
-
-    _template_fields = {
-        'init_plan': {'task', 'tools'},
-        'update_plan': {'task', 'tools', 'history', 'steps', 'remaining_steps'},
-    }
-
-
-class ActionPromptTemplate(TinyPromptTemplate):
-    """Used to generate the final answer or action."""
-
-    system: str
-    final_answer: str
-
-    _template_fields = {
-        'final_answer': {'task', 'tools', 'history', 'steps', 'tool_calls'},
-    }
-
-
-class FallbackAnswerPromptTemplate(TinyPromptTemplate):
-    """Used to generate the final answer if maximum steps achieved."""
-
-    fallback_answer: str
-
-    _template_fields = {
-        'fallback_answer': {'task', 'history', 'steps'},
-    }
-
-
-class MultiStepPromptTemplate(TinyPromptTemplate):
-    """Prompt templates for the multi-step agent."""
-
-    plan: PlanPromptTemplate
-    acter: ActionPromptTemplate
-    fallback: FallbackAnswerPromptTemplate
+_DEFAULT_PROMPT = get_prompt_template()
 
 
 class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
     """Configuration for the TinyMultiStepAgent."""
 
-    type: Literal['multistep'] = 'multistep'
+    type: Literal['multistep'] = Field(default='multistep', frozen=True)
 
-    prompt_template: MultiStepPromptTemplate | None = None
-    max_iterations: int = 15
-    plan_interval: int = 5
+    prompt_template: MultiStepPromptTemplate = Field(default=_DEFAULT_PROMPT)
+    max_iterations: int = Field(default=15)
+    plan_interval: int = Field(default=5)
 
     def build(self) -> TinyMultiStepAgent:
-        if not self.prompt_template:
-            from ..prompts.agents.multi_agent import get_prompt_template
-
-            self.prompt_template = get_prompt_template()
-
         return TinyMultiStepAgent(
             middleware=self.middleware,
             llm=self.llm if isinstance(self.llm, AbstractLLM) else build_llm(self.llm),
@@ -119,8 +78,8 @@ class TinyMultiStepAgent(TinyBaseAgent):
     def __init__(
         self,
         llm: AbstractLLM,
-        prompt_template: MultiStepPromptTemplate,
         memory: AbstractMemory,
+        prompt_template: MultiStepPromptTemplate = _DEFAULT_PROMPT,
         tools: list[AbstractTool] = [],
         max_iterations: int = 15,
         plan_interval: int = 5,

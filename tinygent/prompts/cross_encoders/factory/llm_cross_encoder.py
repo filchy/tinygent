@@ -1,4 +1,6 @@
-from tinygent.cross_encoders.llm_cross_encoder import LLMCrossEncoderPromptTemplate
+from tinygent.prompts.cross_encoders.template.llm_cross_encoder import (
+    LLMCrossEncoderPromptTemplate,
+)
 from tinygent.types.prompt_template import TinyPromptTemplate
 
 

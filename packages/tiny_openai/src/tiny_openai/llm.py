@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from functools import lru_cache
 from io import StringIO
 import os
 import textwrap
 import typing
+from typing import Iterable
 from typing import Literal
 from typing import override
 
@@ -14,12 +16,14 @@ from openai.lib.streaming.chat import ChunkEvent
 from openai.types.chat import ChatCompletionFunctionToolParam
 from pydantic import Field
 from pydantic import SecretStr
+import tiktoken
 
 from tiny_openai.utils import openai_chunk_to_tiny_chunk
 from tiny_openai.utils import openai_result_to_tiny_result
 from tiny_openai.utils import tiny_prompt_to_openai_params
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
+from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.llms.utils import accumulate_llm_chunks
 from tinygent.llms.utils import group_chunks_for_telemetry
 from tinygent.telemetry.decorators import tiny_trace
@@ -100,6 +104,16 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
     @property
     def supports_tool_calls(self) -> bool:
         return True
+
+    @staticmethod
+    @lru_cache(maxsize=None)
+    def _get_encoding(model: str) -> tiktoken.Encoding:
+        return tiktoken.encoding_for_model(model)
+
+    @staticmethod
+    @lru_cache(maxsize=100_000)
+    def _count_tokens(model: str, text: str) -> int:
+        return len(OpenAILLM._get_encoding(model).encode(text))
 
     def _request_args(self) -> dict:
         args = {
@@ -344,6 +358,9 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
                     'result',
                     group_chunks_for_telemetry(accumulated_chunks),
                 )
+
+    def count_tokens_in_messages(self, messages: Iterable[AllTinyMessages]) -> int:
+        return sum([OpenAILLM._count_tokens(self.model, m.tiny_str) for m in messages])
 
     def __str__(self) -> str:
         buf = StringIO()

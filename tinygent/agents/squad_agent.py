@@ -27,17 +27,21 @@ from tinygent.datamodels.tool import AbstractTool
 from tinygent.factory.agent import build_agent
 from tinygent.factory.llm import build_llm
 from tinygent.factory.memory import build_memory
+from tinygent.factory.middleware import build_middleware
 from tinygent.factory.tool import build_tool
+from tinygent.prompts.agents.factory.squad_agent import get_prompt_template
+from tinygent.prompts.agents.template.squad_agent import SquadPromptTemplate
 from tinygent.runtime.executors import run_async_in_executor
 from tinygent.telemetry.decorators import tiny_trace
 from tinygent.telemetry.otel import set_tiny_attributes
 from tinygent.telemetry.otel import tiny_trace_span
 from tinygent.types.base import TinyModel
 from tinygent.types.io.llm_io_input import TinyLLMInput
-from tinygent.types.prompt_template import TinyPromptTemplate
 from tinygent.utils.jinja_utils import render_template
 
 logger = logging.getLogger(__name__)
+
+_DEFAULT_PROMPT = get_prompt_template()
 
 
 class ClassificationQueryResult(TinyModel):
@@ -52,27 +56,13 @@ class ClassificationQueryResult(TinyModel):
     )
 
 
-class ClassifierPromptTemplate(TinyPromptTemplate):
-    """Used to define the classifier (orchestrator) prompt template."""
-
-    prompt: str
-
-    _template_fields = {'prompt': {'task', 'tools', 'squad_members'}}
-
-
-class SquadPromptTemplate(TinyModel):
-    """Used to define the squad member prompt template."""
-
-    classifier: ClassifierPromptTemplate
-
-
 @dataclass(frozen=True)
 class AgentSquadMemberConfig:
     """Configuration for a member of the agent squad."""
 
     name: str
     description: str
-    agent: AbstractAgentConfig
+    agent: dict | AbstractAgentConfig | str
 
 
 @dataclass(frozen=True)
@@ -95,19 +85,14 @@ class AgentSquadMember:
 class TinySquadAgentConfig(TinyBaseAgentConfig['TinySquadAgent']):
     """Configuration for TinySquadAgent."""
 
-    type: Literal['squad'] = 'squad'
+    type: Literal['squad'] = Field(default='squad')
 
-    prompt_template: SquadPromptTemplate | None = None
-    squad: list[AgentSquadMemberConfig]
+    prompt_template: SquadPromptTemplate = Field(default=_DEFAULT_PROMPT)
+    squad: list[AgentSquadMemberConfig] = Field(...)
 
     def build(self) -> TinySquadAgent:
-        if not self.prompt_template:
-            from ..prompts.agents.squad_agent import get_prompt_template
-
-            self.prompt_template = get_prompt_template()
-
         return TinySquadAgent(
-            middleware=self.middleware,
+            middleware=[build_middleware(m) for m in self.middleware],
             prompt_template=self.prompt_template,
             llm=self.llm if isinstance(self.llm, AbstractLLM) else build_llm(self.llm),
             tools=[
@@ -136,8 +121,8 @@ class TinySquadAgent(TinyBaseAgent):
     def __init__(
         self,
         llm: AbstractLLM,
-        prompt_template: SquadPromptTemplate,
         memory: AbstractMemory,
+        prompt_template: SquadPromptTemplate = _DEFAULT_PROMPT,
         tools: list[AbstractTool] = [],
         squad: list[AgentSquadMember] = [],
         middleware: Sequence[AgentMiddleware] = [],
@@ -150,8 +135,13 @@ class TinySquadAgent(TinyBaseAgent):
 
     @staticmethod
     def _normalize_squad_member(member: AgentSquadMember) -> AgentSquadMember:
-        member.agent.on_answer = None
-        member.agent.on_answer_chunk = None
+        def _empty(*_args, **_kwargs) -> None:
+            return None
+
+        for m in member.agent.middleware:
+            m.on_answer = _empty  # type: ignore[method-assign]
+            m.on_answer_chunk = _empty  # type: ignore[method-assign]
+
         return member
 
     def _get_squad_member(self, name: str) -> AgentSquadMember:

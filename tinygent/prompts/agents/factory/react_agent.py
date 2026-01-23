@@ -1,7 +1,7 @@
-from tinygent.agents.react_agent import ActionPromptTemplate
-from tinygent.agents.react_agent import FallbackPromptTemplate
-from tinygent.agents.react_agent import ReActPromptTemplate
-from tinygent.agents.react_agent import ReasonPromptTemplate
+from tinygent.prompts.agents.template.react_agent import ActionPromptTemplate
+from tinygent.prompts.agents.template.react_agent import FallbackPromptTemplate
+from tinygent.prompts.agents.template.react_agent import ReActPromptTemplate
+from tinygent.prompts.agents.template.react_agent import ReasonPromptTemplate
 
 
 def get_prompt_template() -> ReActPromptTemplate:

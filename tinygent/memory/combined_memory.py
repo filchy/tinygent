@@ -3,6 +3,8 @@ from io import StringIO
 import textwrap
 from typing import Literal
 
+from pydantic import Field
+
 from tinygent.datamodels.memory import AbstractMemory
 from tinygent.datamodels.memory import AbstractMemoryConfig
 from tinygent.datamodels.messages import AllTinyMessages
@@ -11,7 +13,7 @@ from tinygent.memory.base_chat_memory import BaseChatMemory
 
 
 class CombinedMemoryConfig(AbstractMemoryConfig['CombinedMemory']):
-    type: Literal['combined'] = 'combined'
+    type: Literal['combined'] = Field(default='combined', frozen=True)
 
     memory_list: list[AbstractMemoryConfig] = []
 

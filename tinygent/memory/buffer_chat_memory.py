@@ -1,12 +1,14 @@
 from io import StringIO
 from typing import Literal
 
+from pydantic import Field
+
 from tinygent.datamodels.memory import AbstractMemoryConfig
 from tinygent.memory import BaseChatMemory
 
 
 class BufferChatMemoryConfig(AbstractMemoryConfig['BufferChatMemory']):
-    type: Literal['buffer'] = 'buffer'
+    type: Literal['buffer'] = Field(default='buffer', frozen=True)
 
     def build(self) -> 'BufferChatMemory':
         return BufferChatMemory()

@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 import os
 import typing
+from typing import Iterable
 from typing import Literal
 from typing import override
 
@@ -17,6 +18,7 @@ from tiny_anthropic.utils import anthropic_result_to_tiny_result
 from tiny_anthropic.utils import tiny_prompt_to_anthropic_params
 from tinygent.datamodels.llm import AbstractLLM
 from tinygent.datamodels.llm import AbstractLLMConfig
+from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.datamodels.messages import TinyToolCall
 from tinygent.llms.utils import accumulate_llm_chunks
 from tinygent.llms.utils import group_chunks_for_telemetry
@@ -325,3 +327,9 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
                     'result',
                     group_chunks_for_telemetry(accumulated_chunks),
                 )
+
+    def count_tokens_in_messages(self, messages: Iterable[AllTinyMessages]) -> int:
+        kwargs = self.__create_client_kwargs(TinyLLMInput(messages=list(messages)))
+        kwargs.pop('max_tokens')
+
+        return self.__get_sync_client().messages.count_tokens(**kwargs).input_tokens

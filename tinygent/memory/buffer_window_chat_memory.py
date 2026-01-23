@@ -1,15 +1,17 @@
 from io import StringIO
 from typing import Literal
 
+from pydantic import Field
+
 from tinygent.datamodels.memory import AbstractMemoryConfig
 from tinygent.datamodels.messages import AllTinyMessages
 from tinygent.memory import BaseChatMemory
 
 
 class BufferWindowChatMemoryConfig(AbstractMemoryConfig['BufferWindowChatMemory']):
-    type: Literal['buffer_window'] = 'buffer_window'
+    type: Literal['buffer_window'] = Field(default='buffer_window', frozen=True)
 
-    k: int = 5
+    k: int = Field(default=5)
 
     def build(self) -> 'BufferWindowChatMemory':
         return BufferWindowChatMemory(k=self.k)
