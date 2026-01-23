@@ -1,5 +1,5 @@
 def _register_anthropic() -> None:
-    from tinygent.runtime.global_registry import GlobalRegistry
+    from tinygent.core.runtime.global_registry import GlobalRegistry
 
     from .llm import ClaudeLLM
     from .llm import ClaudeLLMConfig

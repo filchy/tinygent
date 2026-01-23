@@ -4,11 +4,11 @@ from typing import Sequence
 
 from pydantic import PrivateAttr
 
-from tinygent.datamodels.messages import AllTinyMessages
-from tinygent.datamodels.messages import TinyAIMessage
-from tinygent.datamodels.messages import TinyChatMessage
-from tinygent.datamodels.messages import TinyHumanMessage
-from tinygent.types.base import TinyModel
+from tinygent.core.datamodels.messages import AllTinyMessages
+from tinygent.core.datamodels.messages import TinyAIMessage
+from tinygent.core.datamodels.messages import TinyChatMessage
+from tinygent.core.datamodels.messages import TinyHumanMessage
+from tinygent.core.types.base import TinyModel
 
 logger = logging.getLogger(__name__)
 

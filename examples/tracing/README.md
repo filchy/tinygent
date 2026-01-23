@@ -56,6 +56,6 @@ TINY_OTEL_ENABLED=1 uv run examples/agents/multi-step/main.py
 
 ## How It Works
 
-Tinygent uses OpenTelemetry's Python SDK to instrument code. The tracing is integrated via decorators and context managers, so spans are created for key operations. You can further customize or add tracing in your own code using the utilities in `tinygent.telemetry`.
+Tinygent uses OpenTelemetry's Python SDK to instrument code. The tracing is integrated via decorators and context managers, so spans are created for key operations. You can further customize or add tracing in your own code using the utilities in `tinygent.core.telemetry`.
 
 For more details, see the [OpenTelemetry documentation](https://opentelemetry.io/docs/instrumentation/python/).

@@ -1,4 +1,4 @@
-from tinygent.types.prompt_template import TinyPromptTemplate
+from tinygent.core.types.prompt_template import TinyPromptTemplate
 
 
 def get_cluster_edge_extraction_prompt() -> TinyPromptTemplate.UserSystem:

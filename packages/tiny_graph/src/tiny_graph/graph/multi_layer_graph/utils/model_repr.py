@@ -1,4 +1,4 @@
-from tinygent.types.base import TinyModel
+from tinygent.core.types.base import TinyModel
 
 
 def compact_model_repr(model: TinyModel) -> str:

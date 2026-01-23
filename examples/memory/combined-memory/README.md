@@ -34,7 +34,7 @@ Async variants (`asave_context`, `aload_variables`, `aclear`) are also available
 ## Example
 
 ```python
-from tinygent.datamodels.messages import TinyHumanMessage, TinyChatMessage
+from tinygent.core.datamodels.messages import TinyHumanMessage, TinyChatMessage
 from tinygent.memory import BufferChatMemory, BufferWindowChatMemory
 from tinygent.memory.combined_memory import CombinedMemory
 

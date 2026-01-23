@@ -26,7 +26,7 @@ This is useful when you want to keep the most recent context short and focused, 
 ## Example
 
 ```python
-from tinygent.datamodels.messages import TinyHumanMessage, TinyChatMessage
+from tinygent.core.datamodels.messages import TinyHumanMessage, TinyChatMessage
 from tinygent.memory import BufferWindowChatMemory
 
 memory = BufferWindowChatMemory()

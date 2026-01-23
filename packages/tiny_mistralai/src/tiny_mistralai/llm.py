@@ -23,21 +23,21 @@ from tiny_mistralai.utils import mistralai_chunk_to_tiny_chunks
 from tiny_mistralai.utils import mistralai_family_to_tokenizer
 from tiny_mistralai.utils import mistralai_result_to_tiny_result
 from tiny_mistralai.utils import tiny_prompt_to_mistralai_params
-from tinygent.datamodels.llm import AbstractLLM
-from tinygent.datamodels.llm import AbstractLLMConfig
-from tinygent.datamodels.messages import AllTinyMessages
+from tinygent.core.datamodels.llm import AbstractLLM
+from tinygent.core.datamodels.llm import AbstractLLMConfig
+from tinygent.core.datamodels.messages import AllTinyMessages
+from tinygent.core.telemetry.decorators import tiny_trace
+from tinygent.core.telemetry.otel import set_tiny_attribute
+from tinygent.core.telemetry.utils import set_llm_telemetry_attributes
+from tinygent.core.types.io.llm_io_chunks import TinyLLMResultChunk
 from tinygent.llms.utils import accumulate_llm_chunks
 from tinygent.llms.utils import group_chunks_for_telemetry
-from tinygent.telemetry.decorators import tiny_trace
-from tinygent.telemetry.otel import set_tiny_attribute
-from tinygent.telemetry.utils import set_llm_telemetry_attributes
-from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
 
 if typing.TYPE_CHECKING:
-    from tinygent.datamodels.llm import LLMStructuredT
-    from tinygent.datamodels.tool import AbstractTool
-    from tinygent.types.io.llm_io_input import TinyLLMInput
-    from tinygent.types.io.llm_io_result import TinyLLMResult
+    from tinygent.core.datamodels.llm import LLMStructuredT
+    from tinygent.core.datamodels.tool import AbstractTool
+    from tinygent.core.types.io.llm_io_input import TinyLLMInput
+    from tinygent.core.types.io.llm_io_result import TinyLLMResult
 
 
 class MistralAILLMConfig(AbstractLLMConfig['MistralAILLM']):

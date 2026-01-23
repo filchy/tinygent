@@ -28,12 +28,12 @@ from tiny_graph.graph.multi_layer_graph.utils.text_similarity import (
 from tiny_graph.helper import ensure_utc
 from tiny_graph.helper import get_current_timestamp
 from tiny_graph.helper import parse_timestamp
-from tinygent.datamodels.llm import AbstractLLM
-from tinygent.datamodels.messages import TinyHumanMessage
-from tinygent.datamodels.messages import TinySystemMessage
-from tinygent.runtime.executors import run_in_semaphore
-from tinygent.types.base import TinyModel
-from tinygent.types.io.llm_io_input import TinyLLMInput
+from tinygent.core.datamodels.llm import AbstractLLM
+from tinygent.core.datamodels.messages import TinyHumanMessage
+from tinygent.core.datamodels.messages import TinySystemMessage
+from tinygent.core.runtime.executors import run_in_semaphore
+from tinygent.core.types.base import TinyModel
+from tinygent.core.types.io.llm_io_input import TinyLLMInput
 from tinygent.utils.jinja_utils import render_template
 
 logger = logging.getLogger(__name__)

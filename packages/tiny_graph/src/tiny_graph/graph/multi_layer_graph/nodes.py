@@ -12,9 +12,9 @@ from tiny_graph.graph.multi_layer_graph.types import NodeType
 from tiny_graph.graph.multi_layer_graph.utils.model_repr import compact_model_repr
 from tiny_graph.helper import parse_db_date
 from tiny_graph.node import TinyNode
-from tinygent.datamodels.embedder import AbstractEmbedder
-from tinygent.datamodels.messages import AllTinyMessages
-from tinygent.datamodels.messages import BaseMessage
+from tinygent.core.datamodels.embedder import AbstractEmbedder
+from tinygent.core.datamodels.messages import AllTinyMessages
+from tinygent.core.datamodels.messages import BaseMessage
 
 
 class TinyEventNode(TinyNode):

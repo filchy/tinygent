@@ -1,5 +1,5 @@
 from tiny_graph.graph.multi_layer_graph.edges import TinyEntityEdge
-from tinygent.datamodels.embedder import AbstractEmbedder
+from tinygent.core.datamodels.embedder import AbstractEmbedder
 
 
 async def entity_edge_batch_embeddings(

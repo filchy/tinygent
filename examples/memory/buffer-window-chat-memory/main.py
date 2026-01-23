@@ -1,6 +1,6 @@
-from tinygent.datamodels.messages import TinyChatMessage
-from tinygent.datamodels.messages import TinyHumanMessage
-from tinygent.datamodels.messages import TinyPlanMessage
+from tinygent.core.datamodels.messages import TinyChatMessage
+from tinygent.core.datamodels.messages import TinyHumanMessage
+from tinygent.core.datamodels.messages import TinyPlanMessage
 from tinygent.memory import BufferWindowChatMemory
 
 

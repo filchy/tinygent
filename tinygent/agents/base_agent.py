@@ -16,22 +16,22 @@ from pydantic import Field
 
 from tinygent.agents.middleware.agent import MiddlewareAgent
 from tinygent.agents.middleware.base import AgentMiddleware
-from tinygent.datamodels.agent import AbstractAgent
-from tinygent.datamodels.agent import AbstractAgentConfig
-from tinygent.datamodels.llm import AbstractLLM
-from tinygent.datamodels.llm import AbstractLLMConfig
-from tinygent.datamodels.memory import AbstractMemory
-from tinygent.datamodels.memory import AbstractMemoryConfig
-from tinygent.datamodels.messages import TinyToolCall
-from tinygent.datamodels.messages import TinyToolResult
-from tinygent.datamodels.tool import AbstractTool
-from tinygent.datamodels.tool import AbstractToolConfig
+from tinygent.core.datamodels.agent import AbstractAgent
+from tinygent.core.datamodels.agent import AbstractAgentConfig
+from tinygent.core.datamodels.llm import AbstractLLM
+from tinygent.core.datamodels.llm import AbstractLLMConfig
+from tinygent.core.datamodels.memory import AbstractMemory
+from tinygent.core.datamodels.memory import AbstractMemoryConfig
+from tinygent.core.datamodels.messages import TinyToolCall
+from tinygent.core.datamodels.messages import TinyToolResult
+from tinygent.core.datamodels.tool import AbstractTool
+from tinygent.core.datamodels.tool import AbstractToolConfig
+from tinygent.core.telemetry.decorators import tiny_trace
+from tinygent.core.telemetry.otel import set_tiny_attribute
+from tinygent.core.telemetry.otel import set_tiny_attributes
+from tinygent.core.types.io.llm_io_chunks import TinyLLMResultChunk
+from tinygent.core.types.io.llm_io_input import TinyLLMInput
 from tinygent.memory.buffer_chat_memory import BufferChatMemoryConfig
-from tinygent.telemetry.decorators import tiny_trace
-from tinygent.telemetry.otel import set_tiny_attribute
-from tinygent.telemetry.otel import set_tiny_attributes
-from tinygent.types.io.llm_io_chunks import TinyLLMResultChunk
-from tinygent.types.io.llm_io_input import TinyLLMInput
 
 T = TypeVar('T', bound='AbstractAgent')
 

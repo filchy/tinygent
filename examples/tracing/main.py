@@ -4,11 +4,11 @@ import os
 import time
 from typing import Any
 
-from tinygent.telemetry.decorators import tiny_trace
-from tinygent.telemetry.otel import set_tiny_attribute
-from tinygent.telemetry.otel import set_tiny_attributes
-from tinygent.telemetry.otel import setup_tiny_otel
-from tinygent.telemetry.otel import tiny_trace_span
+from tinygent.core.telemetry.decorators import tiny_trace
+from tinygent.core.telemetry.otel import set_tiny_attribute
+from tinygent.core.telemetry.otel import set_tiny_attributes
+from tinygent.core.telemetry.otel import setup_tiny_otel
+from tinygent.core.telemetry.otel import tiny_trace_span
 
 
 @tiny_trace('load-config')

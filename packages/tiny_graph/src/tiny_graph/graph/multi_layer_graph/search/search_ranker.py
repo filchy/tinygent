@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from tiny_graph.edge import TinyEdge
 from tiny_graph.graph.multi_layer_graph.search.search_utils import rrf
 from tiny_graph.node import TinyNode
-from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
+from tinygent.core.datamodels.cross_encoder import AbstractCrossEncoder
 
 
 async def rerank_candidates_cross_encoder(

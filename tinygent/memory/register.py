@@ -1,3 +1,4 @@
+from tinygent.core.runtime.global_registry import GlobalRegistry
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
 from tinygent.memory.buffer_chat_memory import BufferChatMemoryConfig
 from tinygent.memory.buffer_summary_chat_memory import BufferSummaryChatMemory
@@ -6,7 +7,6 @@ from tinygent.memory.buffer_window_chat_memory import BufferWindowChatMemory
 from tinygent.memory.buffer_window_chat_memory import BufferWindowChatMemoryConfig
 from tinygent.memory.combined_memory import CombinedMemory
 from tinygent.memory.combined_memory import CombinedMemoryConfig
-from tinygent.runtime.global_registry import GlobalRegistry
 
 
 def _register_memories() -> None:

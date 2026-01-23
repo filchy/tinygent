@@ -25,7 +25,7 @@ Each tool accepts a single Pydantic model as input. The `@tool` decorator wraps 
 
 ```python
 from pydantic import Field
-from tinygent.types.base import TinyModel
+from tinygent.core.types.base import TinyModel
 from tinygent.tools.tool import tool
 
 
@@ -56,8 +56,8 @@ def get_time(data: GetTimeInput) -> str:
 Ask the model a question and provide a list of tools it can choose from. The model may return plain chat content or one or more tool calls.
 
 ```python
-from tinygent.types.io.llm_io_input import TinyLLMInput
-from tinygent.datamodels.messages import TinyHumanMessage
+from tinygent.core.types.io.llm_io_input import TinyLLMInput
+from tinygent.core.datamodels.messages import TinyHumanMessage
 from tinygent.llms import OpenAILLM
 
 if __name__ == '__main__':

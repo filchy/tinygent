@@ -9,11 +9,11 @@ from pydantic import Field
 from pydantic import SecretStr
 from voyageai.client_async import AsyncClient
 
-from tinygent.datamodels.cross_encoder import AbstractCrossEncoder
-from tinygent.datamodels.cross_encoder import AbstractCrossEncoderConfig
-from tinygent.runtime.executors import run_in_semaphore
-from tinygent.telemetry.decorators import tiny_trace
-from tinygent.telemetry.utils import set_cross_encoder_telemetry_attributes
+from tinygent.core.datamodels.cross_encoder import AbstractCrossEncoder
+from tinygent.core.datamodels.cross_encoder import AbstractCrossEncoderConfig
+from tinygent.core.runtime.executors import run_in_semaphore
+from tinygent.core.telemetry.decorators import tiny_trace
+from tinygent.core.telemetry.utils import set_cross_encoder_telemetry_attributes
 
 
 class VoyageAICrossEncoderConfig(AbstractCrossEncoderConfig['VoyageAICrossEncoder']):

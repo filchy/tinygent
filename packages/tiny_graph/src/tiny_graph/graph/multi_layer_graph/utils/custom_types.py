@@ -1,5 +1,5 @@
 from tiny_graph.graph.multi_layer_graph.nodes import TinyEntityNode
-from tinygent.types.base import TinyModel
+from tinygent.core.types.base import TinyModel
 
 
 def validate_custom_entity_types(

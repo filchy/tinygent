@@ -1,4 +1,4 @@
-from tinygent.runtime.global_registry import GlobalRegistry
+from tinygent.core.runtime.global_registry import GlobalRegistry
 from tinygent.tools.jit_tool import JITInstructionTool
 from tinygent.tools.jit_tool import JITInstructionToolConfig
 from tinygent.tools.reasoning_tool import ReasoningTool

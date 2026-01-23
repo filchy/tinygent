@@ -5,10 +5,10 @@ from tinygent.agents.map_agent import MapPromptTemplate
 from tinygent.agents.map_agent import TinyMAPAgent
 from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.agents.middleware.base import register_middleware
-from tinygent.factory import build_llm
+from tinygent.core.factory import build_llm
+from tinygent.core.types.io.llm_io_input import TinyLLMInput
 from tinygent.logging import setup_logger
 from tinygent.memory.buffer_chat_memory import BufferChatMemory
-from tinygent.types.io.llm_io_input import TinyLLMInput
 from tinygent.utils.color_printer import TinyColorPrinter
 from tinygent.utils.yaml import tiny_yaml_load
 

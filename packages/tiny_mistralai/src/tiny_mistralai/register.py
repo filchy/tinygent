@@ -1,5 +1,5 @@
 def _register_mistralai() -> None:
-    from tinygent.runtime.global_registry import GlobalRegistry
+    from tinygent.core.runtime.global_registry import GlobalRegistry
 
     from .embedder import MistralAIEmbedder
     from .embedder import MistralAIEmbedderConfig

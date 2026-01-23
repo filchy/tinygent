@@ -7,7 +7,7 @@ from typing import Union
 
 from pydantic import Field
 
-from tinygent.types.discriminator import HasDiscriminatorField
+from tinygent.core.types.discriminator import HasDiscriminatorField
 
 T = TypeVar('T', bound=HasDiscriminatorField)
 

@@ -2,7 +2,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from tinygent.types.base import TinyModel
+from tinygent.core.types.base import TinyModel
 
 
 def validate_schema(metadata: Any, schema: type[TinyModel]) -> TinyModel:

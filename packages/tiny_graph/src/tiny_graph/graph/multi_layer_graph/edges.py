@@ -9,7 +9,7 @@ from tiny_graph.edge import TinyEdge
 from tiny_graph.graph.multi_layer_graph.types import EdgeType
 from tiny_graph.graph.multi_layer_graph.utils.model_repr import compact_model_repr
 from tiny_graph.helper import parse_db_date
-from tinygent.datamodels.embedder import AbstractEmbedder
+from tinygent.core.datamodels.embedder import AbstractEmbedder
 from tinygent.utils.yaml import json
 
 

@@ -3,22 +3,22 @@ from typing import Literal
 
 from pydantic import Field
 
-from tinygent.datamodels.llm import AbstractLLM
-from tinygent.datamodels.llm import AbstractLLMConfig
-from tinygent.datamodels.memory import AbstractMemoryConfig
-from tinygent.datamodels.messages import AllTinyMessages
-from tinygent.datamodels.messages import TinyHumanMessage
-from tinygent.datamodels.messages import TinySummaryMessage
-from tinygent.datamodels.messages import TinySystemMessage
-from tinygent.factory.llm import build_llm
-from tinygent.memory.base_chat_memory import BaseChatMemory
-from tinygent.prompts.memory.factory.buffer_summary_chat_memory import (
+from tinygent.core.datamodels.llm import AbstractLLM
+from tinygent.core.datamodels.llm import AbstractLLMConfig
+from tinygent.core.datamodels.memory import AbstractMemoryConfig
+from tinygent.core.datamodels.messages import AllTinyMessages
+from tinygent.core.datamodels.messages import TinyHumanMessage
+from tinygent.core.datamodels.messages import TinySummaryMessage
+from tinygent.core.datamodels.messages import TinySystemMessage
+from tinygent.core.factory.llm import build_llm
+from tinygent.core.prompts.memory.factory.buffer_summary_chat_memory import (
     get_prompt_template,
 )
-from tinygent.prompts.memory.template.buffer_summary_chat_memory import (
+from tinygent.core.prompts.memory.template.buffer_summary_chat_memory import (
     SummaryUpdatePromptTemplate,
 )
-from tinygent.types.io.llm_io_input import TinyLLMInput
+from tinygent.core.types.io.llm_io_input import TinyLLMInput
+from tinygent.memory.base_chat_memory import BaseChatMemory
 from tinygent.utils.jinja_utils import render_template
 
 _DEFAULT_PROMPT = get_prompt_template()

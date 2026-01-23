@@ -3,9 +3,9 @@ from abc import abstractmethod
 from typing import Any
 
 from tiny_graph.driver.base import BaseDriver
-from tinygent.datamodels.embedder import AbstractEmbedder
-from tinygent.datamodels.llm import AbstractLLM
-from tinygent.datamodels.messages import BaseMessage
+from tinygent.core.datamodels.embedder import AbstractEmbedder
+from tinygent.core.datamodels.llm import AbstractLLM
+from tinygent.core.datamodels.messages import BaseMessage
 
 
 class BaseGraph(ABC):

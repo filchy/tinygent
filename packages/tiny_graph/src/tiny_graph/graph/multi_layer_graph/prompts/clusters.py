@@ -1,4 +1,4 @@
-from tinygent.types.prompt_template import TinyPromptTemplate
+from tinygent.core.types.prompt_template import TinyPromptTemplate
 
 
 def get_new_clusters_proposal_prompt() -> TinyPromptTemplate.UserSystem:

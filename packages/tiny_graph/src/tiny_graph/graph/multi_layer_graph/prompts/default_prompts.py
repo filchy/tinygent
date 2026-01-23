@@ -4,7 +4,7 @@ from tiny_graph.graph.multi_layer_graph.multi_layer_graph import (
 from tiny_graph.graph.multi_layer_graph.multi_layer_graph import (
     TinyMultiLayerGraphTemplate,
 )
-from tinygent.types.prompt_template import TinyPromptTemplate
+from tinygent.core.types.prompt_template import TinyPromptTemplate
 
 
 def get_prompt_template() -> TinyMultiLayerGraphTemplate:

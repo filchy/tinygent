@@ -92,7 +92,7 @@ tiny \
 
 ```python
 from tinygent.tools.tool import tool
-from tinygent.types.base import TinyModel
+from tinygent.core.types.base import TinyModel
 from pydantic import Field
 
 class WeatherInput(TinyModel):
