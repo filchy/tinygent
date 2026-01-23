@@ -5,11 +5,13 @@ from dataclasses import field
 from dataclasses import fields
 import inspect
 import sys
-from typing import Any, Callable, get_type_hints
+from typing import Any
+from typing import Callable
 from typing import Generic
 from typing import TextIO
 from typing import TypeVar
 from typing import cast
+from typing import get_type_hints
 
 from pydantic import Field
 
@@ -88,16 +90,10 @@ class ToolInfo(Generic[R]):
                 inspect.Parameter.VAR_POSITIONAL,
                 inspect.Parameter.VAR_KEYWORD,
             ):
-                raise TypeError(
-                    f"Tool '{fn.__name__}' cannot use *args or **kwargs"
-                )
+                raise TypeError(f"Tool '{fn.__name__}' cannot use *args or **kwargs")
 
             annotation = hints.get(p.name, Any)
-            default = (
-                p.default
-                if p.default is not inspect.Parameter.empty
-                else ...
-            )
+            default = p.default if p.default is not inspect.Parameter.empty else ...
 
             annotations[p.name] = annotation
             namespace[p.name] = Field(default)
