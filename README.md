@@ -1,15 +1,14 @@
 <div align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/images/logo-light.png">
-    <source media="(prefers-color-scheme: light)" srcset=".github/images/logo-dark.png">
-    <img alt="TinyGent Logo" src=".github/images/logo-dark.png" width="60%">
+    <source media="(prefers-color-scheme: dark)" srcset=".github/images/logo-light.svg">
+    <source media="(prefers-color-scheme: light)" srcset=".github/images/logo-dark.svg">
+    <img alt="TinyGent Logo" src=".github/images/logo-dark.svg" width="80%">
   </picture>
-
-  <div align="center">
-    <h3>Tiny platform for amazing agents.</h3>
-  </div>
 </div>
 
+<div align="center">
+  <h3>Tiny platform for amazing agents.</h3>
+</div>
 ___
 
 Tinygent is a tiny agentic framework - lightweight, easy to use (hopefully), and efficient (also hopefully ;-0) library for building and deploying generative AI applications. It provides a simple interface for working with various models and tools, making it ideal for developers who want to quickly prototype and deploy AI solutions.
