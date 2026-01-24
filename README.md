@@ -23,7 +23,7 @@ from tinygent.core.factory import build_agent
 @tool
 def get_weather(location: str) -> str:
     """Get the current weather in a given location."""
-    return f"The weather in {location} is sunny with a high of 75°F."
+    return f'The weather in {location} is sunny with a high of 75°F.'
 
 agent = build_agent(
     'react',
