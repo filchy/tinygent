@@ -1,8 +1,8 @@
 <div align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/images/logo-light.png">
-    <source media="(prefers-color-scheme: light)" srcset=".github/images/logo-dark.png">
-    <img alt="TinyGent Logo" src=".github/images/logo-dark.png" width="60%">
+    <source media="(prefers-color-scheme: dark)" srcset=".github/images/logo-light.svg">
+    <source media="(prefers-color-scheme: light)" srcset=".github/images/logo-dark.svg">
+    <img alt="TinyGent Logo" src=".github/images/logo-dark.svg" width="60%">
   </picture>
 
   <div align="center">
