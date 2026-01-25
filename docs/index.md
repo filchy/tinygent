@@ -1,16 +1,3 @@
-# Tinygent
-
-<div align="center">
-  <img class="logo-light-mode" alt="TinyGent Logo" src="assets/logo-dark.svg" width="60%">
-  <img class="logo-dark-mode" alt="TinyGent Logo" src="assets/logo-light.svg" width="60%">
-</div>
-
-<div align="center">
-  <h3>Tiny platform for amazing agents.</h3>
-</div>
-
----
-
 ## What is Tinygent?
 
 Tinygent is a **lightweight, powerful agentic framework** for building generative AI applications. Unlike heavyweight frameworks that come with complexity overhead, Tinygent focuses on simplicity, flexibility, and developer experience.
