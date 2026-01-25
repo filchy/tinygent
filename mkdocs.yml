@@ -1,7 +1,7 @@
 site_name: tinygent docs
 site_description: Tiny platform for amazing agents - A lightweight agentic framework for building generative AI applications
 site_author: Tinygent Team
-site_url: https://github.com/filchy/tinygent
+site_url: https://filchy.github.io/tinygent
 
 # Repository
 repo_name: filchy/tinygent
