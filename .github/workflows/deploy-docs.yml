@@ -1,0 +1,38 @@
+name: Deploy MkDocs
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dependencies
+        run: |
+          uv venv --seed .venv
+          source .venv/bin/activate
+          uv sync --group docs
+
+      - name: Deploy to GitHub Pages
+        run: |
+          source .venv/bin/activate
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          mkdocs gh-deploy --force

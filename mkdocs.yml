@@ -1,0 +1,134 @@
+site_name: tinygent docs
+site_description: Tiny platform for amazing agents - A lightweight agentic framework for building generative AI applications
+site_author: Tinygent Team
+site_url: https://filchy.github.io/tinygent
+
+# Repository
+repo_name: filchy/tinygent
+repo_url: https://github.com/filchy/tinygent
+edit_uri: edit/master/docs/
+
+# Navigation
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Core Concepts:
+      - Agents: concepts/agents.md
+      - Tools: concepts/tools.md
+      - LLMs: concepts/llms.md
+      - Memory: concepts/memory.md
+      - Middleware: concepts/middleware.md
+  - Guides:
+      - Building Agents: guides/building-agents.md
+      - Custom Tools: guides/custom-tools.md
+  - Examples: examples.md
+  - API Reference: api-reference.md
+
+# Theme
+theme:
+  name: material
+  logo: assets/logo-light.svg
+  favicon: assets/logo-light.svg
+
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - navigation.tracking
+    - navigation.indexes
+    - toc.follow
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+
+  palette:
+    # Light mode
+    - scheme: default
+      primary: black
+      accent: cyan
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+
+    # Dark mode
+    - scheme: slate
+      primary: black
+      accent: lime
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+  font:
+    text: Inter
+    code: JetBrains Mono
+
+# Plugins
+plugins:
+  - search:
+      lang: en
+      separator: '[\s\-\.]+'
+  - tags
+
+# Extensions
+markdown_extensions:
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+  # Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Extra
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/filchy/tinygent
+      name: Tinygent on GitHub
+
+  version:
+    provider: mike
+
+# Extra CSS
+extra_css:
+  - stylesheets/extra.css
+
+# Copyright
+copyright: Copyright &copy; 2025 Tinygent Contributors
