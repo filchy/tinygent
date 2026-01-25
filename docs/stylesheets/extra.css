@@ -83,20 +83,3 @@
 .md-footer {
   margin-top: 3em;
 }
-
-/* Theme-aware logo switching */
-.logo-dark-mode {
-  display: none;
-}
-
-.logo-light-mode {
-  display: inline-block;
-}
-
-[data-md-color-scheme="slate"] .logo-dark-mode {
-  display: inline-block;
-}
-
-[data-md-color-scheme="slate"] .logo-light-mode {
-  display: none;
-}
