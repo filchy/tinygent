@@ -514,6 +514,143 @@ class AsyncMiddleware(AgentMiddleware):
 
 ---
 
+## Agent-Specific Hook Activation
+
+Different agent types activate different hooks based on their implementation:
+
+### TinyMultiStepAgent
+
+Activates:
+- `before_llm_call` / `after_llm_call` - For LLM calls
+- `before_tool_call` / `after_tool_call` - For tool executions
+- `on_plan` - When creating initial or updated plan
+- `on_reasoning` - For agent reasoning steps
+- `on_tool_reasoning` - When reasoning tools generate reasoning
+- `on_answer` / `on_answer_chunk` - For final answers
+- `on_error` - On any error
+
+### TinyReactAgent
+
+Activates:
+- `before_llm_call` / `after_llm_call` - For LLM calls
+- `before_tool_call` / `after_tool_call` - For tool executions
+- `on_tool_reasoning` - When reasoning tools generate reasoning
+- `on_answer` / `on_answer_chunk` - For final answers
+- `on_error` - On any error
+
+Note: React agent does not use `on_plan` or `on_reasoning` hooks.
+
+### TinyMAPAgent
+
+Activates:
+- `before_llm_call` / `after_llm_call` - For LLM calls
+- `before_tool_call` / `after_tool_call` - For tool executions
+- `on_plan` - When creating search/action plans
+- `on_answer` / `on_answer_chunk` - For final answers
+- `on_error` - On any error
+
+Note: MAP agent uses `on_plan` for action summaries but not `on_reasoning` or `on_tool_reasoning`.
+
+### TinySquadAgent
+
+Activates:
+- `before_llm_call` / `after_llm_call` - For LLM calls (delegated to sub-agents)
+- `before_tool_call` / `after_tool_call` - For tool executions (delegated to sub-agents)
+- `on_answer` / `on_answer_chunk` - For final aggregated answers
+- `on_error` - On any error
+
+Note: Squad agent delegates most hooks to its sub-agents. Hook activation depends on sub-agent types.
+
+---
+
+## Built-in Middleware
+
+Tinygent provides ready-to-use middleware for common use cases.
+
+### ToolCallLimiterMiddleware
+
+Limits the number of tool calls per agent run. Can operate in two modes:
+- **Global limiter**: Limits all tool calls when `tool_name=None`
+- **Single tool limiter**: Limits specific tool by name when `tool_name` is set
+
+When the limit is reached, the behavior depends on `hard_block`:
+- **hard_block=True**: Blocks tool execution and returns error result
+- **hard_block=False**: Allows execution but adds system message asking LLM to stop
+
+**Features:**
+- Limit all tools globally or specific tools individually
+- Hard block or soft limit behavior
+- Per-run tracking with automatic cleanup
+- Statistics tracking
+
+**Basic Usage:**
+
+```python
+from tinygent.agents.middleware import ToolCallLimiterMiddleware
+from tinygent.agents import TinyMultiStepAgent
+from tinygent.core.factory import build_llm
+
+# Limit all tools to 5 calls
+limiter = ToolCallLimiterMiddleware(max_tool_calls=5)
+
+agent = TinyMultiStepAgent(
+    llm=build_llm('openai:gpt-4o-mini'),
+    tools=[search, calculator, database],
+    middleware=[limiter],
+)
+```
+
+**Limit Specific Tool:**
+
+```python
+# Only limit expensive API calls
+api_limiter = ToolCallLimiterMiddleware(
+    tool_name='web_search',
+    max_tool_calls=3
+)
+```
+
+**Hard Block vs Soft Limit:**
+
+```python
+# Hard block: returns error result when limit reached (default)
+hard_limiter = ToolCallLimiterMiddleware(
+    max_tool_calls=5,
+    hard_block=True
+)
+
+# Soft limit: adds system message asking LLM to stop but allows execution
+soft_limiter = ToolCallLimiterMiddleware(
+    max_tool_calls=5,
+    hard_block=False
+)
+```
+
+**Multiple Limiters:**
+
+```python
+middleware = [
+    ToolCallLimiterMiddleware(tool_name='web_search', max_tool_calls=3),
+    ToolCallLimiterMiddleware(tool_name='database_query', max_tool_calls=10),
+]
+```
+
+**Getting Statistics:**
+
+```python
+stats = limiter.get_stats()
+# {
+#     'tool_name': 'web_search',
+#     'max_tool_calls': 3,
+#     'hard_block': True,
+#     'active_runs': 0,
+#     'current_counts': {},
+#     'runs_at_limit': 0
+# }
+```
+
+---
+
 ## Next Steps
 
 - **[Agents](agents.md)**: Use middleware with agents
@@ -527,5 +664,6 @@ class AsyncMiddleware(AgentMiddleware):
 Check out:
 
 - `examples/agents/middleware/main.py` - Multiple middleware examples
+- `examples/agents/middleware/tool_limiter_example.py` - Tool call limiting examples
 - `examples/agents/react/main.py` - ReAct cycle tracking
 - `examples/tracing/main.py` - Advanced tracing middleware

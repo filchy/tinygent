@@ -139,7 +139,17 @@ class TinyMAPAgentConfig(TinyBaseAgentConfig['TinyMAPAgent']):
 
 
 class TinyMAPAgent(TinyBaseAgent):
-    """MAP Agent implementation."""
+    """MAP Agent implementation.
+
+    Middleware Hooks Activated:
+    - before_llm_call / after_llm_call - For LLM calls
+    - before_tool_call / after_tool_call - For tool executions
+    - on_plan - When creating search/action plans
+    - on_answer / on_answer_chunk - For final answers
+    - on_error - On any error
+
+    Note: MAP agent uses on_plan for action summaries but not on_reasoning or on_tool_reasoning.
+    """
 
     def __init__(
         self,

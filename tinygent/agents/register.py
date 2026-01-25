@@ -10,12 +10,18 @@ from tinygent.core.runtime.global_registry import GlobalRegistry
 
 
 def _register_agents() -> None:
+    # register agents
     registry = GlobalRegistry().get_registry()
 
     registry.register_agent('multistep', TinyMultiStepAgentConfig, TinyMultiStepAgent)
     registry.register_agent('react', TinyReActAgentConfig, TinyReActAgent)
     registry.register_agent('squad', TinySquadAgentConfig, TinySquadAgent)
     registry.register_agent('map', TinyMAPAgentConfig, TinyMAPAgent)
+
+    # register middlewares
+    from tinygent.agents.middleware.register import _register_middleware
+
+    _register_middleware()
 
 
 _register_agents()

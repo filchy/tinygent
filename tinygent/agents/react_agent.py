@@ -68,7 +68,17 @@ class TinyReActAgentConfig(TinyBaseAgentConfig['TinyReActAgent']):
 
 
 class TinyReActAgent(TinyBaseAgent):
-    """ReAct Agent implementation."""
+    """ReAct Agent implementation.
+
+    Middleware Hooks Activated:
+    - before_llm_call / after_llm_call - For LLM calls
+    - before_tool_call / after_tool_call - For tool executions
+    - on_tool_reasoning - When reasoning tools generate reasoning
+    - on_answer / on_answer_chunk - For final answers
+    - on_error - On any error
+
+    Note: React agent does not use on_plan or on_reasoning hooks.
+    """
 
     def __init__(
         self,

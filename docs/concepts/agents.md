@@ -63,6 +63,16 @@ result = agent.run('What is the weather in Prague?')
 - Tool-heavy workflows
 - When you need transparent reasoning
 
+**Middleware Hooks Activated:**
+
+- `before_llm_call` / `after_llm_call` - For LLM calls
+- `before_tool_call` / `after_tool_call` - For tool executions
+- `on_tool_reasoning` - When reasoning tools generate reasoning
+- `on_answer` / `on_answer_chunk` - For final answers
+- `on_error` - On any error
+
+Note: ReAct agent does not use `on_plan` or `on_reasoning` hooks.
+
 ---
 
 ### 2. MultiStep Agent
@@ -108,6 +118,16 @@ result = agent.run(
 - Multi-step workflows
 - Tasks requiring explicit planning
 - When you need to see the plan before execution
+
+**Middleware Hooks Activated:**
+
+- `before_llm_call` / `after_llm_call` - For LLM calls
+- `before_tool_call` / `after_tool_call` - For tool executions
+- `on_plan` - When creating initial or updated plan
+- `on_reasoning` - For agent reasoning steps
+- `on_tool_reasoning` - When reasoning tools generate reasoning
+- `on_answer` / `on_answer_chunk` - For final answers
+- `on_error` - On any error
 
 ---
 
@@ -161,6 +181,15 @@ result = squad.run(
 - Divide-and-conquer strategies
 - When you want parallel execution
 
+**Middleware Hooks Activated:**
+
+- `before_llm_call` / `after_llm_call` - For LLM calls (delegated to sub-agents)
+- `before_tool_call` / `after_tool_call` - For tool executions (delegated to sub-agents)
+- `on_answer` / `on_answer_chunk` - For final aggregated answers
+- `on_error` - On any error
+
+Note: Squad agent delegates most hooks to its sub-agents. Hook activation depends on sub-agent types.
+
 ---
 
 ### 4. MAP Agent (Modular Agentic Planner)
@@ -201,6 +230,16 @@ result = agent.run('Complex multi-step task with potential replanning')
 - Highly dynamic tasks
 - When the plan may need adjustment
 - Research and exploration tasks
+
+**Middleware Hooks Activated:**
+
+- `before_llm_call` / `after_llm_call` - For LLM calls
+- `before_tool_call` / `after_tool_call` - For tool executions
+- `on_plan` - When creating search/action plans
+- `on_answer` / `on_answer_chunk` - For final answers
+- `on_error` - On any error
+
+Note: MAP agent uses `on_plan` for action summaries but not `on_reasoning` or `on_tool_reasoning`.
 
 ---
 
