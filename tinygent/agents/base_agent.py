@@ -16,6 +16,7 @@ from pydantic import Field
 
 from tinygent.agents.middleware.agent import MiddlewareAgent
 from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.tool_limiter import ToolCallBlockedException
 from tinygent.core.datamodels.agent import AbstractAgent
 from tinygent.core.datamodels.agent import AbstractAgentConfig
 from tinygent.core.datamodels.llm import AbstractLLM
@@ -161,8 +162,9 @@ class TinyBaseAgent(AbstractAgent, MiddlewareAgent):
         )
         logger.debug('Running tool %s(%s)', tool.info.name, call.arguments)
 
-        await self.before_tool_call(run_id=run_id, tool=tool, args=call.arguments)
         try:
+            await self.before_tool_call(run_id=run_id, tool=tool, args=call.arguments)
+
             result = tool(**call.arguments)
             call.metadata['executed'] = True
             call.result = result
@@ -182,6 +184,26 @@ class TinyBaseAgent(AbstractAgent, MiddlewareAgent):
 
             tool_result.raw = tool
             return tool_result
+        except ToolCallBlockedException as e:
+            logger.warning(
+                'Tool call blocked by middleware: %s(%s) - %s',
+                tool.info.name,
+                call.arguments,
+                str(e),
+            )
+            await self.on_error(run_id=run_id, e=e)
+
+            # Return error result to maintain tool call/result consistency
+            error_result = TinyToolResult(
+                call_id=call.call_id or 'unknown',
+                content=f'Tool call blocked: {str(e)}',
+            )
+            call.metadata['executed'] = False
+            call.metadata['blocked'] = True
+            call.metadata['error'] = e
+
+            set_tiny_attribute('tool.blocked', str(e))
+            return error_result
         except Exception as e:
             logger.warning(
                 'Error during tool call %s(%s)', tool.info.name, call.arguments

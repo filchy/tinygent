@@ -116,7 +116,16 @@ class TinySquadAgentConfig(TinyBaseAgentConfig['TinySquadAgent']):
 
 
 class TinySquadAgent(TinyBaseAgent):
-    """Squad Agent for coordinating multiple agents to solve complex tasks."""
+    """Squad Agent for coordinating multiple agents to solve complex tasks.
+
+    Middleware Hooks Activated:
+    - before_llm_call / after_llm_call - For LLM calls (delegated to sub-agents)
+    - before_tool_call / after_tool_call - For tool executions (delegated to sub-agents)
+    - on_answer / on_answer_chunk - For final aggregated answers
+    - on_error - On any error
+
+    Note: Squad agent delegates most hooks to its sub-agents. Hook activation depends on sub-agent types.
+    """
 
     def __init__(
         self,
