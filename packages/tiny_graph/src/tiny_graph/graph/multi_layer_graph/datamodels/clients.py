@@ -15,4 +15,4 @@ class TinyGraphClients:
 
     @property
     def safe_embed_model(self) -> str:
-        return self.embedder.model_name.replace('-', '_')
+        return self.embedder.model.replace('-', '_')
