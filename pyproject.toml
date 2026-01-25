@@ -2,11 +2,12 @@
 name = "tinygent"
 version = "0.1.0"
 description = "Tiny agentic framework for building AI agents which can do more than tiny just tasks."
+authors = [{ name = "Filip Chytil" }]
+
+license = "MIT"
 readme = "README.md"
-authors = [
-    { name = "Filip Chytil", email = "chytilfilip@gmail.com" }
-]
 requires-python = "==3.12.*"
+
 dependencies = [
     "async-lru>=2.0.5",
     "jinja2>=3.1.6",
