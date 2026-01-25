@@ -1,11 +1,8 @@
 # Tinygent
 
 <div align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-light.svg">
-    <source media="(prefers-color-scheme: light)" srcset="assets/logo-dark.svg">
-    <img alt="TinyGent Logo" src="assets/logo-dark.svg" width="60%">
-  </picture>
+  <img class="logo-light-mode" alt="TinyGent Logo" src="assets/logo-dark.svg" width="60%">
+  <img class="logo-dark-mode" alt="TinyGent Logo" src="assets/logo-light.svg" width="60%">
 </div>
 
 <div align="center">
