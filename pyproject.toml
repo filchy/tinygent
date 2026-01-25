@@ -27,6 +27,11 @@ dev = [
     "mypy>=1.17.1",
     "ruff>=0.12.11",
 ]
+docs = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.7.1",
+    "mkdocstrings[python]>=1.0.2",
+]
 brave = ["tiny-brave"]
 anthropic = ["tiny-anthropic"]
 openai = ["tiny-openai"]
@@ -40,6 +45,7 @@ voyageai = ["tiny-voyageai"]
 tiny = "tinygent.cli.main:run_cli"
 lint = "scripts.lint:main"
 fmt = "scripts.fmt:main"
+docs = "scripts.docs:main"
 
 [project.entry-points.components]
 tiny_agents = "tinygent.agents.register"

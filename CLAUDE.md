@@ -81,6 +81,7 @@ uv run lint
 
 - 4-space indentation, 89 char line limit
 - Force single-line imports
+- NEVER use emojis
 
 ## Key Patterns
 
