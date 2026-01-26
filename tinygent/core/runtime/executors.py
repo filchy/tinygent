@@ -1,6 +1,7 @@
 import asyncio
 from collections.abc import Coroutine
 from concurrent.futures import Future
+import gc
 import os
 import threading
 import typing
@@ -72,14 +73,35 @@ def run_async_in_executor(
         asyncio.set_event_loop(loop)
         try:
             result = loop.run_until_complete(coro)
-            pending = asyncio.all_tasks(loop)
-            if pending:
+            # Keep gathering pending tasks until none remain
+            # This ensures cleanup tasks (like httpx client cleanup) are completed
+            # We need multiple iterations because cleanup can spawn new tasks
+            max_iterations = 10
+            for _ in range(max_iterations):
+                pending = asyncio.all_tasks(loop)
+                if not pending:
+                    break
                 loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
             return result
         finally:
             try:
                 loop.run_until_complete(loop.shutdown_asyncgens())
+                # Gather any tasks created during shutdown_asyncgens
+                pending = asyncio.all_tasks(loop)
+                if pending:
+                    loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
                 loop.run_until_complete(loop.shutdown_default_executor())
+                # Final cleanup: gather any remaining tasks before closing
+                pending = asyncio.all_tasks(loop)
+                if pending:
+                    loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                # Force garbage collection to trigger any __del__ methods
+                # This ensures httpx AsyncClient and similar objects clean up before loop closes
+                gc.collect()
+                # Wait for any cleanup tasks created by garbage collection
+                pending = asyncio.all_tasks(loop)
+                if pending:
+                    loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
             finally:
                 asyncio.set_event_loop(None)
                 loop.close()

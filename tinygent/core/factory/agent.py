@@ -2,7 +2,6 @@ from collections.abc import Sequence
 import logging
 from typing import overload
 
-from tinygent.agents.middleware.base import TinyBaseMiddleware
 from tinygent.core.datamodels.agent import AbstractAgent
 from tinygent.core.datamodels.agent import AbstractAgentConfig
 from tinygent.core.datamodels.llm import AbstractLLM
@@ -30,7 +29,7 @@ def build_agent(
 def build_agent(
     agent: dict | AbstractAgentConfig,
     *,
-    middleware: Sequence[TinyBaseMiddleware | str] = [],
+    middleware: Sequence[AbstractMiddleware | AbstractMiddlewareConfig | str] = [],
     llm: dict | AbstractLLM | AbstractLLMConfig | str | None = None,
     tools: list[dict | AbstractTool | AbstractToolConfig | str] | None = None,
     memory: dict | AbstractMemory | AbstractMemoryConfig | str | None = None,
@@ -41,7 +40,7 @@ def build_agent(
 def build_agent(
     agent: str,
     *,
-    middleware: Sequence[TinyBaseMiddleware | str] = [],
+    middleware: Sequence[AbstractMiddleware | AbstractMiddlewareConfig | str] = [],
     llm: dict | AbstractLLM | AbstractLLMConfig | str | None = None,
     llm_provider: str | None = None,
     llm_temperature: float | None = None,
