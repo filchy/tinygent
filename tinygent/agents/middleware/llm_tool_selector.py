@@ -57,6 +57,23 @@ class TinyLLMToolSelectorMiddlewareConfig(
 
 
 class TinyLLMToolSelectorMiddleware(TinyBaseMiddleware):
+    """Middleware that intelligently selects relevant tools using an LLM.
+
+    Before each LLM call, this middleware uses a dedicated selection LLM to analyze
+    the conversation context and determine which tools are most relevant. This reduces
+    token usage and improves performance by only providing the main agent with the
+    most appropriate subset of tools.
+
+    The middleware can limit the number of selected tools and always include critical
+    tools regardless of the selection process.
+
+    Args:
+        llm: LLM to use for tool selection (typically a fast, cost-effective model)
+        prompt_template: Template for tool selection prompt (default provided)
+        max_tools: Maximum number of tools to select (None = no limit)
+        always_include: List of tool names to always include in selection (None = no always-include list)
+    """
+
     def __init__(
         self,
         *,

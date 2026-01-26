@@ -23,6 +23,24 @@ class CombinedMemoryConfig(AbstractMemoryConfig['CombinedMemory']):
 
 
 class CombinedMemory(BaseChatMemory):
+    """Composite memory combining multiple memory systems.
+
+    Coordinates multiple memory instances, allowing different memory strategies
+    to work together. Messages are saved to all constituent memories, and
+    variables are loaded and merged from all memories.
+
+    This enables sophisticated memory architectures such as:
+    - Separate memories for different information types
+    - Combining window and summary memories
+    - Multi-tier memory with different retention policies
+
+    Operations (save, load, clear) are propagated to all constituent memories,
+    with async operations executed in parallel for efficiency.
+
+    Args:
+        memory_list: List of memory instances to combine
+    """
+
     def __init__(self, memory_list: list[AbstractMemory]) -> None:
         super().__init__()
 

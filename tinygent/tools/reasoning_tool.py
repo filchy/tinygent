@@ -36,7 +36,27 @@ class ReasoningToolConfig(AbstractToolConfig['ReasoningTool'], Generic[T]):
 
 
 class ReasoningTool(AbstractTool):
-    """A tool that captures reasoning behind its invocation."""
+    """A tool decorator that requires reasoning explanations for invocations.
+
+    Wraps another tool and adds a mandatory "reasoning" parameter to its input
+    schema. This forces the agent to explain why it's calling the tool before
+    execution, promoting more deliberate tool use and providing insight into
+    agent decision-making.
+
+    The reasoning is captured and accessible via middleware hooks (on_tool_reasoning)
+    but is not passed to the underlying tool function. This pattern is useful for:
+    - Understanding agent tool selection logic
+    - Debugging unexpected tool calls
+    - Creating audit trails of agent reasoning
+    - Training agents to think before acting
+
+    The reasoning prompt can be customized to guide the type of explanation required
+    (e.g., "Explain why this search is necessary" vs "Why this tool is being called").
+
+    Args:
+        inner_tool: The tool to wrap with reasoning requirements
+        reasoning_prompt: Custom prompt for reasoning field (default: "Why this tool is being called")
+    """
 
     def __init__(
         self, inner_tool: AbstractTool, reasoning_prompt: str | None = None

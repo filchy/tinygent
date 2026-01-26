@@ -105,7 +105,21 @@ class TinySquadAgentConfig(TinyBaseAgentConfig['TinySquadAgent']):
 
 
 class TinySquadAgent(TinyBaseAgent):
-    """Squad Agent for coordinating multiple agents to solve complex tasks.
+    """Squad Agent for coordinating multiple specialized agents.
+
+    Implements a delegation-based architecture where tasks are intelligently routed
+    to the most appropriate specialized agent (squad member) based on task analysis.
+    Each squad member can be a different agent type with its own tools and capabilities.
+
+    The squad agent uses an LLM-based classifier to:
+    1. Analyze the incoming task
+    2. Select the most suitable squad member
+    3. Optionally refine the task description for that member
+    4. Delegate execution to the selected agent
+
+    This architecture enables building complex systems where different agent types
+    (e.g., ReAct for research, MultiStep for planning) handle tasks they're best
+    suited for, while maintaining a unified interface.
 
     Middleware Hooks Activated:
     - before_llm_call / after_llm_call - For LLM calls (delegated to sub-agents)
@@ -114,6 +128,14 @@ class TinySquadAgent(TinyBaseAgent):
     - on_error - On any error
 
     Note: Squad agent delegates most hooks to its sub-agents. Hook activation depends on sub-agent types.
+
+    Args:
+        llm: Language model for task classification and routing
+        memory: Memory system for maintaining conversation history
+        prompt_template: Template for squad prompts (default provided)
+        tools: List of tools available (typically empty, as tools are on sub-agents)
+        squad: List of squad members (specialized agents with names and descriptions)
+        middleware: List of middleware to apply during execution
     """
 
     def __init__(

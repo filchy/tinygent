@@ -37,7 +37,33 @@ class JITInstructionToolConfig(AbstractToolConfig['JITInstructionTool'], Generic
 
 
 class JITInstructionTool(AbstractTool):
-    """A tool that adds a JIT instruction to its output schema."""
+    """A tool decorator that provides just-in-time instructions after execution.
+
+    Wraps another tool and appends a JIT (Just-In-Time) instruction to its output.
+    This allows tools to provide dynamic guidance to the agent after execution,
+    instructing how to interpret or act on the results.
+
+    The instruction is added to the tool's output either as:
+    - A dictionary with 'tool_result' and 'instruction' keys (for regular tools)
+    - A final yielded value with 'instruction' key (for generator tools)
+
+    This pattern enables:
+    - Context-dependent post-execution guidance
+    - Dynamic workflow steering based on tool results
+    - Progressive disclosure of instructions
+    - Tool-specific result interpretation hints
+
+    Example JIT instructions:
+    - "Use the search results to formulate your final answer"
+    - "If the API returned an error, try the fallback endpoint"
+    - "Format the data as JSON before responding"
+
+    Note: This tool only supports synchronous functions and generators.
+
+    Args:
+        inner_tool: The tool to wrap with JIT instructions
+        jit_instruction: Instruction text to append after tool execution
+    """
 
     def __init__(self, inner_tool: AbstractTool, jit_instruction: str) -> None:
         raw = inner_tool.raw

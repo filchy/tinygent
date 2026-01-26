@@ -62,7 +62,16 @@ class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
 
 
 class TinyMultiStepAgent(TinyBaseAgent):
-    """Multi-Step Agent implementation.
+    """Multi-Step planning agent with dynamic replanning.
+
+    This agent creates a multi-step plan to solve complex tasks and executes actions
+    based on that plan. It periodically updates its plan based on progress and new
+    information gathered from tool executions.
+
+    The agent alternates between planning phases (creating/updating the plan with
+    reasoning) and action phases (executing tools). Plans are refreshed at configurable
+    intervals to adapt to new information. This makes it suitable for complex tasks
+    requiring strategic planning and adaptation.
 
     Middleware Hooks Activated:
     - before_llm_call / after_llm_call - For LLM calls
@@ -72,6 +81,15 @@ class TinyMultiStepAgent(TinyBaseAgent):
     - on_tool_reasoning - When reasoning tools generate reasoning
     - on_answer / on_answer_chunk - For final answers
     - on_error - On any error
+
+    Args:
+        llm: Language model for planning and actions
+        memory: Memory system for maintaining conversation history
+        prompt_template: Template for multi-step prompts (default provided)
+        tools: List of tools available to the agent
+        max_iterations: Maximum number of action iterations (default: 15)
+        plan_interval: Number of iterations between plan updates (default: 5)
+        middleware: List of middleware to apply during execution
     """
 
     def __init__(

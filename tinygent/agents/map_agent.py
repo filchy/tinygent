@@ -129,7 +129,23 @@ class TinyMAPAgentConfig(TinyBaseAgentConfig['TinyMAPAgent']):
 
 
 class TinyMAPAgent(TinyBaseAgent):
-    """MAP Agent implementation.
+    """MAP (Monitoring, Action Proposal, Prediction) Agent implementation.
+
+    Implements a sophisticated planning approach that decomposes complex tasks into
+    subgoals and explores multiple action proposals for each subgoal through a
+    search process. The agent uses monitoring to validate proposals, prediction to
+    simulate outcomes, and evaluation to select the best action path.
+
+    The MAP architecture consists of:
+    - Task Decomposer: Breaks down complex tasks into manageable subgoals
+    - Actor: Proposes actions to achieve subgoals
+    - Monitor: Validates action proposals with feedback loops
+    - Predictor: Simulates next states after actions
+    - Evaluator: Scores states based on subgoal satisfaction
+    - Orchestrator: Determines if subgoals are fully satisfied
+
+    This agent performs tree search with configurable depth and branch factors,
+    making it suitable for tasks requiring thorough exploration of action spaces.
 
     Middleware Hooks Activated:
     - before_llm_call / after_llm_call - For LLM calls
@@ -139,6 +155,17 @@ class TinyMAPAgent(TinyBaseAgent):
     - on_error - On any error
 
     Note: MAP agent uses on_plan for action summaries but not on_reasoning or on_tool_reasoning.
+
+    Args:
+        llm: Language model for all MAP components
+        memory: Memory system for maintaining conversation history
+        max_plan_length: Maximum number of actions in final plan
+        max_branches_per_layer: Number of action proposals to explore per layer
+        max_layer_depth: Maximum depth of search tree exploration
+        prompt_template: Template for MAP prompts (default provided)
+        max_recurrsion: Maximum attempts to generate valid action proposals (default: 5)
+        tools: List of tools available to the agent
+        middleware: List of middleware to apply during execution
     """
 
     def __init__(
