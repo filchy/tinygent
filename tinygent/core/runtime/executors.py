@@ -89,19 +89,25 @@ def run_async_in_executor(
                 # Gather any tasks created during shutdown_asyncgens
                 pending = asyncio.all_tasks(loop)
                 if pending:
-                    loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                    loop.run_until_complete(
+                        asyncio.gather(*pending, return_exceptions=True)
+                    )
                 loop.run_until_complete(loop.shutdown_default_executor())
                 # Final cleanup: gather any remaining tasks before closing
                 pending = asyncio.all_tasks(loop)
                 if pending:
-                    loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                    loop.run_until_complete(
+                        asyncio.gather(*pending, return_exceptions=True)
+                    )
                 # Force garbage collection to trigger any __del__ methods
                 # This ensures httpx AsyncClient and similar objects clean up before loop closes
                 gc.collect()
                 # Wait for any cleanup tasks created by garbage collection
                 pending = asyncio.all_tasks(loop)
                 if pending:
-                    loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                    loop.run_until_complete(
+                        asyncio.gather(*pending, return_exceptions=True)
+                    )
             finally:
                 asyncio.set_event_loop(None)
                 loop.close()

@@ -11,7 +11,8 @@ from tinygent.agents.middleware.base import TinyBaseMiddleware
 from tinygent.agents.middleware.base import TinyBaseMiddlewareConfig
 from tinygent.core.datamodels.llm import AbstractLLM
 from tinygent.core.datamodels.llm import AbstractLLMConfig
-from tinygent.core.datamodels.messages import TinyHumanMessage, TinySystemMessage
+from tinygent.core.datamodels.messages import TinyHumanMessage
+from tinygent.core.datamodels.messages import TinySystemMessage
 from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.factory.llm import build_llm
 from tinygent.core.prompts.agents.middleware.factory.llm_tool_selector import (
@@ -121,10 +122,12 @@ class TinyLLMToolSelectorMiddleware(TinyBaseMiddleware):
         if self.max_tools:
             remaining_space = self.max_tools - len(selected_tools)
 
-            set_tiny_attributes({
-                'tool_selector.remaining_space': remaining_space,
-                'tool_selector.early_exit': remaining_space <= 0,
-            })
+            set_tiny_attributes(
+                {
+                    'tool_selector.remaining_space': remaining_space,
+                    'tool_selector.early_exit': remaining_space <= 0,
+                }
+            )
 
             if remaining_space <= 0:
                 kwargs['tools'] = selected_tools
@@ -135,33 +138,37 @@ class TinyLLMToolSelectorMiddleware(TinyBaseMiddleware):
             TinySystemMessage(content=self.prompt_template.system)
         )
         local_llm_input.add_at_end(
-            TinyHumanMessage(content=render_template(
-                self.prompt_template.user,
-                {
-                    'tools': '\n'.join(
-                        [f'{t.info.name} - {t.info.description or 'Description not provided'}' for t in tools]
-                    )
-                }
-            ))
+            TinyHumanMessage(
+                content=render_template(
+                    self.prompt_template.user,
+                    {
+                        'tools': '\n'.join(
+                            [
+                                f'{t.info.name} - {t.info.description or "Description not provided"}'
+                                for t in tools
+                            ]
+                        )
+                    },
+                )
+            )
         )
 
         result = await self.llm.agenerate_structured(
-            llm_input=local_llm_input,
-            output_schema=self._create_selection_model(tools)
+            llm_input=local_llm_input, output_schema=self._create_selection_model(tools)
         )
 
         for selected_tool_name in result.selected_tools:  # type: ignore
             tool_obj = mapped_tools.get(selected_tool_name)
 
             if tool_obj in selected_tools:
-                logger.warning('Tool \'%s\' already selected', selected_tool_name)
+                logger.warning("Tool '%s' already selected", selected_tool_name)
                 continue
 
             if not tool_obj:
                 logger.error(
-                    'Selected tool \'%s\' doesn\'t exist amongs available tools: %s',
+                    "Selected tool '%s' doesn't exist amongs available tools: %s",
                     selected_tool_name,
-                    [t.info.name for t in tools]
+                    [t.info.name for t in tools],
                 )
                 continue
 

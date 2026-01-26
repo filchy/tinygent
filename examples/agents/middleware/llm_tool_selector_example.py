@@ -81,7 +81,7 @@ def get_news(data: NewsInput) -> str:
 @reasoning_tool
 def calculate_square(data: CalculateInput) -> str:
     """Calculate the square of a number (uses only 'a' parameter)."""
-    result = data.a ** 2
+    result = data.a**2
     return f'The square of {data.a} is {result}'
 
 
@@ -120,9 +120,7 @@ def example_2_max_tools_limit() -> None:
     print('8 tools available, max_tools=3\n')
 
     selector = build_middleware(
-        'llm_tool_selector',
-        llm=build_llm('openai:gpt-4o-mini'),
-        max_tools=3
+        'llm_tool_selector', llm=build_llm('openai:gpt-4o-mini'), max_tools=3
     )
 
     agent = build_agent(

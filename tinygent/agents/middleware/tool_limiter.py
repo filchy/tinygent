@@ -10,7 +10,8 @@ from tinygent.agents.middleware.base import TinyBaseMiddleware
 from tinygent.agents.middleware.base import TinyBaseMiddlewareConfig
 from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.telemetry.decorators import tiny_trace
-from tinygent.core.telemetry.otel import set_tiny_attribute, set_tiny_attributes
+from tinygent.core.telemetry.otel import set_tiny_attribute
+from tinygent.core.telemetry.otel import set_tiny_attributes
 from tinygent.core.types.io.llm_io_input import TinyLLMInput
 
 logger = logging.getLogger(__name__)
@@ -87,21 +88,25 @@ class TinyToolCallLimiterMiddleware(TinyBaseMiddleware):
         args: dict[str, Any],
         kwargs: dict[str, Any],
     ) -> None:
-        set_tiny_attributes({
-            'tool_limiter.tool_name': tool.info.name,
-            'tool_limiter.target_tool': self.tool_name or '__all__',
-            'tool_limiter.max_calls': self.max_tool_calls,
-            'tool_limiter.hard_block': self.hard_block,
-        })
+        set_tiny_attributes(
+            {
+                'tool_limiter.tool_name': tool.info.name,
+                'tool_limiter.target_tool': self.tool_name or '__all__',
+                'tool_limiter.max_calls': self.max_tool_calls,
+                'tool_limiter.hard_block': self.hard_block,
+            }
+        )
 
         if not self._check_target_tool(tool):
             return
 
         current_count = self.tool_call_counts.get(run_id, 0)
 
-        set_tiny_attributes({
-            'tool_limiter.current_count': current_count,
-        })
+        set_tiny_attributes(
+            {
+                'tool_limiter.current_count': current_count,
+            }
+        )
 
         if current_count >= self.max_tool_calls:
             set_tiny_attribute('tool_limiter.limit_exceeded', True)
@@ -147,10 +152,12 @@ class TinyToolCallLimiterMiddleware(TinyBaseMiddleware):
             if current_count >= self.max_tool_calls:
                 from tinygent.core.datamodels.messages import TinySystemMessage
 
-                set_tiny_attributes({
-                    'tool_limiter.soft_limit_triggered': True,
-                    'tool_limiter.current_count': current_count,
-                })
+                set_tiny_attributes(
+                    {
+                        'tool_limiter.soft_limit_triggered': True,
+                        'tool_limiter.current_count': current_count,
+                    }
+                )
 
                 limit_message = TinySystemMessage(
                     content=(
@@ -189,10 +196,12 @@ class TinyToolCallLimiterMiddleware(TinyBaseMiddleware):
         if run_id in self.limit_reached:
             del self.limit_reached[run_id]
 
-        set_tiny_attributes({
-            'tool_limiter.error': True,
-            'tool_limiter.error_type': type(e).__name__,
-        })
+        set_tiny_attributes(
+            {
+                'tool_limiter.error': True,
+                'tool_limiter.error_type': type(e).__name__,
+            }
+        )
 
     def get_stats(self) -> dict[str, Any]:
         """Get statistics about tool call usage."""
