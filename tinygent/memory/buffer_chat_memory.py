@@ -15,6 +15,21 @@ class BufferChatMemoryConfig(AbstractMemoryConfig['BufferChatMemory']):
 
 
 class BufferChatMemory(BaseChatMemory):
+    """Simple buffer memory that stores full conversation history.
+
+    Maintains the complete chat history without any truncation or summarization.
+    All messages are stored in memory and returned when loading variables.
+
+    This is the simplest memory type, suitable for:
+    - Short conversations that fit within context limits
+    - Scenarios where full history is required
+    - Development and testing with small message counts
+
+    Note: This memory type can exceed context limits for long conversations.
+    Consider BufferWindowChatMemory or BufferSummaryChatMemory for longer
+    interactions.
+    """
+
     def __init__(self) -> None:
         super().__init__()
 

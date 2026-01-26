@@ -58,7 +58,15 @@ class TinyReActAgentConfig(TinyBaseAgentConfig['TinyReActAgent']):
 
 
 class TinyReActAgent(TinyBaseAgent):
-    """ReAct Agent implementation.
+    """ReAct (Reasoning + Acting) Agent implementation.
+
+    Implements the ReAct paradigm where the agent iteratively reasons about the task
+    and takes actions (tool calls) until it arrives at a final answer. Each iteration
+    consists of a reasoning step followed by an action step.
+
+    The agent maintains a history of reasoning and tool calls to inform subsequent
+    iterations. If the maximum iteration limit is reached without a final answer,
+    a fallback mechanism is triggered to provide the best possible response.
 
     Middleware Hooks Activated:
     - before_llm_call / after_llm_call - For LLM calls
@@ -68,6 +76,14 @@ class TinyReActAgent(TinyBaseAgent):
     - on_error - On any error
 
     Note: React agent does not use on_plan or on_reasoning hooks.
+
+    Args:
+        llm: Language model for generating reasoning and actions
+        memory: Memory system for maintaining conversation history
+        prompt_template: Template for ReAct prompts (default provided)
+        tools: List of tools available to the agent
+        max_iterations: Maximum number of reasoning-action cycles (default: 10)
+        middleware: List of middleware to apply during execution
     """
 
     def __init__(

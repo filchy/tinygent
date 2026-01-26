@@ -41,7 +41,26 @@ class ToolConfig(AbstractToolConfig['Tool[R]'], Generic[R]):
 
 
 class Tool(AbstractTool, Generic[R]):
-    """A simple tool wrapping a callable function."""
+    """A simple tool wrapping a callable function for agent use.
+
+    Wraps Python functions (sync, async, generators, async generators) into
+    a standardized tool interface that agents can invoke. Automatically extracts
+    metadata like name, description, and parameter schemas from the function.
+
+    The tool handles:
+    - Input validation using Pydantic schemas
+    - Automatic async/sync adaptation
+    - Optional LRU caching for expensive operations
+    - Generator/async generator collection into lists
+
+    Caching is supported for regular and async functions (not generators).
+    When enabled, results are memoized using LRU cache with configurable size.
+
+    Args:
+        fn: The callable function to wrap (sync/async, regular/generator)
+        use_cache: Enable LRU caching of results (default: False)
+        cache_size: Maximum cache size if caching enabled (default: None)
+    """
 
     def __init__(
         self,

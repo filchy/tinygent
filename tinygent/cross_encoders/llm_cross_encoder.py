@@ -79,6 +79,27 @@ class LLMCrossEncoderConfig(AbstractCrossEncoderConfig['LLMCrossEncoder']):
 
 
 class LLMCrossEncoder(AbstractCrossEncoder):
+    """LLM-based cross encoder for ranking text relevance.
+
+    Uses a language model to score the relevance between query-text pairs or
+    arbitrary text pairs. Unlike embedding-based approaches, this cross encoder
+    evaluates each pair directly through the LLM, potentially capturing more
+    nuanced semantic relationships.
+
+    The cross encoder can be used for:
+    - Reranking search results based on query relevance
+    - Evaluating semantic similarity between text pairs
+    - Filtering candidates in information retrieval pipelines
+
+    Scores are generated within a configurable range (default: -5.0 to 5.0),
+    where higher scores indicate greater relevance or similarity.
+
+    Args:
+        llm: Language model for scoring pairs
+        prompt_template: Template for ranking prompts (default provided)
+        score_range: (min, max) range for relevance scores (default: (-5.0, 5.0))
+    """
+
     def __init__(
         self,
         llm: AbstractLLM,

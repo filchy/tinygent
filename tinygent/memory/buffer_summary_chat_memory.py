@@ -45,6 +45,28 @@ class BufferSummaryChatMemoryConfig(AbstractMemoryConfig['BufferSummaryChatMemor
 
 
 class BufferSummaryChatMemory(BaseChatMemory):
+    """Intelligent memory that summarizes old messages to save tokens.
+
+    Maintains recent messages in full while summarizing older messages that
+    would exceed the token limit. Uses an LLM to create progressive summaries
+    that capture key information from pruned messages.
+
+    The memory automatically prunes messages when the buffer exceeds the token
+    limit, creating or updating a rolling summary. Recent messages stay intact
+    for immediate context while older content is compressed into summaries.
+
+    Suitable for:
+    - Long conversations requiring full context awareness
+    - Token-limited environments needing history retention
+    - Scenarios where both recent details and historical context matter
+
+    Args:
+        llm: Language model for generating summaries
+        max_token_limit: Maximum tokens before triggering summarization (default: 2000)
+        return_messages: Return messages as objects vs strings (default: False)
+        prompt: Template for summary generation (default provided)
+    """
+
     def __init__(
         self,
         llm: AbstractLLM,

@@ -18,6 +18,24 @@ class BufferWindowChatMemoryConfig(AbstractMemoryConfig['BufferWindowChatMemory'
 
 
 class BufferWindowChatMemory(BaseChatMemory):
+    """Sliding window memory that keeps only the last K messages.
+
+    Maintains a fixed-size window of recent conversation history by keeping
+    only the last K messages. This prevents memory from growing unbounded
+    while preserving recent context.
+
+    The window slides forward as new messages arrive - when the limit is reached,
+    the oldest message is dropped to make room for new ones.
+
+    Suitable for:
+    - Long-running conversations with context limits
+    - Scenarios where only recent context is relevant
+    - Preventing token limits from being exceeded
+
+    Args:
+        k: Number of messages to retain (default: 5)
+    """
+
     def __init__(self, k: int = 5) -> None:
         super().__init__()
 
