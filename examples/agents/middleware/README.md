@@ -12,14 +12,14 @@ uv run examples/agents/middleware/main.py
 
 ## Concept
 
-Middleware in TinyGent follows a class-based pattern. You create custom middleware by extending the `AgentMiddleware` base class and overriding only the methods you need. Multiple middleware can be composed together using `MiddlewareAgent`.
+Middleware in TinyGent follows a class-based pattern. You create custom middleware by extending the `TinyBaseMiddleware` base class and overriding only the methods you need. Multiple middleware can be composed together using `TinyMiddlewareAgent`.
 
 ### Creating Custom Middleware
 
 ```python
-from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import TinyBaseMiddleware
 
-class LoggingMiddleware(AgentMiddleware):
+class LoggingMiddleware(TinyBaseMiddleware):
     def before_llm_call(self, *, run_id: str, llm_input: TinyLLMInput):
         print(f"[{run_id}] LLM call starting...")
 
@@ -49,17 +49,17 @@ class LoggingMiddleware(AgentMiddleware):
 
 ## Composing Multiple Middleware
 
-Use `MiddlewareAgent` to combine multiple middleware instances:
+Use `TinyMiddlewareAgent` to combine multiple middleware instances:
 
 ```python
-from tinygent.agents.middleware.agent import MiddlewareAgent
-from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.agent import TinyMiddlewareAgent
+from tinygent.agents.middleware.base import TinyBaseMiddleware
 
-class LoggingMiddleware(AgentMiddleware):
+class LoggingMiddleware(TinyBaseMiddleware):
     def on_answer(self, *, run_id: str, answer: str):
         print(f"Answer: {answer}")
 
-class MetricsMiddleware(AgentMiddleware):
+class MetricsMiddleware(TinyBaseMiddleware):
     def before_llm_call(self, *, run_id: str, llm_input: TinyLLMInput):
         self.start_time = time.time()
 
@@ -68,7 +68,7 @@ class MetricsMiddleware(AgentMiddleware):
         print(f"LLM call took {elapsed:.2f}s")
 
 # Compose middleware
-middleware_agent = MiddlewareAgent([
+middleware_agent = TinyMiddlewareAgent([
     LoggingMiddleware(),
     MetricsMiddleware(),
 ])
@@ -102,7 +102,7 @@ middleware_agent = MiddlewareAgent([
 Middleware works seamlessly with the streaming API. The `on_answer_chunk` method receives each chunk as it's generated:
 
 ```python
-class StreamingMiddleware(AgentMiddleware):
+class StreamingMiddleware(TinyBaseMiddleware):
     def on_answer_chunk(self, *, run_id: str, chunk: str, idx: str):
         print(f"[chunk {idx}] {chunk}", end="")
 

@@ -1,11 +1,13 @@
-from .base import AgentMiddleware
+from .base import TinyBaseMiddleware
 from .base import register_middleware
+from .llm_tool_selector import TinyLLMToolSelectorMiddleware
+from .tool_limiter import TinyToolCallLimiterMiddleware
 from .tool_limiter import ToolCallBlockedException
-from .tool_limiter import ToolCallLimiterMiddleware
 
 __all__ = [
-    'AgentMiddleware',
+    'TinyBaseMiddleware',
     'register_middleware',
     'ToolCallBlockedException',
-    'ToolCallLimiterMiddleware',
+    'TinyToolCallLimiterMiddleware',
+    'TinyLLMToolSelectorMiddleware',
 ]

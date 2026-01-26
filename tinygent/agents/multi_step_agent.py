@@ -11,7 +11,6 @@ from pydantic import Field
 
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
-from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.core.datamodels.llm import AbstractLLM
 from tinygent.core.datamodels.memory import AbstractMemory
 from tinygent.core.datamodels.messages import AllTinyMessages
@@ -22,10 +21,8 @@ from tinygent.core.datamodels.messages import TinyPlanMessage
 from tinygent.core.datamodels.messages import TinyReasoningMessage
 from tinygent.core.datamodels.messages import TinySystemMessage
 from tinygent.core.datamodels.messages import TinyToolCall
+from tinygent.core.datamodels.middleware import AbstractMiddleware
 from tinygent.core.datamodels.tool import AbstractTool
-from tinygent.core.factory.llm import build_llm
-from tinygent.core.factory.memory import build_memory
-from tinygent.core.factory.tool import build_tool
 from tinygent.core.prompts.agents.factory.multi_agent import get_prompt_template
 from tinygent.core.prompts.agents.template.multi_agent import MultiStepPromptTemplate
 from tinygent.core.runtime.executors import run_async_in_executor
@@ -54,17 +51,10 @@ class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
 
     def build(self) -> TinyMultiStepAgent:
         return TinyMultiStepAgent(
-            middleware=self.middleware,
-            llm=self.llm if isinstance(self.llm, AbstractLLM) else build_llm(self.llm),
-            tools=[
-                tool if isinstance(tool, AbstractTool) else build_tool(tool)
-                for tool in self.tools
-            ],
-            memory=(
-                self.memory
-                if isinstance(self.memory, AbstractMemory)
-                else build_memory(self.memory)
-            ),
+            middleware=self.build_middleware_list(),
+            llm=self.build_llm_instance(),
+            tools=self.build_tools_list(),
+            memory=self.build_memory_instance(),
             prompt_template=self.prompt_template,
             max_iterations=self.max_iterations,
             plan_interval=self.plan_interval,
@@ -92,7 +82,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
         tools: list[AbstractTool] = [],
         max_iterations: int = 15,
         plan_interval: int = 5,
-        middleware: Sequence[AgentMiddleware] = [],
+        middleware: Sequence[AbstractMiddleware] = [],
     ) -> None:
         super().__init__(llm=llm, tools=tools, memory=memory, middleware=middleware)
 
@@ -267,7 +257,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
                                 self._iteration_number,
                                 planner_msg.content,
                             )
-                            await self.on_plan(run_id=run_id, plan=planner_msg.content)
+                            await self.on_plan(
+                                run_id=run_id, plan=planner_msg.content, kwargs={}
+                            )
                             self._planned_steps.append(planner_msg)
 
                         if isinstance(planner_msg, TinyReasoningMessage):
@@ -277,7 +269,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                                 planner_msg.content,
                             )
                             await self.on_reasoning(
-                                run_id=run_id, reasoning=planner_msg.content
+                                run_id=run_id, reasoning=planner_msg.content, kwargs={}
                             )
                         self.memory.save_context(planner_msg)
 
@@ -320,7 +312,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                                     reasoning,
                                 )
                                 await self.on_tool_reasoning(
-                                    run_id=run_id, reasoning=reasoning
+                                    run_id=run_id, reasoning=reasoning, kwargs={}
                                 )
 
                             logger.debug(
@@ -338,7 +330,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                             )
                         break
                 except Exception as e:
-                    await self.on_error(run_id=run_id, e=e)
+                    await self.on_error(run_id=run_id, e=e, kwargs={})
                     raise e
                 finally:
                     self._iteration_number += 1
@@ -403,7 +395,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
             async for res in self._run_agent(input_text, run_id):
                 final_answer += res
 
-            await self.on_answer(run_id=run_id, answer=final_answer)
+            await self.on_answer(run_id=run_id, answer=final_answer, kwargs={})
             return final_answer
 
         return run_async_in_executor(_run)
@@ -424,7 +416,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
         async def _generator():
             idx = 0
             async for res in self._run_agent(run_id=run_id, input_text=input_text):
-                await self.on_answer_chunk(run_id=run_id, chunk=res, idx=str(idx))
+                await self.on_answer_chunk(
+                    run_id=run_id, chunk=res, idx=str(idx), kwargs={}
+                )
                 idx += 1
                 yield res
 

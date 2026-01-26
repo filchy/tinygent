@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import Field
 
-from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import TinyBaseMiddleware
 from tinygent.agents.middleware.base import register_middleware
 from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
@@ -24,7 +24,7 @@ logger = setup_logger('debug')
 
 
 @register_middleware('step_counter')
-class StepCounterMiddleware(AgentMiddleware):
+class StepCounterMiddleware(TinyBaseMiddleware):
     """Middleware that tracks steps and iterations in multi-step agent."""
 
     def __init__(self) -> None:
@@ -32,7 +32,7 @@ class StepCounterMiddleware(AgentMiddleware):
         self.tool_calls: list[dict[str, Any]] = []
         self.plans: list[str] = []
 
-    def on_plan(self, *, run_id: str, plan: str) -> None:
+    async def on_plan(self, *, run_id: str, plan: str, kwargs: dict[str, Any]) -> None:
         self.plans.append(plan)
         print(
             TinyColorPrinter.custom(
@@ -44,7 +44,9 @@ class StepCounterMiddleware(AgentMiddleware):
             )
         )
 
-    def before_llm_call(self, *, run_id: str, llm_input: TinyLLMInput) -> None:
+    async def before_llm_call(
+        self, *, run_id: str, llm_input: TinyLLMInput, kwargs: dict[str, Any]
+    ) -> None:
         self.current_step += 1
         print(
             TinyColorPrinter.custom(
@@ -54,8 +56,13 @@ class StepCounterMiddleware(AgentMiddleware):
             )
         )
 
-    def before_tool_call(
-        self, *, run_id: str, tool: AbstractTool, args: dict[str, Any]
+    async def before_tool_call(
+        self,
+        *,
+        run_id: str,
+        tool: AbstractTool,
+        args: dict[str, Any],
+        kwargs: dict[str, Any],
     ) -> None:
         print(
             TinyColorPrinter.custom(
@@ -65,13 +72,14 @@ class StepCounterMiddleware(AgentMiddleware):
             )
         )
 
-    def after_tool_call(
+    async def after_tool_call(
         self,
         *,
         run_id: str,
         tool: AbstractTool,
         args: dict[str, Any],
         result: Any,
+        kwargs: dict[str, Any],
     ) -> None:
         self.tool_calls.append(
             {
@@ -89,7 +97,9 @@ class StepCounterMiddleware(AgentMiddleware):
             )
         )
 
-    def on_answer(self, *, run_id: str, answer: str) -> None:
+    async def on_answer(
+        self, *, run_id: str, answer: str, kwargs: dict[str, Any]
+    ) -> None:
         print(
             TinyColorPrinter.custom(
                 'FINAL ANSWER',

@@ -4,7 +4,7 @@ Built-in middleware for agent lifecycle hooks.
 
 ## Available Middleware
 
-### ToolCallLimiterMiddleware
+### TinyToolCallLimiterMiddleware
 
 Limits the number of tool calls per agent run. Can operate in two modes:
 - **Global limiter**: Limits all tool calls when `tool_name=None`
@@ -26,11 +26,11 @@ Limits the number of tool calls per agent run. Can operate in two modes:
 ### Option 1: Limit All Tools Globally
 
 ```python
-from tinygent.agents.middleware import ToolCallLimiterMiddleware
+from tinygent.agents.middleware import TinyToolCallLimiterMiddleware
 from tinygent.agents import TinyMultiStepAgent
 from tinygent.core.factory import build_llm
 
-limiter = ToolCallLimiterMiddleware(max_tool_calls=5)
+limiter = TinyToolCallLimiterMiddleware(max_tool_calls=5)
 
 agent = TinyMultiStepAgent(
     llm=build_llm('openai:gpt-4o-mini'),
@@ -42,10 +42,10 @@ agent = TinyMultiStepAgent(
 ### Option 2: Limit Specific Tool Only
 
 ```python
-from tinygent.agents.middleware import ToolCallLimiterMiddleware
+from tinygent.agents.middleware import TinyToolCallLimiterMiddleware
 
 # Only limit expensive API calls
-api_limiter = ToolCallLimiterMiddleware(
+api_limiter = TinyToolCallLimiterMiddleware(
     tool_name='web_search',
     max_tool_calls=3
 )
@@ -60,12 +60,12 @@ agent = TinyMultiStepAgent(
 ### Option 3: Multiple Limiters for Different Tools
 
 ```python
-from tinygent.agents.middleware import ToolCallLimiterMiddleware
+from tinygent.agents.middleware import TinyToolCallLimiterMiddleware
 
 middleware = [
-    ToolCallLimiterMiddleware(tool_name='web_search', max_tool_calls=3),
-    ToolCallLimiterMiddleware(tool_name='database_query', max_tool_calls=10),
-    ToolCallLimiterMiddleware(tool_name='expensive_api', max_tool_calls=1),
+    TinyToolCallLimiterMiddleware(tool_name='web_search', max_tool_calls=3),
+    TinyToolCallLimiterMiddleware(tool_name='database_query', max_tool_calls=10),
+    TinyToolCallLimiterMiddleware(tool_name='expensive_api', max_tool_calls=1),
 ]
 
 agent = TinyMultiStepAgent(
@@ -92,9 +92,9 @@ agent = build_agent(
 
 ```python
 from tinygent.agents import TinyMultiStepAgentConfig
-from tinygent.agents.middleware import ToolCallLimiterMiddleware
+from tinygent.agents.middleware import TinyToolCallLimiterMiddleware
 
-limiter = ToolCallLimiterMiddleware(max_tool_calls=3)
+limiter = TinyToolCallLimiterMiddleware(max_tool_calls=3)
 
 config = TinyMultiStepAgentConfig(
     llm='openai:gpt-4o-mini',
@@ -108,7 +108,7 @@ agent = config.build()
 ### Getting Statistics
 
 ```python
-limiter = ToolCallLimiterMiddleware(max_tool_calls=5)
+limiter = TinyToolCallLimiterMiddleware(max_tool_calls=5)
 
 agent = TinyMultiStepAgent(llm=..., tools=[...], middleware=[limiter])
 result = agent.run('Some task')
@@ -127,10 +127,10 @@ print(stats)
 ## Creating Custom Middleware
 
 ```python
-from tinygent.agents.middleware import AgentMiddleware, register_middleware
+from tinygent.agents.middleware import TinyBaseMiddleware, register_middleware
 
 @register_middleware('my_middleware')
-class MyCustomMiddleware(AgentMiddleware):
+class MyCustomMiddleware(TinyBaseMiddleware):
     def before_tool_call(self, *, run_id: str, tool, args):
         print(f'Calling {tool.info.name}')
 

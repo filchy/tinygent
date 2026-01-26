@@ -14,6 +14,8 @@ if typing.TYPE_CHECKING:
     from tinygent.core.datamodels.llm import AbstractLLMConfig
     from tinygent.core.datamodels.memory import AbstractMemory
     from tinygent.core.datamodels.memory import AbstractMemoryConfig
+    from tinygent.core.datamodels.middleware import AbstractMiddleware
+    from tinygent.core.datamodels.middleware import AbstractMiddlewareConfig
     from tinygent.core.datamodels.tool import AbstractTool
     from tinygent.core.datamodels.tool import AbstractToolConfig
 
@@ -50,6 +52,11 @@ class Registry:
         # tools
         self._registered_tools: dict[
             str, tuple[type[AbstractToolConfig], type[AbstractTool]]
+        ] = {}
+
+        # middlewares
+        self._registered_middlewares: dict[
+            str, tuple[type[AbstractMiddlewareConfig], type[AbstractMiddleware]]
         ] = {}
 
     def _rebuild_annotations(self) -> None:
@@ -238,6 +245,35 @@ class Registry:
     ) -> dict[str, tuple[type[AbstractToolConfig], type[AbstractTool]]]:
         logger.debug('Getting all registered tools')
         return self._registered_tools
+
+    # middlewares
+    def register_middleware(
+        self,
+        name: str,
+        config_class: type[AbstractMiddlewareConfig],
+        middleware_class: type[AbstractMiddleware],
+    ) -> None:
+        logger.debug('Registering middleware %s', name)
+        if name in self._registered_middlewares:
+            raise ValueError(f'Middleware {name} already registered.')
+
+        self._registered_middlewares[name] = (config_class, middleware_class)
+        self._registration_changed()
+
+    def get_middleware(
+        self, name: str
+    ) -> tuple[type[AbstractMiddlewareConfig], type[AbstractMiddleware]]:
+        logger.debug('Getting middleware %s', name)
+        if name not in self._registered_middlewares:
+            raise ValueError(f'Middleware {name} not registered.')
+
+        return self._registered_middlewares[name]
+
+    def get_middlewares(
+        self,
+    ) -> dict[str, tuple[type[AbstractMiddlewareConfig], type[AbstractMiddleware]]]:
+        logger.debug('Getting all registered middlewares.')
+        return self._registered_middlewares
 
 
 class GlobalRegistry:

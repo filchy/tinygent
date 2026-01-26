@@ -14,8 +14,6 @@ from typing import TypeVar
 
 from pydantic import Field
 
-from tinygent.agents.middleware.agent import MiddlewareAgent
-from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.agents.middleware.tool_limiter import ToolCallBlockedException
 from tinygent.core.datamodels.agent import AbstractAgent
 from tinygent.core.datamodels.agent import AbstractAgentConfig
@@ -25,6 +23,8 @@ from tinygent.core.datamodels.memory import AbstractMemory
 from tinygent.core.datamodels.memory import AbstractMemoryConfig
 from tinygent.core.datamodels.messages import TinyToolCall
 from tinygent.core.datamodels.messages import TinyToolResult
+from tinygent.core.datamodels.middleware import AbstractMiddleware
+from tinygent.core.datamodels.middleware import AbstractMiddlewareConfig
 from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.datamodels.tool import AbstractToolConfig
 from tinygent.core.telemetry.decorators import tiny_trace
@@ -45,7 +45,9 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
 
     type: Any = Field(default='base')
 
-    middleware: Sequence[AgentMiddleware] = Field(default_factory=list)
+    middleware: Sequence[AbstractMiddlewareConfig | AbstractMiddleware] = Field(
+        default_factory=list
+    )
 
     llm: AbstractLLMConfig | AbstractLLM = Field(...)
     tools: Sequence[AbstractToolConfig | AbstractTool] = Field(default_factory=list)
@@ -57,18 +59,52 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
         """Build the BaseAgent instance from the configuration."""
         raise NotImplementedError('Subclasses must implement this method.')
 
+    def build_llm_instance(self) -> AbstractLLM:
+        """Build LLM instance from config or return existing instance."""
+        if isinstance(self.llm, AbstractLLM):
+            return self.llm
+        from tinygent.core.factory.llm import build_llm
 
-class TinyBaseAgent(AbstractAgent, MiddlewareAgent):
+        return build_llm(self.llm)
+
+    def build_tools_list(self) -> list[AbstractTool]:
+        """Build list of tool instances from configs or return existing instances."""
+        from tinygent.core.factory.tool import build_tool
+
+        return [
+            tool if isinstance(tool, AbstractTool) else build_tool(tool)
+            for tool in self.tools
+        ]
+
+    def build_memory_instance(self) -> AbstractMemory:
+        """Build memory instance from config or return existing instance."""
+        if isinstance(self.memory, AbstractMemory):
+            return self.memory
+        from tinygent.core.factory.memory import build_memory
+
+        return build_memory(self.memory)
+
+    def build_middleware_list(self) -> list[AbstractMiddleware]:
+        """Build list of middleware instances from configs or return existing instances."""
+        from tinygent.core.factory.middleware import build_middleware
+
+        return [
+            m if isinstance(m, AbstractMiddleware) else build_middleware(m)
+            for m in self.middleware
+        ]
+
+
+class TinyBaseAgent(AbstractAgent, AbstractMiddleware):
     def __init__(
         self,
         llm: AbstractLLM,
         memory: AbstractMemory,
         tools: Sequence[AbstractTool] = (),
-        middleware: Sequence[AgentMiddleware] = [],
+        middleware: Sequence[AbstractMiddleware] = [],
     ) -> None:
-        MiddlewareAgent.__init__(self, middleware)
         self.llm = llm
         self.memory = memory
+        self.middleware = middleware
 
         self._tools = tools
         self._final_answer: str | None = None
@@ -109,14 +145,19 @@ class TinyBaseAgent(AbstractAgent, MiddlewareAgent):
     async def run_llm(
         self, run_id: str, fn: Callable, llm_input: TinyLLMInput, **kwargs
     ) -> Any:
-        await self.before_llm_call(run_id=run_id, llm_input=llm_input)
+        kwargs_dict = dict(kwargs)
+        await self.before_llm_call(
+            run_id=run_id, llm_input=llm_input, kwargs=kwargs_dict
+        )
         try:
-            result = fn(llm_input=llm_input, **kwargs)
-            await self.after_llm_call(run_id=run_id, llm_input=llm_input, result=result)
+            result = fn(llm_input=llm_input, **kwargs_dict)
+            await self.after_llm_call(
+                run_id=run_id, llm_input=llm_input, result=result, kwargs=kwargs_dict
+            )
             return result
         except Exception as e:
             logger.warning('Error during llm call: %s', e)
-            await self.on_error(run_id=run_id, e=e)
+            await self.on_error(run_id=run_id, e=e, kwargs=kwargs_dict)
             raise
 
     @tiny_trace('run_llm_stream')
@@ -131,9 +172,12 @@ class TinyBaseAgent(AbstractAgent, MiddlewareAgent):
         llm_input: TinyLLMInput,
         **kwargs: Any,
     ) -> AsyncGenerator[TinyLLMResultChunk, None]:
-        await self.before_llm_call(run_id=run_id, llm_input=llm_input)
+        kwargs_dict = dict(kwargs)
+        await self.before_llm_call(
+            run_id=run_id, llm_input=llm_input, kwargs=kwargs_dict
+        )
         try:
-            result = fn(llm_input=llm_input, **kwargs)
+            result = fn(llm_input=llm_input, **kwargs_dict)
 
             # if coroutine, await it to get async generator
             if isinstance(result, Awaitable):
@@ -144,15 +188,17 @@ class TinyBaseAgent(AbstractAgent, MiddlewareAgent):
                 all_chunks.append(chunk)
                 yield chunk
 
-            await self.after_llm_call(run_id=run_id, llm_input=llm_input, result=None)
+            await self.after_llm_call(
+                run_id=run_id, llm_input=llm_input, result=None, kwargs=kwargs_dict
+            )
         except Exception as e:
             logger.warning('Error during llm stream call: %s', e)
-            await self.on_error(run_id=run_id, e=e)
+            await self.on_error(run_id=run_id, e=e, kwargs=kwargs_dict)
             raise
 
     @tiny_trace('run_tool')
     async def run_tool(
-        self, run_id: str, tool: AbstractTool, call: TinyToolCall
+        self, run_id: str, tool: AbstractTool, call: TinyToolCall, **kwargs: Any
     ) -> TinyToolResult:
         set_tiny_attributes(
             {
@@ -162,14 +208,21 @@ class TinyBaseAgent(AbstractAgent, MiddlewareAgent):
         )
         logger.debug('Running tool %s(%s)', tool.info.name, call.arguments)
 
+        kwargs_dict = dict(kwargs)
         try:
-            await self.before_tool_call(run_id=run_id, tool=tool, args=call.arguments)
+            await self.before_tool_call(
+                run_id=run_id, tool=tool, args=call.arguments, kwargs=kwargs_dict
+            )
 
             result = tool(**call.arguments)
             call.metadata['executed'] = True
             call.result = result
             await self.after_tool_call(
-                run_id=run_id, tool=tool, args=call.arguments, result=result
+                run_id=run_id,
+                tool=tool,
+                args=call.arguments,
+                result=result,
+                kwargs=kwargs_dict,
             )
 
             tool_result = TinyToolResult(
@@ -191,7 +244,7 @@ class TinyBaseAgent(AbstractAgent, MiddlewareAgent):
                 call.arguments,
                 str(e),
             )
-            await self.on_error(run_id=run_id, e=e)
+            await self.on_error(run_id=run_id, e=e, kwargs=kwargs_dict)
 
             # Return error result to maintain tool call/result consistency
             error_result = TinyToolResult(
@@ -208,7 +261,7 @@ class TinyBaseAgent(AbstractAgent, MiddlewareAgent):
             logger.warning(
                 'Error during tool call %s(%s)', tool.info.name, call.arguments
             )
-            await self.on_error(run_id=run_id, e=e)
+            await self.on_error(run_id=run_id, e=e, kwargs=kwargs_dict)
             raise
 
     def __str__(self) -> str:
@@ -227,5 +280,12 @@ class TinyBaseAgent(AbstractAgent, MiddlewareAgent):
                 buf.write(f'{textwrap.indent(str(tool), "\t\t")}\n')
         else:
             buf.write('\t\tNo tools configured.\n')
+
+        buf.write(f'\tMiddlewares ({len(self.middleware)}):\n')
+        if len(self.middleware) > 0:
+            for middleware in self.middleware:
+                buf.write(f'{textwrap.indent(str(middleware), "\t\t")}\n')
+        else:
+            buf.write('\t\tNo middlewares configured.\n')
 
         return buf.getvalue()

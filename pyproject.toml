@@ -50,6 +50,7 @@ docs = "scripts.docs:main"
 
 [project.entry-points.components]
 tiny_agents = "tinygent.agents.register"
+tiny_middlewares = "tinygent.agents.middleware.register"
 tiny_tools = "tinygent.tools.register"
 tiny_memory = "tinygent.memory.register"
 tiny_crossencoders = "tinygent.cross_encoders.register"

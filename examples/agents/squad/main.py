@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import Field
 
-from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import TinyBaseMiddleware
 from tinygent.agents.middleware.base import register_middleware
 from tinygent.agents.multi_step_agent import MultiStepPromptTemplate
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
@@ -28,7 +28,7 @@ logger = setup_logger('debug')
 
 
 @register_middleware('squad_delegation')
-class SquadDelegationMiddleware(AgentMiddleware):
+class SquadDelegationMiddleware(TinyBaseMiddleware):
     """Middleware that tracks agent delegation and coordination in Squad agent."""
 
     def __init__(self) -> None:
@@ -37,7 +37,7 @@ class SquadDelegationMiddleware(AgentMiddleware):
         self.tool_calls_count = 0
         self.current_plan: str | None = None
 
-    def on_plan(self, *, run_id: str, plan: str) -> None:
+    async def on_plan(self, *, run_id: str, plan: str, kwargs: dict[str, Any]) -> None:
         self.current_plan = plan
         print(
             TinyColorPrinter.custom(
@@ -49,7 +49,9 @@ class SquadDelegationMiddleware(AgentMiddleware):
             )
         )
 
-    def before_llm_call(self, *, run_id: str, llm_input: TinyLLMInput) -> None:
+    async def before_llm_call(
+        self, *, run_id: str, llm_input: TinyLLMInput, kwargs: dict[str, Any]
+    ) -> None:
         self.llm_calls += 1
         print(
             TinyColorPrinter.custom(
@@ -59,8 +61,13 @@ class SquadDelegationMiddleware(AgentMiddleware):
             )
         )
 
-    def before_tool_call(
-        self, *, run_id: str, tool: AbstractTool, args: dict[str, Any]
+    async def before_tool_call(
+        self,
+        *,
+        run_id: str,
+        tool: AbstractTool,
+        args: dict[str, Any],
+        kwargs: dict[str, Any],
     ) -> None:
         self.tool_calls_count += 1
         # Check if this is a delegation to a squad member
@@ -92,13 +99,14 @@ class SquadDelegationMiddleware(AgentMiddleware):
                 )
             )
 
-    def after_tool_call(
+    async def after_tool_call(
         self,
         *,
         run_id: str,
         tool: AbstractTool,
         args: dict[str, Any],
         result: Any,
+        kwargs: dict[str, Any],
     ) -> None:
         result_preview = (
             str(result)[:100] + '...' if len(str(result)) > 100 else str(result)
@@ -111,7 +119,9 @@ class SquadDelegationMiddleware(AgentMiddleware):
             )
         )
 
-    def on_answer(self, *, run_id: str, answer: str) -> None:
+    async def on_answer(
+        self, *, run_id: str, answer: str, kwargs: dict[str, Any]
+    ) -> None:
         print(
             TinyColorPrinter.custom(
                 'SQUAD ANSWER',
@@ -120,7 +130,9 @@ class SquadDelegationMiddleware(AgentMiddleware):
             )
         )
 
-    def on_error(self, *, run_id: str, e: Exception) -> None:
+    async def on_error(
+        self, *, run_id: str, e: Exception, kwargs: dict[str, Any]
+    ) -> None:
         print(TinyColorPrinter.error(f'[Run: {run_id[:8]}...] Squad Error: {e}'))
 
     def get_summary(self) -> dict[str, Any]:

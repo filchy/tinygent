@@ -237,7 +237,7 @@ uv run examples/agents/react/main.py
 from tinygent.agents.react_agent import TinyReActAgent
 
 # Custom middleware tracking ReAct cycles
-class ReActCycleMiddleware(AgentMiddleware):
+class ReActCycleMiddleware(TinyBaseMiddleware):
     def on_reasoning(self, *, run_id: str, reasoning: str) -> None:
         print(f"THOUGHT: {reasoning}")
 
@@ -327,7 +327,7 @@ uv run examples/agents/middleware/main.py
 
 ```python
 # Timing middleware
-class LLMCallTimingMiddleware(AgentMiddleware):
+class LLMCallTimingMiddleware(TinyBaseMiddleware):
     def before_llm_call(self, *, run_id: str, llm_input) -> None:
         self.call_start_times[run_id] = time.time()
 
@@ -336,7 +336,7 @@ class LLMCallTimingMiddleware(AgentMiddleware):
         print(f"LLM call took {duration:.2f}s")
 
 # Audit middleware
-class ToolCallAuditMiddleware(AgentMiddleware):
+class ToolCallAuditMiddleware(TinyBaseMiddleware):
     def after_tool_call(self, *, run_id: str, tool, args, result) -> None:
         audit_entry = {
             'timestamp': time.time(),

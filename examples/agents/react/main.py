@@ -3,11 +3,10 @@ from typing import Any
 
 from pydantic import Field
 
-from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import TinyBaseMiddleware
 from tinygent.agents.middleware.base import register_middleware
 from tinygent.agents.react_agent import ReActPromptTemplate
 from tinygent.agents.react_agent import TinyReActAgent
-from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.factory import build_llm
 from tinygent.core.types.base import TinyModel
 from tinygent.logging import setup_logger
@@ -20,7 +19,7 @@ logger = setup_logger('debug')
 
 
 @register_middleware('react_cycle')
-class ReActCycleMiddleware(AgentMiddleware):
+class ReActCycleMiddleware(TinyBaseMiddleware):
     """Middleware that tracks the Thought-Action-Observation cycle in ReAct agent."""
 
     def __init__(self) -> None:
@@ -28,7 +27,9 @@ class ReActCycleMiddleware(AgentMiddleware):
         self.current_cycle: dict[str, Any] = {}
         self.iteration = 0
 
-    def on_reasoning(self, *, run_id: str, reasoning: str) -> None:
+    def on_reasoning(
+        self, *, run_id: str, reasoning: str, kwargs: dict[str, Any]
+    ) -> None:
         self.iteration += 1
         self.current_cycle = {
             'iteration': self.iteration,
@@ -45,7 +46,12 @@ class ReActCycleMiddleware(AgentMiddleware):
         )
 
     def before_tool_call(
-        self, *, run_id: str, tool: AbstractTool, args: dict[str, Any]
+        self,
+        *,
+        run_id: str,
+        tool: Any,
+        args: dict[str, Any],
+        kwargs: dict[str, Any],
     ) -> None:
         self.current_cycle['action'] = {
             'tool': tool.info.name,
@@ -63,9 +69,10 @@ class ReActCycleMiddleware(AgentMiddleware):
         self,
         *,
         run_id: str,
-        tool: AbstractTool,
+        tool: Any,
         args: dict[str, Any],
         result: Any,
+        kwargs: dict[str, Any],
     ) -> None:
         self.current_cycle['observation'] = str(result)
         self.cycles.append(self.current_cycle)
@@ -79,7 +86,7 @@ class ReActCycleMiddleware(AgentMiddleware):
             )
         )
 
-    def on_answer(self, *, run_id: str, answer: str) -> None:
+    def on_answer(self, *, run_id: str, answer: str, kwargs: dict[str, Any]) -> None:
         print(
             TinyColorPrinter.custom(
                 'FINAL ANSWER',
@@ -88,7 +95,9 @@ class ReActCycleMiddleware(AgentMiddleware):
             )
         )
 
-    def on_answer_chunk(self, *, run_id: str, chunk: str, idx: str) -> None:
+    def on_answer_chunk(
+        self, *, run_id: str, chunk: str, idx: str, kwargs: dict[str, Any]
+    ) -> None:
         # For streaming responses
         print(
             TinyColorPrinter.custom(
@@ -98,7 +107,7 @@ class ReActCycleMiddleware(AgentMiddleware):
             )
         )
 
-    def on_error(self, *, run_id: str, e: Exception) -> None:
+    def on_error(self, *, run_id: str, e: Exception, kwargs: dict[str, Any]) -> None:
         print(TinyColorPrinter.error(f'[Iteration #{self.iteration}] Error: {e}'))
 
     def get_cycle_log(self) -> list[dict[str, Any]]:

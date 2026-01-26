@@ -21,19 +21,19 @@ Think of middleware as **event listeners** for agent operations.
 ## Basic Example
 
 ```python
-from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import TinyBaseMiddleware
 
-class LoggingMiddleware(AgentMiddleware):
-    def on_reasoning(self, *, run_id: str, reasoning: str) -> None:
+class LoggingMiddleware(TinyBaseMiddleware):
+    def on_reasoning(self, *, run_id: str, reasoning: str, **kwargs) -> None:
         print(f"Thought: {reasoning}")
 
-    def before_tool_call(self, *, run_id: str, tool, args) -> None:
+    def before_tool_call(self, *, run_id: str, tool, args, **kwargs) -> None:
         print(f"Calling: {tool.info.name}({args})")
 
-    def after_tool_call(self, *, run_id: str, tool, args, result) -> None:
+    def after_tool_call(self, *, run_id: str, tool, args, result, **kwargs) -> None:
         print(f"Result: {result}")
 
-    def on_answer(self, *, run_id: str, answer: str) -> None:
+    def on_answer(self, *, run_id: str, answer: str, **kwargs) -> None:
         print(f"Final Answer: {answer}")
 
 # Use it
@@ -66,16 +66,16 @@ Final Answer: The weather in Prague is sunny with a high of 75°F.
 ### Agent Lifecycle
 
 ```python
-class AgentMiddleware:
-    def on_start(self, *, run_id: str, task: str) -> None:
+class TinyBaseMiddleware:
+    def on_start(self, *, run_id: str, task: str, **kwargs) -> None:
         """Called when agent starts processing a task."""
         pass
 
-    def on_end(self, *, run_id: str) -> None:
+    def on_end(self, *, run_id: str, **kwargs) -> None:
         """Called when agent finishes processing."""
         pass
 
-    def on_error(self, *, run_id: str, e: Exception) -> None:
+    def on_error(self, *, run_id: str, e: Exception, **kwargs) -> None:
         """Called when an error occurs."""
         pass
 ```
@@ -83,12 +83,12 @@ class AgentMiddleware:
 ### LLM Calls
 
 ```python
-class AgentMiddleware:
-    def before_llm_call(self, *, run_id: str, llm_input) -> None:
+class TinyBaseMiddleware:
+    def before_llm_call(self, *, run_id: str, llm_input, **kwargs) -> None:
         """Called before making an LLM API call."""
         pass
 
-    def after_llm_call(self, *, run_id: str, llm_input, result) -> None:
+    def after_llm_call(self, *, run_id: str, llm_input, result, **kwargs) -> None:
         """Called after LLM API call completes."""
         pass
 ```
@@ -96,12 +96,12 @@ class AgentMiddleware:
 ### Tool Calls
 
 ```python
-class AgentMiddleware:
-    def before_tool_call(self, *, run_id: str, tool, args: dict) -> None:
+class TinyBaseMiddleware:
+    def before_tool_call(self, *, run_id: str, tool, args: dict, **kwargs) -> None:
         """Called before executing a tool."""
         pass
 
-    def after_tool_call(self, *, run_id: str, tool, args: dict, result) -> None:
+    def after_tool_call(self, *, run_id: str, tool, args: dict, result, **kwargs) -> None:
         """Called after tool execution completes."""
         pass
 ```
@@ -109,16 +109,16 @@ class AgentMiddleware:
 ### Reasoning and Answers
 
 ```python
-class AgentMiddleware:
-    def on_reasoning(self, *, run_id: str, reasoning: str) -> None:
+class TinyBaseMiddleware:
+    def on_reasoning(self, *, run_id: str, reasoning: str, **kwargs) -> None:
         """Called when agent produces a thought/reasoning step."""
         pass
 
-    def on_answer(self, *, run_id: str, answer: str) -> None:
+    def on_answer(self, *, run_id: str, answer: str, **kwargs) -> None:
         """Called when agent produces final answer."""
         pass
 
-    def on_answer_chunk(self, *, run_id: str, chunk: str, idx: str) -> None:
+    def on_answer_chunk(self, *, run_id: str, chunk: str, idx: str, **kwargs) -> None:
         """Called for each streaming chunk of the answer."""
         pass
 ```
@@ -131,15 +131,15 @@ Track the Thought-Action-Observation cycle:
 
 ```python
 from typing import Any
-from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import TinyBaseMiddleware
 
-class ReActCycleMiddleware(AgentMiddleware):
+class ReActCycleMiddleware(TinyBaseMiddleware):
     def __init__(self) -> None:
         self.cycles: list[dict[str, Any]] = []
         self.current_cycle: dict[str, Any] = {}
         self.iteration = 0
 
-    def on_reasoning(self, *, run_id: str, reasoning: str) -> None:
+    def on_reasoning(self, *, run_id: str, reasoning: str, **kwargs) -> None:
         self.iteration += 1
         self.current_cycle = {
             'iteration': self.iteration,
@@ -147,19 +147,19 @@ class ReActCycleMiddleware(AgentMiddleware):
         }
         print(f"[Iteration {self.iteration}] {reasoning}")
 
-    def before_tool_call(self, *, run_id: str, tool, args) -> None:
+    def before_tool_call(self, *, run_id: str, tool, args, **kwargs) -> None:
         self.current_cycle['action'] = {
             'tool': tool.info.name,
             'args': args,
         }
         print(f"[Iteration {self.iteration}] {tool.info.name}({args})")
 
-    def after_tool_call(self, *, run_id: str, tool, args, result) -> None:
+    def after_tool_call(self, *, run_id: str, tool, args, result, **kwargs) -> None:
         self.current_cycle['observation'] = str(result)
         self.cycles.append(self.current_cycle.copy())
         print(f"[Iteration {self.iteration}] {result}")
 
-    def on_answer(self, *, run_id: str, answer: str) -> None:
+    def on_answer(self, *, run_id: str, answer: str, **kwargs) -> None:
         print(f"Final Answer after {self.iteration} iterations")
 
     def get_summary(self) -> dict[str, Any]:
@@ -207,15 +207,15 @@ Track LLM call timing:
 ```python
 import time
 
-class TimingMiddleware(AgentMiddleware):
+class TimingMiddleware(TinyBaseMiddleware):
     def __init__(self) -> None:
         self.call_start_times: dict[str, float] = {}
         self.call_durations: list[float] = []
 
-    def before_llm_call(self, *, run_id: str, llm_input) -> None:
+    def before_llm_call(self, *, run_id: str, llm_input, **kwargs) -> None:
         self.call_start_times[run_id] = time.time()
 
-    def after_llm_call(self, *, run_id: str, llm_input, result) -> None:
+    def after_llm_call(self, *, run_id: str, llm_input, result, **kwargs) -> None:
         start = self.call_start_times.pop(run_id, None)
         if start:
             duration = time.time() - start
@@ -243,11 +243,11 @@ Log all tool calls for compliance:
 import json
 from datetime import datetime
 
-class ToolAuditMiddleware(AgentMiddleware):
+class ToolAuditMiddleware(TinyBaseMiddleware):
     def __init__(self, log_file: str = 'tool_audit.jsonl'):
         self.log_file = log_file
 
-    def after_tool_call(self, *, run_id: str, tool, args, result) -> None:
+    def after_tool_call(self, *, run_id: str, tool, args, result, **kwargs) -> None:
         audit_entry = {
             'timestamp': datetime.now().isoformat(),
             'run_id': run_id,
@@ -266,7 +266,7 @@ class ToolAuditMiddleware(AgentMiddleware):
 Track API costs:
 
 ```python
-class CostTrackingMiddleware(AgentMiddleware):
+class CostTrackingMiddleware(TinyBaseMiddleware):
     def __init__(self):
         self.total_cost = 0.0
         self.costs_by_model = {}
@@ -277,7 +277,7 @@ class CostTrackingMiddleware(AgentMiddleware):
             'gpt-4o': {'input': 2.50, 'output': 10.00},
         }
 
-    def after_llm_call(self, *, run_id: str, llm_input, result) -> None:
+    def after_llm_call(self, *, run_id: str, llm_input, result, **kwargs) -> None:
         model = result.model  # e.g., 'gpt-4o-mini'
         input_tokens = result.usage.prompt_tokens
         output_tokens = result.usage.completion_tokens
@@ -303,11 +303,11 @@ class CostTrackingMiddleware(AgentMiddleware):
 Gracefully handle errors:
 
 ```python
-class ErrorHandlingMiddleware(AgentMiddleware):
+class ErrorHandlingMiddleware(TinyBaseMiddleware):
     def __init__(self):
         self.errors: list[dict] = []
 
-    def on_error(self, *, run_id: str, e: Exception) -> None:
+    def on_error(self, *, run_id: str, e: Exception, **kwargs) -> None:
         error_info = {
             'run_id': run_id,
             'error_type': type(e).__name__,
@@ -330,12 +330,12 @@ class ErrorHandlingMiddleware(AgentMiddleware):
 Pretty-print streaming output:
 
 ```python
-class StreamingDisplayMiddleware(AgentMiddleware):
-    def on_answer_chunk(self, *, run_id: str, chunk: str, idx: str) -> None:
+class StreamingDisplayMiddleware(TinyBaseMiddleware):
+    def on_answer_chunk(self, *, run_id: str, chunk: str, idx: str, **kwargs) -> None:
         # Print chunks as they arrive
         print(chunk, end='', flush=True)
 
-    def on_answer(self, *, run_id: str, answer: str) -> None:
+    def on_answer(self, *, run_id: str, answer: str, **kwargs) -> None:
         # Print newline after complete answer
         print("\n")
 ```
@@ -361,10 +361,10 @@ agent = build_agent(
 Make middleware reusable:
 
 ```python
-from tinygent.agents.middleware.base import register_middleware
+from tinygent.agents.middleware.base import TinyBaseMiddleware
 
 @register_middleware('logging')
-class LoggingMiddleware(AgentMiddleware):
+class LoggingMiddleware(TinyBaseMiddleware):
     # ... implementation ...
 
 # Later, build from registry
@@ -408,7 +408,7 @@ print(f"Errors: {len(error_handler.errors)}")
 Middleware can maintain state across calls:
 
 ```python
-class ConversationMetricsMiddleware(AgentMiddleware):
+class ConversationMetricsMiddleware(TinyBaseMiddleware):
     def __init__(self):
         self.metrics = {
             'total_turns': 0,
@@ -418,17 +418,17 @@ class ConversationMetricsMiddleware(AgentMiddleware):
         }
         self.start_times = {}
 
-    def on_start(self, *, run_id: str, task: str) -> None:
+    def on_start(self, *, run_id: str, task: str, **kwargs) -> None:
         self.start_times[run_id] = time.time()
         self.metrics['total_turns'] += 1
 
-    def after_tool_call(self, *, run_id: str, tool, args, result) -> None:
+    def after_tool_call(self, *, run_id: str, tool, args, result, **kwargs) -> None:
         self.metrics['total_tool_calls'] += 1
 
-    def after_llm_call(self, *, run_id: str, llm_input, result) -> None:
+    def after_llm_call(self, *, run_id: str, llm_input, result, **kwargs) -> None:
         self.metrics['total_tokens'] += result.usage.total_tokens
 
-    def on_end(self, *, run_id: str) -> None:
+    def on_end(self, *, run_id: str, **kwargs) -> None:
         start = self.start_times.pop(run_id, None)
         if start:
             duration = time.time() - start
@@ -449,28 +449,28 @@ class ConversationMetricsMiddleware(AgentMiddleware):
 
 ```python
 # Bad - Does too much
-class GodMiddleware(AgentMiddleware):
-    def on_reasoning(self, ...):
+class GodMiddleware(TinyBaseMiddleware):
+    def on_reasoning(self, *, run_id, reasoning, **kwargs):
         self.log()
         self.track_cost()
         self.send_analytics()
         self.update_ui()
 
 # Good - Single responsibility
-class LoggingMiddleware(AgentMiddleware):
-    def on_reasoning(self, ...):
+class LoggingMiddleware(TinyBaseMiddleware):
+    def on_reasoning(self, *, run_id, reasoning, **kwargs):
         self.log()
 
-class CostMiddleware(AgentMiddleware):
-    def on_reasoning(self, ...):
+class CostMiddleware(TinyBaseMiddleware):
+    def on_reasoning(self, *, run_id, reasoning, **kwargs):
         self.track_cost()
 ```
 
 ### 2. Handle Errors Gracefully
 
 ```python
-class SafeMiddleware(AgentMiddleware):
-    def after_tool_call(self, *, run_id: str, tool, args, result) -> None:
+class SafeMiddleware(TinyBaseMiddleware):
+    def after_tool_call(self, *, run_id: str, tool, args, result, **kwargs) -> None:
         try:
             # Your logic
             self.process(result)
@@ -483,13 +483,13 @@ class SafeMiddleware(AgentMiddleware):
 
 ```python
 # Bad - Blocks agent execution
-class SlowMiddleware(AgentMiddleware):
-    def before_llm_call(self, ...):
+class SlowMiddleware(TinyBaseMiddleware):
+    def before_llm_call(self, *, run_id, llm_input, **kwargs):
         time.sleep(5)  # Blocks!
 
 # Good - Async for I/O
-class AsyncMiddleware(AgentMiddleware):
-    async def before_llm_call(self, ...):
+class AsyncMiddleware(TinyBaseMiddleware):
+    async def before_llm_call(self, *, run_id, llm_input, **kwargs):
         await async_operation()
 ```
 
@@ -567,7 +567,7 @@ Note: Squad agent delegates most hooks to its sub-agents. Hook activation depend
 
 Tinygent provides ready-to-use middleware for common use cases.
 
-### ToolCallLimiterMiddleware
+### TinyToolCallLimiterMiddleware
 
 Limits the number of tool calls per agent run. Can operate in two modes:
 - **Global limiter**: Limits all tool calls when `tool_name=None`
@@ -586,12 +586,12 @@ When the limit is reached, the behavior depends on `hard_block`:
 **Basic Usage:**
 
 ```python
-from tinygent.agents.middleware import ToolCallLimiterMiddleware
+from tinygent.agents.middleware import TinyToolCallLimiterMiddleware
 from tinygent.agents import TinyMultiStepAgent
 from tinygent.core.factory import build_llm
 
 # Limit all tools to 5 calls
-limiter = ToolCallLimiterMiddleware(max_tool_calls=5)
+limiter = TinyToolCallLimiterMiddleware(max_tool_calls=5)
 
 agent = TinyMultiStepAgent(
     llm=build_llm('openai:gpt-4o-mini'),
@@ -604,7 +604,7 @@ agent = TinyMultiStepAgent(
 
 ```python
 # Only limit expensive API calls
-api_limiter = ToolCallLimiterMiddleware(
+api_limiter = TinyToolCallLimiterMiddleware(
     tool_name='web_search',
     max_tool_calls=3
 )
@@ -614,13 +614,13 @@ api_limiter = ToolCallLimiterMiddleware(
 
 ```python
 # Hard block: returns error result when limit reached (default)
-hard_limiter = ToolCallLimiterMiddleware(
+hard_limiter = TinyToolCallLimiterMiddleware(
     max_tool_calls=5,
     hard_block=True
 )
 
 # Soft limit: adds system message asking LLM to stop but allows execution
-soft_limiter = ToolCallLimiterMiddleware(
+soft_limiter = TinyToolCallLimiterMiddleware(
     max_tool_calls=5,
     hard_block=False
 )
@@ -630,8 +630,8 @@ soft_limiter = ToolCallLimiterMiddleware(
 
 ```python
 middleware = [
-    ToolCallLimiterMiddleware(tool_name='web_search', max_tool_calls=3),
-    ToolCallLimiterMiddleware(tool_name='database_query', max_tool_calls=10),
+    TinyToolCallLimiterMiddleware(tool_name='web_search', max_tool_calls=3),
+    TinyToolCallLimiterMiddleware(tool_name='database_query', max_tool_calls=10),
 ]
 ```
 

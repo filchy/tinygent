@@ -3,7 +3,7 @@ from typing import Any
 
 from tinygent.agents.map_agent import MapPromptTemplate
 from tinygent.agents.map_agent import TinyMAPAgent
-from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import TinyBaseMiddleware
 from tinygent.agents.middleware.base import register_middleware
 from tinygent.core.factory import build_llm
 from tinygent.core.types.io.llm_io_input import TinyLLMInput
@@ -16,14 +16,14 @@ logger = setup_logger('debug')
 
 
 @register_middleware('plan_progress')
-class PlanProgressMiddleware(AgentMiddleware):
+class PlanProgressMiddleware(TinyBaseMiddleware):
     """Middleware that tracks planning progress in MAP agent."""
 
     def __init__(self) -> None:
         self.plans: list[str] = []
         self.llm_calls = 0
 
-    def on_plan(self, *, run_id: str, plan: str) -> None:
+    async def on_plan(self, *, run_id: str, plan: str, kwargs: dict[str, Any]) -> None:
         self.plans.append(plan)
         print(
             TinyColorPrinter.custom(
@@ -33,7 +33,9 @@ class PlanProgressMiddleware(AgentMiddleware):
             )
         )
 
-    def before_llm_call(self, *, run_id: str, llm_input: TinyLLMInput) -> None:
+    async def before_llm_call(
+        self, *, run_id: str, llm_input: TinyLLMInput, kwargs: dict[str, Any]
+    ) -> None:
         self.llm_calls += 1
         print(
             TinyColorPrinter.custom(
@@ -43,7 +45,9 @@ class PlanProgressMiddleware(AgentMiddleware):
             )
         )
 
-    def on_answer(self, *, run_id: str, answer: str) -> None:
+    async def on_answer(
+        self, *, run_id: str, answer: str, kwargs: dict[str, Any]
+    ) -> None:
         print(
             TinyColorPrinter.custom(
                 'MAP ANSWER',
@@ -52,7 +56,9 @@ class PlanProgressMiddleware(AgentMiddleware):
             )
         )
 
-    def on_error(self, *, run_id: str, e: Exception) -> None:
+    async def on_error(
+        self, *, run_id: str, e: Exception, kwargs: dict[str, Any]
+    ) -> None:
         print(TinyColorPrinter.error(f'[Run: {run_id[:8]}...] MAP Error: {e}'))
 
     def get_summary(self) -> dict[str, Any]:

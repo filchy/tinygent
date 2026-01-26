@@ -18,10 +18,5 @@ def _register_agents() -> None:
     registry.register_agent('squad', TinySquadAgentConfig, TinySquadAgent)
     registry.register_agent('map', TinyMAPAgentConfig, TinyMAPAgent)
 
-    # register middlewares
-    from tinygent.agents.middleware.register import _register_middleware
-
-    _register_middleware()
-
 
 _register_agents()

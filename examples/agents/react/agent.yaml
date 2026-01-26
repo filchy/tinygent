@@ -19,4 +19,5 @@ tools:
     prompt: 'Explain why are you using this tool and what information you expect to get from it.'
 
 middleware:
+  - tool_limiter
   - react_cycle
