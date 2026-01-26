@@ -18,7 +18,7 @@ agent = build_agent(
     llm: str | BaseLLM,
     tools: list[AbstractTool] = [],
     memory: BaseMemory | None = None,
-    middleware: list[AgentMiddleware] = [],
+    middleware: list[TinyBaseMiddleware] = [],
     max_iterations: int = 5,
     **kwargs
 ) -> BaseAgent
@@ -149,7 +149,7 @@ agent = TinyReActAgent(
     llm: BaseLLM,
     tools: list[AbstractTool],
     memory: BaseMemory | None = None,
-    middleware: list[AgentMiddleware] = [],
+    middleware: list[TinyBaseMiddleware] = [],
     max_iterations: int = 5,
     prompt_template: ReActPromptTemplate | None = None,
 )
@@ -172,7 +172,7 @@ agent = TinyMultiStepAgent(
     llm: BaseLLM,
     tools: list[AbstractTool],
     memory: BaseMemory | None = None,
-    middleware: list[AgentMiddleware] = [],
+    middleware: list[TinyBaseMiddleware] = [],
     max_iterations: int = 10,
     prompt_template: MultiStepPromptTemplate | None = None,
 )
@@ -189,7 +189,7 @@ squad = TinySquadAgent(
     llm: BaseLLM,
     agents: list[BaseAgent],
     memory: BaseMemory | None = None,
-    middleware: list[AgentMiddleware] = [],
+    middleware: list[TinyBaseMiddleware] = [],
     max_iterations: int = 5,
 )
 ```
@@ -205,7 +205,7 @@ agent = TinyMAPAgent(
     llm: BaseLLM,
     tools: list[AbstractTool],
     memory: BaseMemory | None = None,
-    middleware: list[AgentMiddleware] = [],
+    middleware: list[TinyBaseMiddleware] = [],
     max_iterations: int = 15,
 )
 ```
@@ -347,9 +347,9 @@ memory = CombinedMemory(
 ### Base Middleware
 
 ```python
-from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import TinyBaseMiddleware
 
-class CustomMiddleware(AgentMiddleware):
+class CustomMiddleware(TinyBaseMiddleware):
     def on_start(self, *, run_id: str, task: str) -> None:
         pass
 
@@ -386,10 +386,10 @@ class CustomMiddleware(AgentMiddleware):
 ### Register Middleware
 
 ```python
-from tinygent.agents.middleware.base import register_middleware
+from tinygent.agents.middleware.base import TinyBaseMiddleware
 
 @register_middleware('my_middleware')
-class MyMiddleware(AgentMiddleware):
+class MyMiddleware(TinyBaseMiddleware):
     # ...
 ```
 

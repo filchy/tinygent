@@ -58,14 +58,33 @@ async def run_sync_in_executor(
 def run_async_in_executor(
     func: Callable[P, Coroutine[Any, Any, T]], *args: P.args, **kwargs: P.kwargs
 ) -> T:
+    """Run an async function in a blocking manner.
+
+    If called from a sync context (no running loop), creates and runs a new loop.
+    If called from an async context (existing loop), schedules on a background thread.
+    """
     coro = func(*args, **kwargs)
     try:
         asyncio.get_running_loop()
     except RuntimeError:
-        # no running loop → we can block here
-        return asyncio.run(coro)
+        # no running loop -> create one and wait for all tasks to complete
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(coro)
+            pending = asyncio.all_tasks(loop)
+            if pending:
+                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            return result
+        finally:
+            try:
+                loop.run_until_complete(loop.shutdown_asyncgens())
+                loop.run_until_complete(loop.shutdown_default_executor())
+            finally:
+                asyncio.set_event_loop(None)
+                loop.close()
     else:
-        # already inside a loop → schedule onto background loop
+        # already inside a loop -> schedule onto background loop
         loop = _ensure_background_loop()
         future: Future = asyncio.run_coroutine_threadsafe(coro, loop)
         return future.result()

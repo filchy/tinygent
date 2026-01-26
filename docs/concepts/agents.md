@@ -310,9 +310,9 @@ See [Memory](memory.md) for more details.
 Customize agent behavior with middleware hooks:
 
 ```python
-from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import TinyBaseMiddleware
 
-class LoggingMiddleware(AgentMiddleware):
+class LoggingMiddleware(TinyBaseMiddleware):
     def on_reasoning(self, *, run_id: str, reasoning: str) -> None:
         print(f"[THOUGHT] {reasoning}")
 

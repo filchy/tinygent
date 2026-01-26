@@ -2,7 +2,7 @@ import logging
 
 from pydantic import Field
 
-from tinygent.agents.middleware.tool_limiter import ToolCallLimiterMiddleware
+from tinygent.agents.middleware.tool_limiter import TinyToolCallLimiterMiddleware
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
 from tinygent.core.factory import build_llm
 from tinygent.core.prompts.agents.template.multi_agent import ActionPromptTemplate
@@ -102,7 +102,7 @@ def example_1_global_limit() -> None:
     print('Task requires 4 tool calls, agent will finish with available info')
     print('=' * 70 + '\n')
 
-    limiter = ToolCallLimiterMiddleware(max_tool_calls=3)
+    limiter = TinyToolCallLimiterMiddleware(max_tool_calls=3)
 
     agent = TinyMultiStepAgent(
         llm=build_llm('openai:gpt-4o-mini'),
@@ -113,9 +113,7 @@ def example_1_global_limit() -> None:
         memory=BufferChatMemory(),
     )
 
-    result = agent.run(
-        'Greet Alice, add 5 and 7, multiply 3 and 4, then greet Bob'
-    )
+    result = agent.run('Greet Alice, add 5 and 7, multiply 3 and 4, then greet Bob')
 
     print('\n' + '=' * 70)
     print('Result:', result)
@@ -136,10 +134,7 @@ def example_2_specific_tool_limit() -> None:
     print('Other tools can be called unlimited times')
     print('=' * 70 + '\n')
 
-    greet_limiter = ToolCallLimiterMiddleware(
-        tool_name='greet',
-        max_tool_calls=1
-    )
+    greet_limiter = TinyToolCallLimiterMiddleware(tool_name='greet', max_tool_calls=1)
 
     agent = TinyMultiStepAgent(
         llm=build_llm('openai:gpt-4o-mini'),
@@ -173,9 +168,9 @@ def example_3_multiple_limiters() -> None:
     print('=' * 70 + '\n')
 
     middleware = [
-        ToolCallLimiterMiddleware(tool_name='greet', max_tool_calls=1),
-        ToolCallLimiterMiddleware(tool_name='add_numbers', max_tool_calls=2),
-        ToolCallLimiterMiddleware(tool_name='multiply_numbers', max_tool_calls=2),
+        TinyToolCallLimiterMiddleware(tool_name='greet', max_tool_calls=1),
+        TinyToolCallLimiterMiddleware(tool_name='add_numbers', max_tool_calls=2),
+        TinyToolCallLimiterMiddleware(tool_name='multiply_numbers', max_tool_calls=2),
     ]
 
     agent = TinyMultiStepAgent(
@@ -187,9 +182,7 @@ def example_3_multiple_limiters() -> None:
         memory=BufferChatMemory(),
     )
 
-    result = agent.run(
-        'Greet Alice and Bob. Calculate: 5+7, 10+20, 3*4, 6*8'
-    )
+    result = agent.run('Greet Alice and Bob. Calculate: 5+7, 10+20, 3*4, 6*8')
 
     print('\n' + '=' * 70)
     print('Result:', result)

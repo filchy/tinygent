@@ -8,7 +8,7 @@ from tiny_brave import NewsSearchApiResponse
 from tiny_brave import NewsSearchRequest
 from tiny_brave import brave_news_search
 import tiny_chat as tc
-from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import TinyBaseMiddleware
 from tinygent.agents.react_agent import ReActPromptTemplate
 from tinygent.agents.react_agent import TinyReActAgent
 from tinygent.cli.utils import discover_and_register_components
@@ -36,7 +36,7 @@ async def brave_news(data: BraveNewsConfig):
     return result
 
 
-class ChatClientMiddleware(AgentMiddleware):
+class ChatClientMiddleware(TinyBaseMiddleware):
     async def on_answer(self, *, run_id: str, answer: str) -> None:
         await tc.AgentMessage(
             id=run_id,

@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import logging
 from typing import Any
+from typing import Literal
 
-from tinygent.agents.middleware.base import AgentMiddleware
-from tinygent.agents.middleware.base import register_middleware
+from pydantic import Field
+
+from tinygent.agents.middleware.base import TinyBaseMiddleware
+from tinygent.agents.middleware.base import TinyBaseMiddlewareConfig
 from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.types.io.llm_io_input import TinyLLMInput
 
@@ -15,8 +20,28 @@ class ToolCallBlockedException(Exception):
     pass
 
 
-@register_middleware('tool_limiter')
-class ToolCallLimiterMiddleware(AgentMiddleware):
+class TinyToolCallLimiterMiddlewareConfig(
+    TinyBaseMiddlewareConfig['TinyToolCallLimiterMiddleware']
+):
+    """Configuration for ToolCallLimiter Middleware."""
+
+    type: Literal['tool_limiter'] = Field(default='tool_limiter', frozen=True)
+
+    tool_name: str | None = Field(default=None)
+
+    max_tool_calls: int = Field(default=10)
+
+    hard_block: bool = Field(default=True)
+
+    def build(self) -> TinyToolCallLimiterMiddleware:
+        return TinyToolCallLimiterMiddleware(
+            tool_name=self.tool_name,
+            max_tool_calls=self.max_tool_calls,
+            hard_block=self.hard_block,
+        )
+
+
+class TinyToolCallLimiterMiddleware(TinyBaseMiddleware):
     """Middleware that limits tool calls per run.
 
     Can operate in two modes:
@@ -51,8 +76,13 @@ class ToolCallLimiterMiddleware(AgentMiddleware):
             return True
         return self.tool_name == tool.info.name
 
-    def before_tool_call(
-        self, *, run_id: str, tool: AbstractTool, args: dict[str, Any]
+    async def before_tool_call(
+        self,
+        *,
+        run_id: str,
+        tool: AbstractTool,
+        args: dict[str, Any],
+        kwargs: dict[str, Any],
     ) -> None:
         if not self._check_target_tool(tool):
             return
@@ -90,7 +120,9 @@ class ToolCallLimiterMiddleware(AgentMiddleware):
                 f'{tool.info.name}'
             )
 
-    def before_llm_call(self, *, run_id: str, llm_input: TinyLLMInput) -> None:
+    async def before_llm_call(
+        self, *, run_id: str, llm_input: TinyLLMInput, kwargs: dict[str, Any]
+    ) -> None:
         if not self.hard_block:
             current_count = self.tool_call_counts.get(run_id, 0)
 
@@ -109,7 +141,9 @@ class ToolCallLimiterMiddleware(AgentMiddleware):
                 )
                 llm_input.add_at_end(limit_message)
 
-    def on_answer(self, *, run_id: str, answer: str) -> None:
+    async def on_answer(
+        self, *, run_id: str, answer: str, kwargs: dict[str, Any]
+    ) -> None:
         if run_id in self.tool_call_counts:
             total = self.tool_call_counts[run_id]
             logger.debug(f'Run completed with {total} tool calls')
@@ -118,7 +152,9 @@ class ToolCallLimiterMiddleware(AgentMiddleware):
         if run_id in self.limit_reached:
             del self.limit_reached[run_id]
 
-    def on_error(self, *, run_id: str, e: Exception) -> None:
+    async def on_error(
+        self, *, run_id: str, e: Exception, kwargs: dict[str, Any]
+    ) -> None:
         if run_id in self.tool_call_counts:
             del self.tool_call_counts[run_id]
 

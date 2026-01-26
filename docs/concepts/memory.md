@@ -502,9 +502,9 @@ memory = WindowBufferMemory(window_size=4)
 Track memory changes with middleware:
 
 ```python
-from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import TinyBaseMiddleware
 
-class MemoryMonitorMiddleware(AgentMiddleware):
+class MemoryMonitorMiddleware(TinyBaseMiddleware):
     def on_answer(self, *, run_id: str, answer: str) -> None:
         # Check memory size after each answer
         size = len(str(agent.memory.load_variables()))

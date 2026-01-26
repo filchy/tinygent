@@ -14,7 +14,6 @@ from pydantic import model_validator
 
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
-from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.core.datamodels.agent import AbstractAgent
 from tinygent.core.datamodels.agent import AbstractAgentConfig
 from tinygent.core.datamodels.llm import AbstractLLM
@@ -23,12 +22,9 @@ from tinygent.core.datamodels.messages import AllTinyMessages
 from tinygent.core.datamodels.messages import TinyHumanMessage
 from tinygent.core.datamodels.messages import TinySquadMemberMessage
 from tinygent.core.datamodels.messages import TinySystemMessage
+from tinygent.core.datamodels.middleware import AbstractMiddleware
 from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.factory.agent import build_agent
-from tinygent.core.factory.llm import build_llm
-from tinygent.core.factory.memory import build_memory
-from tinygent.core.factory.middleware import build_middleware
-from tinygent.core.factory.tool import build_tool
 from tinygent.core.prompts.agents.factory.squad_agent import get_prompt_template
 from tinygent.core.prompts.agents.template.squad_agent import SquadPromptTemplate
 from tinygent.core.runtime.executors import run_async_in_executor
@@ -92,18 +88,11 @@ class TinySquadAgentConfig(TinyBaseAgentConfig['TinySquadAgent']):
 
     def build(self) -> TinySquadAgent:
         return TinySquadAgent(
-            middleware=[build_middleware(m) for m in self.middleware],
+            middleware=self.build_middleware_list(),
             prompt_template=self.prompt_template,
-            llm=self.llm if isinstance(self.llm, AbstractLLM) else build_llm(self.llm),
-            tools=[
-                tool if isinstance(tool, AbstractTool) else build_tool(tool)
-                for tool in self.tools
-            ],
-            memory=(
-                self.memory
-                if isinstance(self.memory, AbstractMemory)
-                else build_memory(self.memory)
-            ),
+            llm=self.build_llm_instance(),
+            tools=self.build_tools_list(),
+            memory=self.build_memory_instance(),
             squad=[AgentSquadMember.from_config(agent_cfg) for agent_cfg in self.squad],
         )
 
@@ -134,7 +123,7 @@ class TinySquadAgent(TinyBaseAgent):
         prompt_template: SquadPromptTemplate = _DEFAULT_PROMPT,
         tools: list[AbstractTool] = [],
         squad: list[AgentSquadMember] = [],
-        middleware: Sequence[AgentMiddleware] = [],
+        middleware: Sequence[AbstractMiddleware] = [],
     ) -> None:
         super().__init__(llm=llm, tools=tools, memory=memory, middleware=middleware)
 
@@ -144,7 +133,7 @@ class TinySquadAgent(TinyBaseAgent):
 
     @staticmethod
     def _normalize_squad_member(member: AgentSquadMember) -> AgentSquadMember:
-        def _empty(*_args, **_kwargs) -> None:
+        async def _empty(*_args, **_kwargs) -> None:
             return None
 
         for m in member.agent.middleware:
@@ -272,7 +261,7 @@ class TinySquadAgent(TinyBaseAgent):
                 )
                 self.memory.save_context(TinyHumanMessage(content=final_answer))
         except Exception as e:
-            await self.on_error(run_id=run_id, e=e)
+            await self.on_error(run_id=run_id, e=e, kwargs={})
             raise e
 
     def reset(self) -> None:
@@ -309,7 +298,7 @@ class TinySquadAgent(TinyBaseAgent):
             async for output in self._run_agent(run_id=run_id, input_text=input_text):
                 final_answer += output
 
-            await self.on_answer(run_id=run_id, answer=final_answer)
+            await self.on_answer(run_id=run_id, answer=final_answer, kwargs={})
             return final_answer
 
         return run_async_in_executor(_run)
@@ -330,7 +319,9 @@ class TinySquadAgent(TinyBaseAgent):
         async def _generator():
             idx = 0
             async for res in self._run_agent(run_id=run_id, input_text=input_text):
-                await self.on_answer_chunk(run_id=run_id, chunk=res, idx=str(idx))
+                await self.on_answer_chunk(
+                    run_id=run_id, chunk=res, idx=str(idx), kwargs={}
+                )
                 idx += 1
                 yield res
 

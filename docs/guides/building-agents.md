@@ -94,9 +94,9 @@ agent = build_agent(
 ### Step 3: Add Middleware for Logging
 
 ```python
-from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import TinyBaseMiddleware
 
-class TravelAgentMiddleware(AgentMiddleware):
+class TravelAgentMiddleware(TinyBaseMiddleware):
     def on_reasoning(self, *, run_id: str, reasoning: str) -> None:
         print(f"Planning: {reasoning}")
 
@@ -302,7 +302,7 @@ from tinygent.logging import setup_logger
 
 logger = setup_logger('debug')
 
-class LoggingMiddleware(AgentMiddleware):
+class LoggingMiddleware(TinyBaseMiddleware):
     def on_reasoning(self, *, run_id: str, reasoning: str) -> None:
         logger.info(f'[{run_id}] Reasoning: {reasoning}')
 ```

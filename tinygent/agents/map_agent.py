@@ -11,17 +11,14 @@ from pydantic import Field
 
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
-from tinygent.agents.middleware.base import AgentMiddleware
 from tinygent.core.datamodels.llm import AbstractLLM
 from tinygent.core.datamodels.memory import AbstractMemory
 from tinygent.core.datamodels.messages import AllTinyMessages
 from tinygent.core.datamodels.messages import TinyChatMessage
 from tinygent.core.datamodels.messages import TinyHumanMessage
 from tinygent.core.datamodels.messages import TinySystemMessage
+from tinygent.core.datamodels.middleware import AbstractMiddleware
 from tinygent.core.datamodels.tool import AbstractTool
-from tinygent.core.factory.llm import build_llm
-from tinygent.core.factory.memory import build_memory
-from tinygent.core.factory.tool import build_tool
 from tinygent.core.prompts.agents.factory.map_agent import get_prompt_template
 from tinygent.core.prompts.agents.template.map_agent import MapPromptTemplate
 from tinygent.core.runtime.executors import run_async_in_executor
@@ -120,17 +117,10 @@ class TinyMAPAgentConfig(TinyBaseAgentConfig['TinyMAPAgent']):
     def build(self) -> TinyMAPAgent:
         return TinyMAPAgent(
             prompt_template=self.prompt_template,
-            middleware=self.middleware,
-            llm=self.llm if isinstance(self.llm, AbstractLLM) else build_llm(self.llm),
-            tools=[
-                tool if isinstance(tool, AbstractTool) else build_tool(tool)
-                for tool in self.tools
-            ],
-            memory=(
-                self.memory
-                if isinstance(self.memory, AbstractMemory)
-                else build_memory(self.memory)
-            ),
+            middleware=self.build_middleware_list(),
+            llm=self.build_llm_instance(),
+            tools=self.build_tools_list(),
+            memory=self.build_memory_instance(),
             max_plan_length=self.max_plan_length,
             max_branches_per_layer=self.max_branches_per_layer,
             max_layer_depth=self.max_layer_depth,
@@ -161,7 +151,7 @@ class TinyMAPAgent(TinyBaseAgent):
         prompt_template: MapPromptTemplate = _DEFAULT_PROMPT,
         max_recurrsion: int = 5,
         tools: list[AbstractTool] = [],
-        middleware: Sequence[AgentMiddleware] = [],
+        middleware: Sequence[AbstractMiddleware] = [],
     ) -> None:
         super().__init__(llm=llm, tools=tools, memory=memory, middleware=middleware)
 
@@ -674,7 +664,7 @@ class TinyMAPAgent(TinyBaseAgent):
                 current_state = search_res.next_state
                 validity = await self._orchestrator(run_id, current_state, subgoal)
 
-                await self.on_plan(run_id=run_id, plan=search_res.action.sum)
+                await self.on_plan(run_id=run_id, plan=search_res.action.sum, kwargs={})
 
         set_tiny_attributes(
             {'agent.map.final_plan': '\n'.join([p.sum for p in final_plan])}
@@ -703,7 +693,7 @@ class TinyMAPAgent(TinyBaseAgent):
             return '\n\n'.join([p.sum for p in final_plan])
         except Exception as e:
             logger.warning('Error during MAP: %s', e)
-            await self.on_error(run_id=run_id, e=e)
+            await self.on_error(run_id=run_id, e=e, kwargs={})
             raise e
 
     def reset(self) -> None:
@@ -734,7 +724,7 @@ class TinyMAPAgent(TinyBaseAgent):
         async def _run() -> str:
             plan = await self._run_agent(run_id=run_id, input_text=input_text)
 
-            await self.on_answer(run_id=run_id, answer=plan)
+            await self.on_answer(run_id=run_id, answer=plan, kwargs={})
             return plan
 
         return run_async_in_executor(_run)
@@ -755,7 +745,7 @@ class TinyMAPAgent(TinyBaseAgent):
         async def _generator():
             plan = await self._run_agent(run_id=run_id, input_text=input_text)
 
-            await self.on_answer_chunk(run_id=run_id, chunk=plan, idx='0')
+            await self.on_answer_chunk(run_id=run_id, chunk=plan, idx='0', kwargs={})
             yield plan
 
         return _generator()

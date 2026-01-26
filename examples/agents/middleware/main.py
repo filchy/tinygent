@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import Field
 
-from tinygent.agents.middleware.base import AgentMiddleware
+from tinygent.agents.middleware.base import TinyBaseMiddleware
 from tinygent.agents.middleware.base import register_middleware
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
 from tinygent.core.datamodels.tool import AbstractTool
@@ -44,13 +44,15 @@ def add_numbers(data: CalculateInput) -> str:
 
 
 @register_middleware('answer_logger')
-class AnswerLoggingMiddleware(AgentMiddleware):
+class AnswerLoggingMiddleware(TinyBaseMiddleware):
     """Middleware that logs the final answer with formatting."""
 
     def __init__(self) -> None:
         self.answers: list[str] = []
 
-    def on_answer(self, *, run_id: str, answer: str) -> None:
+    async def on_answer(
+        self, *, run_id: str, answer: str, kwargs: dict[str, Any]
+    ) -> None:
         self.answers.append(answer)
         print(
             TinyColorPrinter.custom(
@@ -60,7 +62,9 @@ class AnswerLoggingMiddleware(AgentMiddleware):
             )
         )
 
-    def on_answer_chunk(self, *, run_id: str, chunk: str, idx: str) -> None:
+    async def on_answer_chunk(
+        self, *, run_id: str, chunk: str, idx: str, kwargs: dict[str, Any]
+    ) -> None:
         # For streaming responses
         print(
             TinyColorPrinter.custom(
@@ -76,7 +80,7 @@ class AnswerLoggingMiddleware(AgentMiddleware):
 
 
 @register_middleware('llm_timing')
-class LLMCallTimingMiddleware(AgentMiddleware):
+class LLMCallTimingMiddleware(TinyBaseMiddleware):
     """Middleware that tracks LLM call timing and statistics."""
 
     def __init__(self) -> None:
@@ -84,7 +88,9 @@ class LLMCallTimingMiddleware(AgentMiddleware):
         self.call_durations: list[float] = []
         self.total_calls = 0
 
-    def before_llm_call(self, *, run_id: str, llm_input: TinyLLMInput) -> None:
+    async def before_llm_call(
+        self, *, run_id: str, llm_input: TinyLLMInput, kwargs: dict[str, Any]
+    ) -> None:
         self.call_start_times[run_id] = time.time()
         self.total_calls += 1
 
@@ -99,8 +105,13 @@ class LLMCallTimingMiddleware(AgentMiddleware):
             )
         )
 
-    def after_llm_call(
-        self, *, run_id: str, llm_input: TinyLLMInput, result: Any
+    async def after_llm_call(
+        self,
+        *,
+        run_id: str,
+        llm_input: TinyLLMInput,
+        result: Any,
+        kwargs: dict[str, Any],
     ) -> None:
         start_time = self.call_start_times.pop(run_id, None)
         if start_time:
@@ -130,15 +141,20 @@ class LLMCallTimingMiddleware(AgentMiddleware):
 
 
 @register_middleware('tool_audit')
-class ToolCallAuditMiddleware(AgentMiddleware):
+class ToolCallAuditMiddleware(TinyBaseMiddleware):
     """Middleware that audits all tool calls with detailed logging."""
 
     def __init__(self) -> None:
         self.tool_calls: list[dict[str, Any]] = []
         self.tool_start_times: dict[str, float] = {}
 
-    def before_tool_call(
-        self, *, run_id: str, tool: AbstractTool, args: dict[str, Any]
+    async def before_tool_call(
+        self,
+        *,
+        run_id: str,
+        tool: AbstractTool,
+        args: dict[str, Any],
+        kwargs: dict[str, Any],
     ) -> None:
         key = f'{run_id}:{tool.info.name}'
         self.tool_start_times[key] = time.time()
@@ -151,13 +167,14 @@ class ToolCallAuditMiddleware(AgentMiddleware):
             )
         )
 
-    def after_tool_call(
+    async def after_tool_call(
         self,
         *,
         run_id: str,
         tool: AbstractTool,
         args: dict[str, Any],
         result: Any,
+        kwargs: dict[str, Any],
     ) -> None:
         key = f'{run_id}:{tool.info.name}'
         start_time = self.tool_start_times.pop(key, None)
@@ -181,7 +198,9 @@ class ToolCallAuditMiddleware(AgentMiddleware):
             )
         )
 
-    def on_error(self, *, run_id: str, e: Exception) -> None:
+    async def on_error(
+        self, *, run_id: str, e: Exception, kwargs: dict[str, Any]
+    ) -> None:
         print(
             TinyColorPrinter.error(
                 f'[Run: {run_id[:8]}...] Error during tool execution: {e}'
