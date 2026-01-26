@@ -635,6 +635,30 @@ middleware = [
 ]
 ```
 
+**Using Config Factory:**
+
+```python
+from tinygent.agents.middleware.tool_limiter import TinyToolCallLimiterMiddlewareConfig
+
+# Create via config
+config = TinyToolCallLimiterMiddlewareConfig(
+    tool_name='web_search',
+    max_tool_calls=5,
+    hard_block=True
+)
+
+limiter = config.build()
+```
+
+**Factory Configuration Options:**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `type` | `Literal['tool_limiter']` | `'tool_limiter'` | Type identifier (frozen) |
+| `tool_name` | `str \| None` | `None` | Specific tool to limit. `None` = limit all tools globally |
+| `max_tool_calls` | `int` | `10` | Maximum number of tool calls allowed per run |
+| `hard_block` | `bool` | `True` | Whether to hard block (`True`) or soft limit (`False`) tool calls |
+
 **Getting Statistics:**
 
 ```python
@@ -648,6 +672,136 @@ stats = limiter.get_stats()
 #     'runs_at_limit': 0
 # }
 ```
+
+---
+
+### TinyLLMToolSelectorMiddleware
+
+Intelligently selects the most relevant subset of tools for each LLM call using a smaller LLM. This middleware is especially useful when you have many tools available but want to reduce context size and improve performance by only providing the most relevant tools to the main agent.
+
+**Features:**
+- Uses a dedicated LLM to select relevant tools based on conversation context
+- Reduces token usage by limiting tools sent to the main LLM
+- Supports always-include list for critical tools
+- Configurable maximum tools limit
+- Automatic prompt template management
+
+**How It Works:**
+1. Before each LLM call, the middleware analyzes the conversation context
+2. Uses a selection LLM to determine which tools are most relevant
+3. Filters the tool list to only include selected tools
+4. The main agent LLM receives only the relevant subset
+
+**Basic Usage:**
+
+```python
+from tinygent.agents.middleware import TinyLLMToolSelectorMiddleware
+from tinygent.agents import TinyMultiStepAgent
+from tinygent.core.factory import build_llm
+
+# Use fast model for tool selection
+selector = TinyLLMToolSelectorMiddleware(
+    llm=build_llm('openai:gpt-4o-mini'),
+    max_tools=5
+)
+
+agent = TinyMultiStepAgent(
+    llm=build_llm('openai:gpt-4o'),
+    tools=[search, calculator, weather, database, email, calendar, notes],
+    middleware=[selector],
+)
+```
+
+**Always Include Critical Tools:**
+
+```python
+# Ensure certain tools are always available
+selector = TinyLLMToolSelectorMiddleware(
+    llm=build_llm('openai:gpt-4o-mini'),
+    max_tools=5,
+    always_include=['search', 'calculator']
+)
+```
+
+**Custom Prompt Template:**
+
+```python
+from tinygent.core.prompts.agents.middleware.template.llm_tool_selector import (
+    LLMToolSelectorPromptTemplate
+)
+
+custom_prompt = LLMToolSelectorPromptTemplate(
+    system="You are a tool selection expert. Select only the most relevant tools.",
+    user="Available tools:\n{{ tools }}\n\nSelect the best tools for the current task."
+)
+
+selector = TinyLLMToolSelectorMiddleware(
+    llm=build_llm('openai:gpt-4o-mini'),
+    prompt_template=custom_prompt,
+    max_tools=3
+)
+```
+
+**Using Config Factory:**
+
+```python
+from tinygent.agents.middleware.llm_tool_selector import (
+    TinyLLMToolSelectorMiddlewareConfig
+)
+
+# Create via config
+config = TinyLLMToolSelectorMiddlewareConfig(
+    llm='openai:gpt-4o-mini',
+    max_tools=5,
+    always_include=['search', 'calculator']
+)
+
+selector = config.build()
+```
+
+**Factory Configuration Options:**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `type` | `Literal['llm_tool_selector']` | `'llm_tool_selector'` | Type identifier (frozen) |
+| `llm` | `AbstractLLMConfig \| AbstractLLM` | Required | LLM to use for tool selection. Can be a string like `'openai:gpt-4o-mini'` or an LLM instance |
+| `prompt_template` | `LLMToolSelectorPromptTemplate` | Default prompt | Template for tool selection prompt. Contains `system` and `user` fields |
+| `max_tools` | `int \| None` | `None` | Maximum number of tools to select. `None` = no limit |
+| `always_include` | `list[str] \| None` | `None` | List of tool names to always include in selection |
+
+**Advanced Example:**
+
+```python
+# Combine with tool limiter
+selector = TinyLLMToolSelectorMiddleware(
+    llm=build_llm('openai:gpt-4o-mini'),
+    max_tools=5,
+    always_include=['search']
+)
+
+limiter = TinyToolCallLimiterMiddleware(
+    max_tool_calls=10,
+    hard_block=False
+)
+
+agent = TinyMultiStepAgent(
+    llm=build_llm('openai:gpt-4o'),
+    tools=[search, calculator, weather, database, email, calendar, notes, api_call],
+    middleware=[selector, limiter],
+)
+```
+
+**Benefits:**
+- **Reduced Token Usage**: Only send relevant tools to the main LLM
+- **Improved Performance**: Faster LLM responses with smaller context
+- **Better Focus**: Agent focuses on appropriate tools for the task
+- **Cost Savings**: Fewer tokens = lower API costs
+
+**When to Use:**
+- You have 10+ tools available
+- Tools have large descriptions
+- You want to optimize token usage
+- You need dynamic tool selection based on context
 
 ---
 
