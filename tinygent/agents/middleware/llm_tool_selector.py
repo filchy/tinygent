@@ -21,7 +21,7 @@ from tinygent.core.prompts.agents.middleware.template.llm_tool_selector import (
     LLMToolSelectorPromptTemplate,
 )
 from tinygent.core.telemetry.decorators import tiny_trace
-from tinygent.core.telemetry.otel import set_tiny_attribute, set_tiny_attributes
+from tinygent.core.telemetry.otel import set_tiny_attributes
 from tinygent.core.types.base import TinyModel
 from tinygent.core.types.io.llm_io_input import TinyLLMInput
 from tinygent.utils.jinja_utils import render_template
@@ -92,7 +92,7 @@ class TinyLLMToolSelectorMiddleware(TinyBaseMiddleware):
 
         return LocalSelectionModel
 
-    @tiny_trace('tool_selector')
+    @tiny_trace('tool_selector.before_llm_call')
     async def before_llm_call(
         self, *, run_id: str, llm_input: TinyLLMInput, kwargs: dict[str, Any]
     ) -> None:
@@ -120,6 +120,12 @@ class TinyLLMToolSelectorMiddleware(TinyBaseMiddleware):
         remaining_space: int | None = None
         if self.max_tools:
             remaining_space = self.max_tools - len(selected_tools)
+
+            set_tiny_attributes({
+                'tool_selector.remaining_space': remaining_space,
+                'tool_selector.early_exit': remaining_space <= 0,
+            })
+
             if remaining_space <= 0:
                 kwargs['tools'] = selected_tools
                 return
