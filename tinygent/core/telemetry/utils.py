@@ -5,9 +5,9 @@ from typing import Iterable
 from tinygent.core.datamodels.cross_encoder import AbstractCrossEncoderConfig
 from tinygent.core.datamodels.embedder import AbstractEmbedderConfig
 from tinygent.core.datamodels.llm import AbstractLLMConfig
+from tinygent.core.datamodels.messages import AllTinyMessages
 from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.telemetry.otel import set_tiny_attributes
-from tinygent.core.types.io.llm_io_input import TinyLLMInput
 
 
 def set_embedder_telemetry_attributes(
@@ -34,7 +34,7 @@ def set_embedder_telemetry_attributes(
 
 def set_llm_telemetry_attributes(
     config: AbstractLLMConfig,
-    llm_input: TinyLLMInput,
+    messages: Iterable[AllTinyMessages],
     *,
     result: str | list[str] | None = None,
     tools: list[AbstractTool] | None = None,
@@ -43,8 +43,8 @@ def set_llm_telemetry_attributes(
     """Unified telemetry attribute setter for all LLM methods."""
     attrs: dict[str, Any] = {
         'model.config': json.dumps(config.model_dump(mode='json')),
-        'messages': [m.tiny_str for m in llm_input.messages],
-        'messages.len': len(llm_input.messages),
+        'messages': [m.tiny_str for m in messages],
+        'messages.len': len(list(messages)),
     }
 
     if tools is not None:

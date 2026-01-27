@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 import os
+import textwrap
 import typing
 from typing import Iterable
 from typing import Literal
@@ -25,6 +26,7 @@ from tinygent.core.telemetry.otel import set_tiny_attribute
 from tinygent.core.telemetry.utils import set_llm_telemetry_attributes
 from tinygent.core.types.io.llm_io_chunks import TinyLLMResultChunk
 from tinygent.core.types.io.llm_io_input import TinyLLMInput
+from tinygent.llms.utils import StringIO
 from tinygent.llms.utils import accumulate_llm_chunks
 from tinygent.llms.utils import group_chunks_for_telemetry
 
@@ -184,7 +186,9 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         res = self.__get_sync_client().messages.create(**kwargs)
 
         tiny_res = anthropic_result_to_tiny_result(res)
-        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string())
+        set_llm_telemetry_attributes(
+            self.config, llm_input.messages, result=tiny_res.to_string()
+        )
         return tiny_res
 
     @tiny_trace('agenerate_text')
@@ -194,7 +198,9 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         res = await self.__get_async_client().messages.create(**kwargs)
 
         tiny_res = anthropic_result_to_tiny_result(res)
-        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string())
+        set_llm_telemetry_attributes(
+            self.config, llm_input.messages, result=tiny_res.to_string()
+        )
         return tiny_res
 
     @tiny_trace('stream_text')
@@ -202,7 +208,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         self, llm_input: TinyLLMInput
     ) -> AsyncIterator[TinyLLMResultChunk]:
         kwargs = self.__create_client_kwargs(llm_input)
-        set_llm_telemetry_attributes(self.config, llm_input)
+        set_llm_telemetry_attributes(self.config, llm_input.messages)
 
         async def tiny_chunks() -> AsyncIterator[TinyLLMResultChunk]:
             async with self.__get_async_client().messages.stream(**kwargs) as stream:
@@ -234,7 +240,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
 
         set_llm_telemetry_attributes(
             self.config,
-            llm_input,
+            llm_input.messages,
             result=str(p),
             output_schema=output_schema,
         )
@@ -254,7 +260,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
 
         set_llm_telemetry_attributes(
             self.config,
-            llm_input,
+            llm_input.messages,
             result=str(p),
             output_schema=output_schema,
         )
@@ -272,7 +278,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
 
         tiny_res = anthropic_result_to_tiny_result(res)
         set_llm_telemetry_attributes(
-            self.config, llm_input, result=tiny_res.to_string(), tools=tools
+            self.config, llm_input.messages, result=tiny_res.to_string(), tools=tools
         )
         return tiny_res
 
@@ -288,7 +294,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
 
         tiny_res = anthropic_result_to_tiny_result(res)
         set_llm_telemetry_attributes(
-            self.config, llm_input, result=tiny_res.to_string(), tools=tools
+            self.config, llm_input.messages, result=tiny_res.to_string(), tools=tools
         )
         return tiny_res
 
@@ -300,7 +306,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         kwargs['tools'] = [self._tool_convertor(tool) for tool in tools]
         kwargs['extra_headers'] = {'anthropic-beta': _anthropic_tool_streaming_beta}
 
-        set_llm_telemetry_attributes(self.config, llm_input)
+        set_llm_telemetry_attributes(self.config, llm_input.messages)
 
         async with self.__get_async_client().messages.stream(**kwargs) as stream:
 
@@ -330,8 +336,26 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
                     group_chunks_for_telemetry(accumulated_chunks),
                 )
 
+    @tiny_trace('count_tokens_in_messages')
     def count_tokens_in_messages(self, messages: Iterable[AllTinyMessages]) -> int:
+        set_llm_telemetry_attributes(self.config, messages)
+
         kwargs = self.__create_client_kwargs(TinyLLMInput(messages=list(messages)))
         kwargs.pop('max_tokens')
 
-        return self.__get_sync_client().messages.count_tokens(**kwargs).input_tokens
+        number_of_tokens = (
+            self.__get_sync_client().messages.count_tokens(**kwargs).input_tokens
+        )
+
+        set_tiny_attribute('number_of_tokens', number_of_tokens)
+        return number_of_tokens
+
+    def __str__(self) -> str:
+        buf = StringIO()
+
+        buf.write('Claude LLM Summary:\n')
+        buf.write(textwrap.indent(f'Model: {self.model}\n', '\t'))
+        buf.write(textwrap.indent(f'Base URL: {self.base_url}\n', '\t'))
+        buf.write(textwrap.indent(f'Timeout: {self.timeout}\n', '\t'))
+
+        return buf.getvalue()

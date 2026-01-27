@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from functools import lru_cache
+from io import StringIO
 import os
+import textwrap
 import typing
 from typing import Iterable
 from typing import Literal
@@ -165,7 +167,9 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         res = chat.send_message(params['message'])  # type: ignore
 
         tiny_res = gemini_response_to_tiny_result(res)
-        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string())
+        set_llm_telemetry_attributes(
+            self.config, llm_input.messages, result=tiny_res.to_string()
+        )
         return tiny_res
 
     @tiny_trace('agenerate_text')
@@ -184,7 +188,9 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
         res = await chat.send_message(params['message'])  # type: ignore
 
         tiny_res = gemini_response_to_tiny_result(res)
-        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string())
+        set_llm_telemetry_attributes(
+            self.config, llm_input.messages, result=tiny_res.to_string()
+        )
         return tiny_res
 
     @tiny_trace('stream_text')
@@ -193,7 +199,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
     ) -> AsyncIterator[TinyLLMResultChunk]:
         params = tiny_prompt_to_gemini_params(llm_input)
         config = tiny_attributes_to_gemini_config(llm_input, self.temperature)
-        set_llm_telemetry_attributes(self.config, llm_input)
+        set_llm_telemetry_attributes(self.config, llm_input.messages)
 
         chat = self.__get_async_client().chats.create(
             model=self.model,
@@ -242,7 +248,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
                     parsed = output_schema.model_validate_json(content)
                     set_llm_telemetry_attributes(
                         self.config,
-                        llm_input,
+                        llm_input.messages,
                         result=str(parsed),
                         output_schema=output_schema,
                     )
@@ -276,7 +282,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
                     parsed = output_schema.model_validate_json(content)
                     set_llm_telemetry_attributes(
                         self.config,
-                        llm_input,
+                        llm_input.messages,
                         result=str(parsed),
                         output_schema=output_schema,
                     )
@@ -308,7 +314,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
 
         tiny_res = gemini_response_to_tiny_result(res)
         set_llm_telemetry_attributes(
-            self.config, llm_input, result=tiny_res.to_string(), tools=tools
+            self.config, llm_input.messages, result=tiny_res.to_string(), tools=tools
         )
         return tiny_res
 
@@ -334,7 +340,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
 
         tiny_res = gemini_response_to_tiny_result(res)
         set_llm_telemetry_attributes(
-            self.config, llm_input, result=tiny_res.to_string(), tools=tools
+            self.config, llm_input.messages, result=tiny_res.to_string(), tools=tools
         )
         return tiny_res
 
@@ -350,7 +356,7 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
             self.temperature,
             tools=gemini_tools,  # type: ignore
         )
-        set_llm_telemetry_attributes(self.config, llm_input, tools=tools)
+        set_llm_telemetry_attributes(self.config, llm_input.messages, tools=tools)
 
         chat = self.__get_async_client().chats.create(
             model=self.model,
@@ -375,5 +381,22 @@ class GeminiLLM(AbstractLLM[GeminiLLMConfig]):
                 group_chunks_for_telemetry(accumulated_chunks),
             )
 
+    @tiny_trace('count_tokens_in_messages')
     def count_tokens_in_messages(self, messages: Iterable[AllTinyMessages]) -> int:
-        return sum([self._count_tokens(self.model, m.tiny_str) for m in messages])
+        set_llm_telemetry_attributes(self.config, messages)
+
+        number_of_tokens = sum(
+            [self._count_tokens(self.model, m.tiny_str) for m in messages]
+        )
+
+        set_tiny_attribute('number_of_tokens', number_of_tokens)
+        return number_of_tokens
+
+    def __str__(self) -> str:
+        buf = StringIO()
+
+        buf.write('Gemini LLM Summary:\n')
+        buf.write(textwrap.indent(f'Model: {self.model}\n', '\t'))
+        buf.write(textwrap.indent(f'Temperature: {self.temperature}\n', '\t'))
+
+        return buf.getvalue()
