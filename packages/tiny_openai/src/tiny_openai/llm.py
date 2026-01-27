@@ -16,7 +16,6 @@ from openai.lib.streaming.chat import ChunkEvent
 from openai.types.chat import ChatCompletionFunctionToolParam
 from pydantic import Field
 from pydantic import SecretStr
-import tiktoken
 
 from tiny_openai.utils import openai_chunk_to_tiny_chunk
 from tiny_openai.utils import openai_result_to_tiny_result
@@ -32,6 +31,8 @@ from tinygent.llms.utils import accumulate_llm_chunks
 from tinygent.llms.utils import group_chunks_for_telemetry
 
 if typing.TYPE_CHECKING:
+    import tiktoken
+
     from tinygent.core.datamodels.llm import LLMStructuredT
     from tinygent.core.datamodels.tool import AbstractTool
     from tinygent.core.types.io.llm_io_input import TinyLLMInput
@@ -108,6 +109,8 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
     @staticmethod
     @lru_cache(maxsize=None)
     def _get_encoding(model: str) -> tiktoken.Encoding:
+        import tiktoken
+
         return tiktoken.encoding_for_model(model)
 
     @staticmethod
@@ -198,7 +201,9 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
         )
 
         tiny_res = openai_result_to_tiny_result(res)
-        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string())
+        set_llm_telemetry_attributes(
+            self.config, llm_input.messages, result=tiny_res.to_string()
+        )
         return tiny_res
 
     @tiny_trace('agenerate_text')
@@ -211,7 +216,9 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
         )
 
         tiny_res = openai_result_to_tiny_result(res)
-        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string())
+        set_llm_telemetry_attributes(
+            self.config, llm_input.messages, result=tiny_res.to_string()
+        )
         return tiny_res
 
     @tiny_trace('stream_text')
@@ -219,7 +226,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
         self, llm_input: TinyLLMInput
     ) -> AsyncIterator[TinyLLMResultChunk]:
         messages = tiny_prompt_to_openai_params(llm_input)
-        set_llm_telemetry_attributes(self.config, llm_input)
+        set_llm_telemetry_attributes(self.config, llm_input.messages)
 
         async with self.__get_async_client().chat.completions.stream(
             messages=messages,
@@ -261,7 +268,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
 
         set_llm_telemetry_attributes(
             self.config,
-            llm_input,
+            llm_input.messages,
             result=str(message.parsed),
             output_schema=output_schema,
         )
@@ -284,7 +291,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
 
         set_llm_telemetry_attributes(
             self.config,
-            llm_input,
+            llm_input.messages,
             result=str(message.parsed),
             output_schema=output_schema,
         )
@@ -306,7 +313,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
 
         tiny_res = openai_result_to_tiny_result(res)
         set_llm_telemetry_attributes(
-            self.config, llm_input, result=tiny_res.to_string(), tools=tools
+            self.config, llm_input.messages, result=tiny_res.to_string(), tools=tools
         )
         return tiny_res
 
@@ -326,7 +333,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
 
         tiny_res = openai_result_to_tiny_result(res)
         set_llm_telemetry_attributes(
-            self.config, llm_input, result=tiny_res.to_string(), tools=tools
+            self.config, llm_input.messages, result=tiny_res.to_string(), tools=tools
         )
         return tiny_res
 
@@ -336,7 +343,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
     ) -> AsyncIterator[TinyLLMResultChunk]:
         functions = [self._tool_convertor(tool) for tool in tools]
         messages = tiny_prompt_to_openai_params(llm_input)
-        set_llm_telemetry_attributes(self.config, llm_input, tools=tools)
+        set_llm_telemetry_attributes(self.config, llm_input.messages, tools=tools)
 
         async with self.__get_async_client().chat.completions.stream(
             messages=messages,
@@ -361,8 +368,16 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
                     group_chunks_for_telemetry(accumulated_chunks),
                 )
 
+    @tiny_trace('count_tokens_in_messages')
     def count_tokens_in_messages(self, messages: Iterable[AllTinyMessages]) -> int:
-        return sum([OpenAILLM._count_tokens(self.model, m.tiny_str) for m in messages])
+        set_llm_telemetry_attributes(self.config, messages)
+
+        number_of_tokens = sum(
+            [OpenAILLM._count_tokens(self.model, m.tiny_str) for m in messages]
+        )
+
+        set_tiny_attribute('number_of_tokens', number_of_tokens)
+        return number_of_tokens
 
     def __str__(self) -> str:
         buf = StringIO()

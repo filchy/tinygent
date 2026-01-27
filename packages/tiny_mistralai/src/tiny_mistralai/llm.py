@@ -186,7 +186,9 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         )
 
         tiny_res = mistralai_result_to_tiny_result(res)
-        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string())
+        set_llm_telemetry_attributes(
+            self.config, llm_input.messages, result=tiny_res.to_string()
+        )
         return tiny_res
 
     @tiny_trace('agenerate_text')
@@ -205,7 +207,9 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         )
 
         tiny_res = mistralai_result_to_tiny_result(res)
-        set_llm_telemetry_attributes(self.config, llm_input, result=tiny_res.to_string())
+        set_llm_telemetry_attributes(
+            self.config, llm_input.messages, result=tiny_res.to_string()
+        )
         return tiny_res
 
     @tiny_trace('stream_text')
@@ -213,7 +217,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         self, llm_input: TinyLLMInput
     ) -> AsyncIterator[TinyLLMResultChunk]:
         messages = tiny_prompt_to_mistralai_params(llm_input)
-        set_llm_telemetry_attributes(self.config, llm_input)
+        set_llm_telemetry_attributes(self.config, llm_input.messages)
 
         res = await self.__get_client().chat.stream_async(
             model=self.model,
@@ -259,7 +263,10 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
 
         parsed = output_schema.model_validate(json.loads(str(message.content) or '{}'))
         set_llm_telemetry_attributes(
-            self.config, llm_input, result=str(parsed), output_schema=output_schema
+            self.config,
+            llm_input.messages,
+            result=str(parsed),
+            output_schema=output_schema,
         )
         return parsed
 
@@ -283,7 +290,10 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
 
         parsed = output_schema.model_validate(json.loads(str(message.content) or '{}'))
         set_llm_telemetry_attributes(
-            self.config, llm_input, result=str(parsed), output_schema=output_schema
+            self.config,
+            llm_input.messages,
+            result=str(parsed),
+            output_schema=output_schema,
         )
         return parsed
 
@@ -306,7 +316,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
 
         tiny_res = mistralai_result_to_tiny_result(res)
         set_llm_telemetry_attributes(
-            self.config, llm_input, result=tiny_res.to_string(), tools=tools
+            self.config, llm_input.messages, result=tiny_res.to_string(), tools=tools
         )
         return tiny_res
 
@@ -329,7 +339,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
 
         tiny_res = mistralai_result_to_tiny_result(res)
         set_llm_telemetry_attributes(
-            self.config, llm_input, result=tiny_res.to_string(), tools=tools
+            self.config, llm_input.messages, result=tiny_res.to_string(), tools=tools
         )
         return tiny_res
 
@@ -339,7 +349,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
     ) -> AsyncIterator[TinyLLMResultChunk]:
         functions = [self._tool_convertor(tool) for tool in tools]
         messages = tiny_prompt_to_mistralai_params(llm_input)
-        set_llm_telemetry_attributes(self.config, llm_input, tools=tools)
+        set_llm_telemetry_attributes(self.config, llm_input.messages, tools=tools)
 
         res = await self.__get_client().chat.stream_async(
             model=self.model,
@@ -368,14 +378,19 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
             )
 
     def count_tokens_in_messages(self, messages: Iterable[AllTinyMessages]) -> int:
-        return sum(
+        set_llm_telemetry_attributes(self.config, messages)
+
+        number_of_tokens = sum(
             [MistralAILLM._count_tokens(self.model, m.tiny_str) for m in messages]
         )
+
+        set_tiny_attribute('number_of_tokens', number_of_tokens)
+        return number_of_tokens
 
     def __str__(self) -> str:
         buf = StringIO()
 
-        buf.write('OpenAI LLM Summary:\n')
+        buf.write('MistralAI LLM Summary:\n')
         buf.write(textwrap.indent(f'Model: {self.model}\n', '\t'))
         buf.write(textwrap.indent(f'Safe Prompt: {self.safe_prompt}\n', '\t'))
         buf.write(textwrap.indent(f'Temperature: {self.temperature}\n', '\t'))
