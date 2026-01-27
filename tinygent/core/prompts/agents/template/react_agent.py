@@ -1,8 +1,8 @@
+from tinygent.core.prompt import TinyPrompt
 from tinygent.core.types.base import TinyModel
-from tinygent.core.types.prompt_template import TinyPromptTemplate
 
 
-class ReasonPromptTemplate(TinyPromptTemplate):
+class ReasonPromptTemplate(TinyPrompt):
     """Used to define the reasoning step."""
 
     init: str
@@ -11,7 +11,7 @@ class ReasonPromptTemplate(TinyPromptTemplate):
     _template_fields = {'init': {'task'}, 'update': {'task', 'overview'}}
 
 
-class ActionPromptTemplate(TinyPromptTemplate):
+class ActionPromptTemplate(TinyPrompt):
     """Used to define the final answer or action."""
 
     action: str
@@ -19,7 +19,7 @@ class ActionPromptTemplate(TinyPromptTemplate):
     _template_fields = {'action': {'reasoning', 'tools'}}
 
 
-class FallbackPromptTemplate(TinyPromptTemplate):
+class FallbackPromptTemplate(TinyPrompt):
     """Used to define the fallback if agent don't answer in time."""
 
     fallback_answer: str

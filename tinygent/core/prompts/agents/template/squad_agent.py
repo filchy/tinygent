@@ -1,8 +1,8 @@
+from tinygent.core.prompt import TinyPrompt
 from tinygent.core.types.base import TinyModel
-from tinygent.core.types.prompt_template import TinyPromptTemplate
 
 
-class ClassifierPromptTemplate(TinyPromptTemplate):
+class ClassifierPromptTemplate(TinyPrompt):
     """Used to define the classifier (orchestrator) prompt template."""
 
     prompt: str

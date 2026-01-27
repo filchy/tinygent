@@ -4,13 +4,13 @@ from tiny_graph.graph.multi_layer_graph.multi_layer_graph import (
 from tiny_graph.graph.multi_layer_graph.multi_layer_graph import (
     TinyMultiLayerGraphTemplate,
 )
-from tinygent.core.types.prompt_template import TinyPromptTemplate
+from tinygent.core.prompt import TinyPrompt
 
 
 def get_prompt_template() -> TinyMultiLayerGraphTemplate:
     return TinyMultiLayerGraphTemplate(
         entity_extractor=EntityExtractorPromptTemplate(
-            extract_text=TinyPromptTemplate.UserSystem(
+            extract_text=TinyPrompt.UserSystem(
                 system='You are an AI assistant that extracts entity nodes from text. Your primary task is to extract and classify the speaker and other significant entities mentioned in the provided text.',
                 user="""<ENTITY TYPES>
 {{ entity_types }}
@@ -33,7 +33,7 @@ Guidelines:
 4. Be as explicit as possible in your node names, using full names and avoiding abbreviations.
                 """,
             ),
-            extract_message=TinyPromptTemplate.UserSystem(
+            extract_message=TinyPrompt.UserSystem(
                 system='You are an AI assistant that extracts entity nodes from conversational messages. Your primary task is to extract and classify the speaker and other significant entities mentioned in the conversation.',
                 user="""<ENTITY TYPES>
 {{ entity_types }}
@@ -74,7 +74,7 @@ reference entities. Only extract distinct entities from the CURRENT MESSAGE. Don
 {{ custom_prompt }}
                 """,
             ),
-            extract_json=TinyPromptTemplate.UserSystem(
+            extract_json=TinyPrompt.UserSystem(
                 system='You are an AI assistant that extracts entity nodes from JSON.  Your primary task is to extract and classify relevant entities from JSON files',
                 user="""<ENTITY TYPES>
 {{ entity_types }}
@@ -99,7 +99,7 @@ Guidelines:
 3. Do NOT extract any properties that contain dates
                 """,
             ),
-            reflexion=TinyPromptTemplate.UserSystem(
+            reflexion=TinyPrompt.UserSystem(
                 system='You are an AI assistant that determines which entities have not been extracted from the given context',
                 user="""<PREVIOUS MESSAGES>
 [{{ previous_events | join(', ') }}]

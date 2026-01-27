@@ -200,10 +200,10 @@ cross_encoder = build_cross_encoder(config)
 
 ```python
 from tinygent.cross_encoders.llm_cross_encoder import LLMCrossEncoderPromptTemplate
-from tinygent.core.types.prompt_template import TinyPromptTemplate
+from tinygent.core.prompt import TinyPrompt
 
 custom_prompt = LLMCrossEncoderPromptTemplate(
-    ranking=TinyPromptTemplate.UserSystem(
+    ranking=TinyPrompt.UserSystem(
         system='You are a relevance scorer...',
         user='Rate this text...'
     )

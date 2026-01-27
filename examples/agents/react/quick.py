@@ -18,16 +18,15 @@ def main():
         llm='openai:gpt-4o-mini',
         tools=['get_best_destination'],
         memory='buffer',
-        middleware=['react_cycle', 'tool_limiter'],
+        middleware=['react_tool_tracker', 'tool_limiter'],
     )
-    logger.info(agent)
-    #
-    # result = agent.run(
-    #     'What is the best travel destination and what is the weather like there?'
-    # )
-    #
-    # logger.info('[RESULT] %s', result)
-    # logger.info('[AGENT SUMMARY] %s', str(agent))
+
+    result = agent.run(
+        'What is the best travel destination and what is the weather like there?'
+    )
+
+    logger.info('[RESULT] %s', result)
+    logger.info('[AGENT SUMMARY] %s', str(agent))
 
 
 if __name__ == '__main__':

@@ -9,7 +9,7 @@ from tinygent.core.types.base import TinyModel
 from tinygent.utils.jinja_utils import validate_template
 
 
-class TinyPromptTemplate(TinyModel):
+class TinyPrompt(TinyModel):
     """Base class for prompt templates with template field validation."""
 
     class UserSystem(TinyModel):
@@ -23,7 +23,7 @@ class TinyPromptTemplate(TinyModel):
     _template_fields: ClassVar[dict[str, set[str]]] = {}
 
     @model_validator(mode='after')
-    def _validate_template_fields(self) -> 'TinyPromptTemplate':
+    def _validate_template_fields(self) -> 'TinyPrompt':
         logger = logging.getLogger(__name__)
 
         for field_path, required in self._template_fields.items():
@@ -32,7 +32,7 @@ class TinyPromptTemplate(TinyModel):
             )
 
             parts = field_path.split('.')
-            value: TinyPromptTemplate | Any | None = self
+            value: TinyPrompt | Any | None = self
 
             for part in parts:
                 value = getattr(value, part, None)

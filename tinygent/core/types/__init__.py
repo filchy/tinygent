@@ -1,7 +1,7 @@
 __all__ = [
     'TinyModel',
     'TinyModelBuildable',
-    'TinyPromptTemplate',
+    'TinyPrompt',
     'HasDiscriminatorField',
 ]
 
@@ -15,10 +15,10 @@ def __getattr__(name: str):
         from tinygent.core.types.builder import TinyModelBuildable
 
         return TinyModelBuildable
-    elif name == 'TinyPromptTemplate':
-        from tinygent.core.types.prompt_template import TinyPromptTemplate
+    elif name == 'TinyPrompt':
+        from tinygent.core.prompt import TinyPrompt
 
-        return TinyPromptTemplate
+        return TinyPrompt
     elif name == 'HasDiscriminatorField':
         from tinygent.core.types.discriminator import HasDiscriminatorField
 

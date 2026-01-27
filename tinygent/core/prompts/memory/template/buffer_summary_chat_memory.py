@@ -1,5 +1,5 @@
-from tinygent.core.types.prompt_template import TinyPromptTemplate
+from tinygent.core.prompt import TinyPrompt
 
 
-class SummaryUpdatePromptTemplate(TinyPromptTemplate, TinyPromptTemplate.UserSystem):
+class SummaryUpdatePromptTemplate(TinyPrompt, TinyPrompt.UserSystem):
     _template_fields = {'user': {'summary', 'new_lines'}}

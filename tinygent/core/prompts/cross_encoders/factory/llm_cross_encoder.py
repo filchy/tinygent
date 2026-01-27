@@ -1,12 +1,12 @@
+from tinygent.core.prompt import TinyPrompt
 from tinygent.core.prompts.cross_encoders.template.llm_cross_encoder import (
     LLMCrossEncoderPromptTemplate,
 )
-from tinygent.core.types.prompt_template import TinyPromptTemplate
 
 
 def get_prompt_template() -> LLMCrossEncoderPromptTemplate:
     return LLMCrossEncoderPromptTemplate(
-        ranking=TinyPromptTemplate.UserSystem(
+        ranking=TinyPrompt.UserSystem(
             system="""You are a relevance scoring model acting as a cross-encoder.
 
 Your task is to evaluate how relevant a given TEXT is to a given QUERY.
