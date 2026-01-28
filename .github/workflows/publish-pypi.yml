@@ -27,6 +27,11 @@ jobs:
       - name: Set up Python
         run: uv python install 3.12
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Update versions with build number
         run: |
           BUILD_NUMBER=$(printf "%04d" $(($VERSION_OFFSET + ${{ github.run_number }})))
@@ -49,3 +54,14 @@ jobs:
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         run: uv publish
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BUILD_NUMBER=$(printf "%04d" $(($VERSION_OFFSET + ${{ github.run_number }})))
+          VERSION="${VERSION_PREFIX}.${BUILD_NUMBER}"
+          gh release create "v$VERSION" \
+            --title "Release $VERSION" \
+            --notes "Automated release $VERSION" \
+            --repo ${{ github.repository }}
