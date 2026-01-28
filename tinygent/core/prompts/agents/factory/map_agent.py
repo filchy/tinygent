@@ -1,3 +1,4 @@
+from tinygent.core.prompt import TinyPrompt
 from tinygent.core.prompts.agents.template.map_agent import ActionProposalPromptTemplate
 from tinygent.core.prompts.agents.template.map_agent import ActorPromptTemplate
 from tinygent.core.prompts.agents.template.map_agent import MapPromptTemplate
@@ -5,7 +6,6 @@ from tinygent.core.prompts.agents.template.map_agent import MonitorPrompTemplate
 from tinygent.core.prompts.agents.template.map_agent import OrchestratorPromptTemplate
 from tinygent.core.prompts.agents.template.map_agent import PredictorPromptTemplate
 from tinygent.core.prompts.agents.template.map_agent import TaskDecomposerPromptTemplate
-from tinygent.core.types.prompt_template import TinyPromptTemplate
 
 
 def get_prompt_template() -> MapPromptTemplate:
@@ -16,33 +16,33 @@ def get_prompt_template() -> MapPromptTemplate:
         ),
         action_proposal=ActionProposalPromptTemplate(
             actor=ActorPromptTemplate(
-                init=TinyPromptTemplate.UserSystem(
+                init=TinyPrompt.UserSystem(
                     system='You are an AI assistant that provides detailed and accurate answers to questions.',
                     user='Question: {{ question }}\n\nPlease provide an answer to the above question. Think carefully before answering. You must provide an answer even if you are uncertain. The question may pertain to hypothetical or counterfactual scenarios.',
                 ),
-                init_fixer=TinyPromptTemplate.UserSystem(
+                init_fixer=TinyPrompt.UserSystem(
                     system='You are an AI assistant that refines and improves answers based on validation feedback.',
                     user='{{ validation }}\n\nQuestion: {{ question }}\n\nPlease try again to provide an answer to the above question based on the validation feedback. Think carefully, then provide your improved answer. You must provide an answer even if you are uncertain.',
                 ),
-                continuos=TinyPromptTemplate.UserSystem(
+                continuos=TinyPrompt.UserSystem(
                     system='You are an AI assistant that answers questions while considering previously answered sub-questions.',
                     user='Our goal is to answer the following question:\n\nQuestion: {{ question }}\n\nTo answer this question, we need to consider the following sub-questions and their answers:\n\n{{ previous_questions }}\n\nBased on the above information, please provide an answer to the original question. Think carefully about the question and the provided sub-questions and answers before responding. You must provide an answer even if you are uncertain.',
                 ),
-                continuos_fixer=TinyPromptTemplate.UserSystem(
+                continuos_fixer=TinyPrompt.UserSystem(
                     system='You are an AI assistant that refines answers based on validation feedback while considering context from previous sub-questions.',
                     user='{{ validation }}\n\nQuestion: {{ question }}\n\nPlease try again to provide an answer to the above question based on the validation feedback. Think carefully, then provide your improved answer. You must provide an answer even if you are uncertain.',
                 ),
-                evaluator=TinyPromptTemplate.UserSystem(
+                evaluator=TinyPrompt.UserSystem(
                     system='You are an evaluator that scores how well a predicted state achieves a given subgoal. Always output a single integer between 0 and 100, where 100 means the subgoal is fully achieved and 0 means no progress. Higher scores represent better progress. If the state is invalid, return 0.',
                     user='Evaluate how close the following predicted state is to achieving the subgoal.\n\nState:\n{{ state }}\n\nSubgoal:\n{{ subgoal }}\n\nReturn a single integer score from 0 to 100.',
                 ),
             ),
             monitor=MonitorPrompTemplate(
-                init=TinyPromptTemplate.UserSystem(
+                init=TinyPrompt.UserSystem(
                     system='You are an AI assistant that validates whether proposed answers correctly address the given questions.',
                     user='Our goal is to answer the following question:\n\nQuestion: {{ question }}\n\nThe following answer has been proposed:\n\nProposed Answer: {{ answer }}\n\nIs this the correct answer to the original question? Think carefully about the question and the proposed answer. Indicate whether the proposed answer is correct. If the proposed answer does not contain a final answer, indicate it as invalid.',
                 ),
-                continuos=TinyPromptTemplate.UserSystem(
+                continuos=TinyPrompt.UserSystem(
                     system='You are an AI assistant that validates whether proposed answers correctly address questions, considering context from previously answered sub-questions.',
                     user='Our goal is to answer the following question:\n\nQuestion: {{ question }}\n\nTo answer this question, we first considered these sub-questions and their answers:\n\n{{ previous_questions }}\n\nBased on this information, the following answer has been proposed for the original question:\n\nProposed Answer: {{ answer }}\n\nIs this the correct answer to the original question? Think carefully about the question, the proposed answer, and the provided sub-questions and answers. Indicate whether the proposed answer is correct. If the proposed answer does not contain a final answer, indicate it as invalid.',
                 ),

@@ -105,12 +105,12 @@ def build_agent(
             memory if isinstance(memory, AbstractMemory) else build_memory(memory)
         )
 
-    if middleware:
+    if selected := (middleware if middleware else agent.get('middleware', [])):
         from tinygent.core.factory.middleware import build_middleware
 
         agent['middleware'] = [
             m if isinstance(m, AbstractMiddleware) else build_middleware(m)
-            for m in middleware
+            for m in selected
         ]
 
     agent_config = parse_config(

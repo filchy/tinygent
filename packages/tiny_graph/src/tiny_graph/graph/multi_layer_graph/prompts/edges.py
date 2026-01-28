@@ -1,8 +1,8 @@
-from tinygent.core.types.prompt_template import TinyPromptTemplate
+from tinygent.core.prompt import TinyPrompt
 
 
-def get_cluster_edge_extraction_prompt() -> TinyPromptTemplate.UserSystem:
-    return TinyPromptTemplate.UserSystem(
+def get_cluster_edge_extraction_prompt() -> TinyPrompt.UserSystem:
+    return TinyPrompt.UserSystem(
         system='You are an expert knowledge graph extraction engine. '
         'You extract semantic relationships between CLUSTERS and ENTITIES '
         'based strictly on the provided event content.',
@@ -60,15 +60,15 @@ Return a JSON object that conforms EXACTLY to this schema:
     )
 
 
-def get_cluster_edge_extract_reflextion_prompt() -> TinyPromptTemplate.UserSystem:
-    return TinyPromptTemplate.UserSystem(
+def get_cluster_edge_extract_reflextion_prompt() -> TinyPrompt.UserSystem:
+    return TinyPrompt.UserSystem(
         system='',
         user='',
     )
 
 
-def get_entity_edge_extraction_prompt() -> TinyPromptTemplate.UserSystem:
-    return TinyPromptTemplate.UserSystem(
+def get_entity_edge_extraction_prompt() -> TinyPrompt.UserSystem:
+    return TinyPrompt.UserSystem(
         system='You are an expert fact extractor that extracts fact triples from text. '
         '1. Extracted fact triples should also be extracted with relevant date information.'
         '2. Treat the CURRENT TIME as the time the CURRENT MESSAGE was sent. All temporal information should be extracted relative to this time.',
@@ -134,8 +134,8 @@ You may use information from the PREVIOUS MESSAGES only to disambiguate referenc
     )
 
 
-def get_entity_edge_extract_reflextion_prompt() -> TinyPromptTemplate.UserSystem:
-    return TinyPromptTemplate.UserSystem(
+def get_entity_edge_extract_reflextion_prompt() -> TinyPrompt.UserSystem:
+    return TinyPrompt.UserSystem(
         system='You are an AI assistant that determines which facts have not been extracted from the given context',
         user="""<PREVIOUS MESSAGES>
 {{ previous_events }}
@@ -158,8 +158,8 @@ determine if any facts haven't been extracted.""",
     )
 
 
-def get_resolve_edge_prompt() -> TinyPromptTemplate.UserSystem:
-    return TinyPromptTemplate.UserSystem(
+def get_resolve_edge_prompt() -> TinyPrompt.UserSystem:
+    return TinyPrompt.UserSystem(
         system='You are a helpful assistant that de-duplicates facts from fact lists and determines which existing facts are contradicted by the new fact.',
         user="""Task:
 You will receive TWO separate lists of facts. Each list uses 'idx' as its index field, starting from 0.
@@ -206,8 +206,8 @@ Guidelines:
     )
 
 
-def get_extract_edge_attributes() -> TinyPromptTemplate.UserSystem:
-    return TinyPromptTemplate.UserSystem(
+def get_extract_edge_attributes() -> TinyPrompt.UserSystem:
+    return TinyPrompt.UserSystem(
         system='You are a helpful assistant that extracts fact properties from the provided text.',
         user="""<MESSAGE>
 {{ event_content }}

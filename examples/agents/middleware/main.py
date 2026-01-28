@@ -43,6 +43,28 @@ def add_numbers(data: CalculateInput) -> str:
     return f'The sum of {data.a} and {data.b} is {result}'
 
 
+@register_middleware('plan_tracker')
+class PlanTrackingMiddleware(TinyBaseMiddleware):
+    """Middleware that tracks planning steps."""
+
+    def __init__(self) -> None:
+        self.plans: list[str] = []
+
+    async def on_plan(self, *, run_id: str, plan: str, kwargs: dict[str, Any]) -> None:
+        self.plans.append(plan)
+        print(
+            TinyColorPrinter.custom(
+                'PLAN STEP',
+                f'[Run: {run_id[:8]}...] {plan}',
+                color='YELLOW',
+            )
+        )
+
+    def get_all_plans(self) -> list[str]:
+        """Return all collected plans."""
+        return self.plans
+
+
 @register_middleware('answer_logger')
 class AnswerLoggingMiddleware(TinyBaseMiddleware):
     """Middleware that logs the final answer with formatting."""
@@ -247,6 +269,7 @@ prompt_template = MultiStepPromptTemplate(
 
 
 def main() -> None:
+    plan_middleware = PlanTrackingMiddleware()
     answer_middleware = AnswerLoggingMiddleware()
     timing_middleware = LLMCallTimingMiddleware()
     audit_middleware = ToolCallAuditMiddleware()
@@ -257,6 +280,7 @@ def main() -> None:
         tools=[greet, add_numbers],
         max_iterations=3,
         middleware=[
+            plan_middleware,
             timing_middleware,
             audit_middleware,
             answer_middleware,
@@ -265,10 +289,11 @@ def main() -> None:
     )
 
     print('\n' + '=' * 60)
-    print('Running agent with 3 custom middlewares:')
-    print('\t1. AnswerLoggingMiddleware - Logs final answers')
+    print('Running agent with 4 custom middlewares:')
+    print('\t1. PlanTrackingMiddleware - Tracks planning steps')
     print('\t2. LLMCallTimingMiddleware - Tracks LLM call timing')
     print('\t3. ToolCallAuditMiddleware - Audits tool calls')
+    print('\t4. AnswerLoggingMiddleware - Logs final answers')
     print('=' * 60 + '\n')
 
     result = agent.run('Say hello to Alice and then add 5 and 7')
@@ -284,6 +309,10 @@ def main() -> None:
             print(f'\t{key}: {value:.3f}s')
         else:
             print(f'\t{key}: {value}')
+
+    print('\nPlanning Steps Collected:')
+    for i, plan_step in enumerate(plan_middleware.get_all_plans(), 1):
+        print(f'\t{i}. {plan_step}')
 
     print('\nTool Call Audit Log:')
     for entry in audit_middleware.get_audit_log():

@@ -7,6 +7,7 @@ from tinygent.agents.middleware.base import TinyBaseMiddleware
 from tinygent.agents.middleware.base import register_middleware
 from tinygent.agents.react_agent import ReActPromptTemplate
 from tinygent.agents.react_agent import TinyReActAgent
+from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.factory import build_llm
 from tinygent.core.types.base import TinyModel
 from tinygent.logging import setup_logger
@@ -18,87 +19,81 @@ from tinygent.utils.yaml import tiny_yaml_load
 logger = setup_logger('debug')
 
 
-@register_middleware('react_cycle')
-class ReActCycleMiddleware(TinyBaseMiddleware):
-    """Middleware that tracks the Thought-Action-Observation cycle in ReAct agent."""
+@register_middleware('react_tool_tracker')
+class ReActToolTrackerMiddleware(TinyBaseMiddleware):
+    """Middleware that tracks tool calls in ReAct agent."""
 
     def __init__(self) -> None:
-        self.cycles: list[dict[str, Any]] = []
-        self.current_cycle: dict[str, Any] = {}
-        self.iteration = 0
+        self.tool_calls: list[dict[str, Any]] = []
+        self.total_calls = 0
 
-    def on_reasoning(
-        self, *, run_id: str, reasoning: str, kwargs: dict[str, Any]
-    ) -> None:
-        self.iteration += 1
-        self.current_cycle = {
-            'iteration': self.iteration,
-            'thought': reasoning,
-        }
-        print(
-            TinyColorPrinter.custom(
-                'THOUGHT',
-                f'[Iteration #{self.iteration}] {reasoning[:150]}...'
-                if len(reasoning) > 150
-                else f'[Iteration #{self.iteration}] {reasoning}',
-                color='CYAN',
-            )
-        )
-
-    def before_tool_call(
+    async def before_tool_call(
         self,
         *,
         run_id: str,
-        tool: Any,
+        tool: AbstractTool,
         args: dict[str, Any],
         kwargs: dict[str, Any],
     ) -> None:
-        self.current_cycle['action'] = {
-            'tool': tool.info.name,
-            'args': args,
-        }
+        self.total_calls += 1
         print(
             TinyColorPrinter.custom(
-                'ACTION',
-                f'[Iteration #{self.iteration}] {tool.info.name}({args})',
+                'TOOL CALL',
+                f'[Call #{self.total_calls}] {tool.info.name}({args})',
                 color='YELLOW',
             )
         )
 
-    def after_tool_call(
+    async def after_tool_call(
         self,
         *,
         run_id: str,
-        tool: Any,
+        tool: AbstractTool,
         args: dict[str, Any],
         result: Any,
         kwargs: dict[str, Any],
     ) -> None:
-        self.current_cycle['observation'] = str(result)
-        self.cycles.append(self.current_cycle)
+        call_record = {
+            'tool': tool.info.name,
+            'args': args,
+            'result': str(result),
+        }
+        self.tool_calls.append(call_record)
         print(
             TinyColorPrinter.custom(
-                'OBSERVATION',
-                f'[Iteration #{self.iteration}] {str(result)[:100]}...'
+                'TOOL RESULT',
+                f'[Call #{self.total_calls}] {str(result)[:100]}...'
                 if len(str(result)) > 100
-                else f'[Iteration #{self.iteration}] {result}',
+                else f'[Call #{self.total_calls}] {result}',
                 color='MAGENTA',
             )
         )
 
-    def on_answer(self, *, run_id: str, answer: str, kwargs: dict[str, Any]) -> None:
+    async def on_tool_reasoning(
+        self, *, run_id: str, reasoning: str, kwargs: dict[str, Any]
+    ) -> None:
+        print(
+            TinyColorPrinter.custom(
+                'TOOL REASONING',
+                f'{reasoning[:150]}...' if len(reasoning) > 150 else reasoning,
+                color='CYAN',
+            )
+        )
+
+    async def on_answer(
+        self, *, run_id: str, answer: str, kwargs: dict[str, Any]
+    ) -> None:
         print(
             TinyColorPrinter.custom(
                 'FINAL ANSWER',
-                f'[Run: {run_id[:8]}...] After {self.iteration} iterations',
+                f'[Run: {run_id[:8]}...] After {self.total_calls} tool calls',
                 color='GREEN',
             )
         )
 
-    def on_answer_chunk(
+    async def on_answer_chunk(
         self, *, run_id: str, chunk: str, idx: str, kwargs: dict[str, Any]
     ) -> None:
-        # For streaming responses
         print(
             TinyColorPrinter.custom(
                 'STREAM',
@@ -107,22 +102,21 @@ class ReActCycleMiddleware(TinyBaseMiddleware):
             )
         )
 
-    def on_error(self, *, run_id: str, e: Exception, kwargs: dict[str, Any]) -> None:
-        print(TinyColorPrinter.error(f'[Iteration #{self.iteration}] Error: {e}'))
+    async def on_error(
+        self, *, run_id: str, e: Exception, kwargs: dict[str, Any]
+    ) -> None:
+        print(TinyColorPrinter.error(f'Error: {e}'))
 
-    def get_cycle_log(self) -> list[dict[str, Any]]:
-        """Return the complete cycle log."""
-        return self.cycles
+    def get_tool_calls(self) -> list[dict[str, Any]]:
+        """Return all tool calls."""
+        return self.tool_calls
 
     def get_summary(self) -> dict[str, Any]:
-        """Return summary of ReAct cycles."""
-        tools_used = [
-            c.get('action', {}).get('tool') for c in self.cycles if 'action' in c
-        ]
+        """Return summary of tool usage."""
+        tools_used = [c['tool'] for c in self.tool_calls]
         return {
-            'total_iterations': self.iteration,
-            'completed_cycles': len(self.cycles),
-            'tools_used': list(set(tools_used)),
+            'total_calls': self.total_calls,
+            'unique_tools': list(set(tools_used)),
         }
 
 
@@ -157,7 +151,7 @@ def get_best_destination(data: GetBestDestinationInput) -> list[str]:
 async def main():
     react_agent_prompt = tiny_yaml_load(str(Path(__file__).parent / 'prompts.yaml'))
 
-    react_middleware = ReActCycleMiddleware()
+    react_middleware = ReActToolTrackerMiddleware()
 
     react_agent = TinyReActAgent(
         llm=build_llm('openai:gpt-4o', temperature=0.1),
@@ -179,19 +173,14 @@ async def main():
     logger.info('[MEMORY] %s', react_agent.memory.load_variables())
     logger.info('[AGENT SUMMARY] %s', str(react_agent))
 
-    print('\nReAct Cycle Summary:')
+    print('\nTool Usage Summary:')
     summary = react_middleware.get_summary()
     for key, value in summary.items():
         print(f'\t{key}: {value}')
 
-    print('\nCycle Log:')
-    for cycle in react_middleware.get_cycle_log():
-        print(f'\tIteration {cycle.get("iteration")}:')
-        print(f'\t\tThought: {cycle.get("thought", "N/A")[:80]}...')
-        if 'action' in cycle:
-            print(f'\t\tAction: {cycle["action"]["tool"]}')
-        if 'observation' in cycle:
-            print(f'\t\tObservation: {cycle["observation"][:50]}...')
+    print('\nTool Call Log:')
+    for i, call in enumerate(react_middleware.get_tool_calls(), 1):
+        print(f'\t{i}. {call["tool"]}({call["args"]}) -> {call["result"][:50]}...')
 
 
 if __name__ == '__main__':

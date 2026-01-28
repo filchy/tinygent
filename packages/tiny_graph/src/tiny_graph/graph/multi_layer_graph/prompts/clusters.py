@@ -1,8 +1,8 @@
-from tinygent.core.types.prompt_template import TinyPromptTemplate
+from tinygent.core.prompt import TinyPrompt
 
 
-def get_new_clusters_proposal_prompt() -> TinyPromptTemplate.UserSystem:
-    return TinyPromptTemplate.UserSystem(
+def get_new_clusters_proposal_prompt() -> TinyPrompt.UserSystem:
+    return TinyPrompt.UserSystem(
         system=(
             'You are an expert knowledge-graph curator. '
             'Your task is to decide whether NEW CLUSTERS should be created. '

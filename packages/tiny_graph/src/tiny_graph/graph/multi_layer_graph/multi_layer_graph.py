@@ -53,12 +53,12 @@ from tinygent.core.datamodels.llm import AbstractLLM
 from tinygent.core.datamodels.messages import BaseMessage
 from tinygent.core.datamodels.messages import TinyHumanMessage
 from tinygent.core.datamodels.messages import TinySystemMessage
+from tinygent.core.prompt import TinyPrompt
 from tinygent.core.runtime.executors import run_in_semaphore
 from tinygent.core.telemetry.decorators import tiny_trace
 from tinygent.core.telemetry.otel import set_tiny_attributes
 from tinygent.core.types.base import TinyModel
 from tinygent.core.types.io.llm_io_input import TinyLLMInput
-from tinygent.core.types.prompt_template import TinyPromptTemplate
 from tinygent.utils import render_template
 
 logger = logging.getLogger(__name__)
@@ -85,13 +85,13 @@ class AddRecordResult(TinyModel):
     cluster_edges: list[TinyClusterEdge]
 
 
-class EntityExtractorPromptTemplate(TinyPromptTemplate):
+class EntityExtractorPromptTemplate(TinyPrompt):
     """Used to define prompt template for entity extraction."""
 
-    extract_text: TinyPromptTemplate.UserSystem
-    extract_message: TinyPromptTemplate.UserSystem
-    extract_json: TinyPromptTemplate.UserSystem
-    reflexion: TinyPromptTemplate.UserSystem
+    extract_text: TinyPrompt.UserSystem
+    extract_message: TinyPrompt.UserSystem
+    extract_json: TinyPrompt.UserSystem
+    reflexion: TinyPrompt.UserSystem
 
     _template_fields = {
         'extract_text.user': {'event_content'},

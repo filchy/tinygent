@@ -1,5 +1,5 @@
-from tinygent.core.types.prompt_template import TinyPromptTemplate
+from tinygent.core.prompt import TinyPrompt
 
 
-class LLMToolSelectorPromptTemplate(TinyPromptTemplate, TinyPromptTemplate.UserSystem):
+class LLMToolSelectorPromptTemplate(TinyPrompt, TinyPrompt.UserSystem):
     _template_fields = {'user': {'tools'}}

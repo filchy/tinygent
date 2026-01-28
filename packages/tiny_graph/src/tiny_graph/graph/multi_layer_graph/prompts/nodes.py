@@ -1,8 +1,8 @@
-from tinygent.core.types.prompt_template import TinyPromptTemplate
+from tinygent.core.prompt import TinyPrompt
 
 
-def get_llm_resolve_duplicites_prompt_template() -> TinyPromptTemplate.UserSystem:
-    return TinyPromptTemplate.UserSystem(
+def get_llm_resolve_duplicites_prompt_template() -> TinyPrompt.UserSystem:
+    return TinyPrompt.UserSystem(
         system='You are a helpful assistant that determines whether or not ENTITIES extracted from a conversation are duplicates of existing entities.',
         user="""<PREVIOUS MESSAGES>
 {{ previous_events }}
@@ -64,8 +64,8 @@ For every entity, return an object with the following keys:
     )
 
 
-def get_entity_attributes_extraction_prompt() -> TinyPromptTemplate.UserSystem:
-    return TinyPromptTemplate.UserSystem(
+def get_entity_attributes_extraction_prompt() -> TinyPrompt.UserSystem:
+    return TinyPrompt.UserSystem(
         system='You are a helpful assistant that extracts entity properties from the provided text.',
         user="""Given the MESSAGES and the following ENTITY, update any of its attributes based on the information provided
 in MESSAGES. Use the provided attribute descriptions to better understand how each attribute should be determined.
@@ -86,8 +86,8 @@ Guidelines:
     )
 
 
-def get_entity_summary_creation_prompt() -> TinyPromptTemplate.UserSystem:
-    return TinyPromptTemplate.UserSystem(
+def get_entity_summary_creation_prompt() -> TinyPrompt.UserSystem:
+    return TinyPrompt.UserSystem(
         system='You are a helpful assistant that extracts entity summaries from the provided text.',
         user="""Given the MESSAGES and the ENTITY, update the summary that combines relevant information about the entity
 from the messages and relevant information from the existing summary. Write only new summarization text, nothing else.

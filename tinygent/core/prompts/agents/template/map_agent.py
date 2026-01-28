@@ -1,19 +1,19 @@
+from tinygent.core.prompt import TinyPrompt
 from tinygent.core.types.base import TinyModel
-from tinygent.core.types.prompt_template import TinyPromptTemplate
 
 
-class OrchestratorPromptTemplate(TinyPromptTemplate, TinyPromptTemplate.UserSystem):
+class OrchestratorPromptTemplate(TinyPrompt, TinyPrompt.UserSystem):
     """Used to define orchestrator prompt template."""
 
     _template_fields = {'user': {'question', 'answer'}}
 
 
-class MonitorPrompTemplate(TinyPromptTemplate):
+class MonitorPrompTemplate(TinyPrompt):
     """Used to define monitor prompt template."""
 
-    init: TinyPromptTemplate.UserSystem
+    init: TinyPrompt.UserSystem
 
-    continuos: TinyPromptTemplate.UserSystem
+    continuos: TinyPrompt.UserSystem
 
     _template_fields = {
         'init.user': {'question', 'answer'},
@@ -21,18 +21,18 @@ class MonitorPrompTemplate(TinyPromptTemplate):
     }
 
 
-class ActorPromptTemplate(TinyPromptTemplate):
+class ActorPromptTemplate(TinyPrompt):
     """Used to define actor prompt template."""
 
-    init: TinyPromptTemplate.UserSystem
+    init: TinyPrompt.UserSystem
 
-    init_fixer: TinyPromptTemplate.UserSystem
+    init_fixer: TinyPrompt.UserSystem
 
-    continuos: TinyPromptTemplate.UserSystem
+    continuos: TinyPrompt.UserSystem
 
-    continuos_fixer: TinyPromptTemplate.UserSystem
+    continuos_fixer: TinyPrompt.UserSystem
 
-    evaluator: TinyPromptTemplate.UserSystem
+    evaluator: TinyPrompt.UserSystem
 
     _template_fields = {
         'init.user': {'question'},
@@ -51,13 +51,13 @@ class ActionProposalPromptTemplate(TinyModel):
     monitor: MonitorPrompTemplate
 
 
-class TaskDecomposerPromptTemplate(TinyPromptTemplate, TinyPromptTemplate.UserSystem):
+class TaskDecomposerPromptTemplate(TinyPrompt, TinyPrompt.UserSystem):
     """Used to define task decomposer prompt template."""
 
     _template_fields = {'user': {'question', 'max_subquestions'}}
 
 
-class PredictorPromptTemplate(TinyPromptTemplate, TinyPromptTemplate.UserSystem):
+class PredictorPromptTemplate(TinyPrompt, TinyPrompt.UserSystem):
     """Used to define predictor prompt template."""
 
     _template_fields = {'user': {'state', 'proposed_action'}}
