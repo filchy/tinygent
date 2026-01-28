@@ -8,6 +8,17 @@ license = "MIT"
 readme = "README.md"
 requires-python = "==3.12.*"
 
+keywords = ["ai", "agents", "llm", "openai", "anthropic", "agentic", "framework"]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
 dependencies = [
     "async-lru>=2.0.5",
     "jinja2>=3.1.6",
@@ -19,9 +30,10 @@ dependencies = [
     "typer>=0.19.2",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[project.urls]
+Homepage = "https://github.com/filchy/tinygent"
+Repository = "https://github.com/filchy/tinygent"
+Issues = "https://github.com/filchy/tinygent/issues"
 
 [project.optional-dependencies]
 dev = [
@@ -54,6 +66,10 @@ tiny_middlewares = "tinygent.agents.middleware.register"
 tiny_tools = "tinygent.tools.register"
 tiny_memory = "tinygent.memory.register"
 tiny_crossencoders = "tinygent.cross_encoders.register"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.uv]
 package = true
