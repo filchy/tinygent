@@ -1,12 +1,23 @@
 [project]
 name = "tinygent"
-version = "0.1.0"
+version = "0.1.1"
 description = "Tiny agentic framework for building AI agents which can do more than tiny just tasks."
 authors = [{ name = "Filip Chytil" }]
 
 license = "MIT"
 readme = "README.md"
 requires-python = "==3.12.*"
+
+keywords = ["ai", "agents", "llm", "openai", "anthropic", "agentic", "framework"]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 
 dependencies = [
     "async-lru>=2.0.5",
@@ -19,9 +30,10 @@ dependencies = [
     "typer>=0.19.2",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[project.urls]
+Homepage = "https://github.com/filchy/tinygent"
+Repository = "https://github.com/filchy/tinygent"
+Issues = "https://github.com/filchy/tinygent/issues"
 
 [project.optional-dependencies]
 dev = [
@@ -33,14 +45,14 @@ docs = [
     "mkdocs-material>=9.7.1",
     "mkdocstrings[python]>=1.0.2",
 ]
-brave = ["tiny-brave"]
-anthropic = ["tiny-anthropic"]
-openai = ["tiny-openai"]
-mistralai = ["tiny-mistralai"]
-gemini = ["tiny-gemini"]
-chat = ["tiny-chat"]
-graph = ["tiny-graph"]
-voyageai = ["tiny-voyageai"]
+brave = ["tinygent-brave"]
+anthropic = ["tinygent-anthropic"]
+openai = ["tinygent-openai"]
+mistralai = ["tinygent-mistralai"]
+gemini = ["tinygent-gemini"]
+chat = ["tinygent-chat"]
+graph = ["tinygent-graph"]
+voyageai = ["tinygent-voyageai"]
 
 [project.scripts]
 tiny = "tinygent.cli.main:run_cli"
@@ -55,6 +67,10 @@ tiny_tools = "tinygent.tools.register"
 tiny_memory = "tinygent.memory.register"
 tiny_crossencoders = "tinygent.cross_encoders.register"
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [tool.uv]
 package = true
 
@@ -62,14 +78,14 @@ package = true
 members = ["packages/*", "."]
 
 [tool.uv.sources]
-tiny-brave = { workspace = true }
-tiny-anthropic = { workspace = true }
-tiny-openai = { workspace = true }
-tiny-mistralai = { workspace = true }
-tiny-gemini = { workspace = true }
-tiny-chat = { workspace = true }
-tiny-graph = { workspace = true }
-tiny-voyageai = { workspace = true }
+tinygent-brave = { workspace = true }
+tinygent-anthropic = { workspace = true }
+tinygent-openai = { workspace = true }
+tinygent-mistralai = { workspace = true }
+tinygent-gemini = { workspace = true }
+tinygent-chat = { workspace = true }
+tinygent-graph = { workspace = true }
+tinygent-voyageai = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["tinygent"]
