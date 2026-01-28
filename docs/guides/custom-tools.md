@@ -7,7 +7,7 @@ A comprehensive guide to creating powerful custom tools for your agents.
 ## Quick Start
 
 ```python
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 
 @tool
 def hello_world(name: str) -> str:
@@ -32,7 +32,7 @@ Every tool needs three things:
 3. **Docstring**: Describes what the tool does
 
 ```python
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 
 @tool  # 1. Decorator
 def search_database(query: str, limit: int = 10) -> list[dict]:  # 2. Type hints
@@ -105,8 +105,8 @@ For complex validation and documentation:
 
 ```python
 from pydantic import Field, field_validator, EmailStr
-from tinygent.core.types.base import TinyModel
-from tinygent.tools.tool import register_tool
+from tinygent.core.types import TinyModel
+from tinygent.tools import register_tool
 
 class EmailInput(TinyModel):
     to: EmailStr = Field(..., description='Recipient email address')
@@ -245,7 +245,7 @@ expensive_computation.clear_cache()
 Require the agent to explain its reasoning:
 
 ```python
-from tinygent.tools.reasoning_tool import register_reasoning_tool
+from tinygent.tools import register_reasoning_tool
 
 @register_reasoning_tool(
     reasoning_prompt='Explain why you need to delete this record.'
@@ -275,7 +275,7 @@ def delete_record(record_id: int) -> str:
 Generate code at runtime:
 
 ```python
-from tinygent.tools.jit_tool import jit_tool
+from tinygent.tools import jit_tool
 
 @jit_tool(
     jit_instruction='Generate code to process data according to user requirements.'

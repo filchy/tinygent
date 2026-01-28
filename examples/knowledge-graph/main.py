@@ -9,10 +9,10 @@ from tiny_graph.graph.multi_layer_graph.datamodels.clients import TinyGraphClien
 from tiny_graph.graph.multi_layer_graph.search.search_presets import (
     NODE_HYBRID_SEARCH_RRF,
 )
-from tinygent.core.factory.cross_encoder import build_cross_encoder
-from tinygent.core.factory.embedder import build_embedder
-from tinygent.core.factory.llm import build_llm
-from tinygent.core.types.base import TinyModel
+from tinygent.core.factory import build_cross_encoder
+from tinygent.core.factory import build_embedder
+from tinygent.core.factory import build_llm
+from tinygent.core.types import TinyModel
 from tinygent.logging import setup_logger
 
 logger = setup_logger('debug')

@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 from abc import ABC
 from abc import abstractmethod
 import logging
+from typing import TYPE_CHECKING
 from typing import Annotated
 from typing import Any
 from typing import Generic
@@ -11,8 +14,10 @@ from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import PrivateAttr
 
-from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.types.base import TinyModel
+
+if TYPE_CHECKING:
+    from tinygent.core.datamodels.tool import AbstractTool
 
 logger = logging.getLogger(__name__)
 

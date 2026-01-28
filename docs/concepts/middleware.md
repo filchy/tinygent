@@ -21,7 +21,7 @@ Think of middleware as **event listeners** for agent operations.
 ## Basic Example
 
 ```python
-from tinygent.agents.middleware.base import TinyBaseMiddleware
+from tinygent.agents.middleware import TinyBaseMiddleware
 
 class LoggingMiddleware(TinyBaseMiddleware):
     def on_reasoning(self, *, run_id: str, reasoning: str, **kwargs) -> None:
@@ -131,7 +131,7 @@ Track the Thought-Action-Observation cycle:
 
 ```python
 from typing import Any
-from tinygent.agents.middleware.base import TinyBaseMiddleware
+from tinygent.agents.middleware import TinyBaseMiddleware
 
 class ReActCycleMiddleware(TinyBaseMiddleware):
     def __init__(self) -> None:
@@ -361,7 +361,7 @@ agent = build_agent(
 Make middleware reusable:
 
 ```python
-from tinygent.agents.middleware.base import TinyBaseMiddleware
+from tinygent.agents.middleware import TinyBaseMiddleware
 
 @register_middleware('logging')
 class LoggingMiddleware(TinyBaseMiddleware):
@@ -638,7 +638,7 @@ middleware = [
 **Using Config Factory:**
 
 ```python
-from tinygent.agents.middleware.tool_limiter import TinyToolCallLimiterMiddlewareConfig
+from tinygent.agents.middleware import TinyToolCallLimiterMiddlewareConfig
 
 # Create via config
 config = TinyToolCallLimiterMiddlewareConfig(
@@ -726,9 +726,7 @@ selector = TinyLLMToolSelectorMiddleware(
 **Custom Prompt Template:**
 
 ```python
-from tinygent.core.prompts.agents.middleware.template.llm_tool_selector import (
-    LLMToolSelectorPromptTemplate
-)
+from tinygent.prompts.middleware import LLMToolSelectorPromptTemplate
 
 custom_prompt = LLMToolSelectorPromptTemplate(
     system="You are a tool selection expert. Select only the most relevant tools.",
@@ -745,9 +743,7 @@ selector = TinyLLMToolSelectorMiddleware(
 **Using Config Factory:**
 
 ```python
-from tinygent.agents.middleware.llm_tool_selector import (
-    TinyLLMToolSelectorMiddlewareConfig
-)
+from tinygent.agents.middleware import TinyLLMToolSelectorMiddlewareConfig
 
 # Create via config
 config = TinyLLMToolSelectorMiddlewareConfig(

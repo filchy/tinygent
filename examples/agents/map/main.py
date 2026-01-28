@@ -1,16 +1,16 @@
 from pathlib import Path
 from typing import Any
 
-from tinygent.agents.map_agent import MapPromptTemplate
-from tinygent.agents.map_agent import TinyMAPAgent
-from tinygent.agents.middleware.base import TinyBaseMiddleware
-from tinygent.agents.middleware.base import register_middleware
+from tinygent.agents import TinyMAPAgent
+from tinygent.agents.middleware import TinyBaseMiddleware
+from tinygent.agents.middleware import register_middleware
 from tinygent.core.factory import build_llm
-from tinygent.core.types.io.llm_io_input import TinyLLMInput
+from tinygent.core.types import TinyLLMInput
 from tinygent.logging import setup_logger
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
-from tinygent.utils.color_printer import TinyColorPrinter
-from tinygent.utils.yaml import tiny_yaml_load
+from tinygent.memory import BufferChatMemory
+from tinygent.prompts import MapPromptTemplate
+from tinygent.utils import TinyColorPrinter
+from tinygent.utils import tiny_yaml_load
 
 logger = setup_logger('debug')
 

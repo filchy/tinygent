@@ -30,7 +30,7 @@
 
 ```python
 from tinygent.core.datamodels.messages import TinyChatMessage, TinyHumanMessage, TinyPlanMessage
-from tinygent.core.factory.llm import build_llm
+from tinygent.core.factory import build_llm
 from tinygent.memory import BufferSummaryChatMemory
 
 memory = BufferSummaryChatMemory(

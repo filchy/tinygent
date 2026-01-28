@@ -21,7 +21,7 @@ Built with modern Python best practices, Tinygent provides:
 Tinygent follows the principle of progressive disclosure - start simple, grow complex only when needed.
 
 ```python
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 from tinygent.core.factory import build_agent
 
 @tool
@@ -95,7 +95,7 @@ agent = config.build()
 Components auto-register for global discovery:
 
 ```python
-from tinygent.tools.tool import register_tool
+from tinygent.tools import register_tool
 
 @register_tool
 def search(query: str) -> str:
@@ -131,7 +131,7 @@ Built with Pydantic for runtime validation and excellent IDE support:
 
 ```python
 from pydantic import Field
-from tinygent.core.types.base import TinyModel
+from tinygent.core.types import TinyModel
 
 class WeatherInput(TinyModel):
     location: str = Field(..., description='The location to get weather for')
@@ -169,7 +169,7 @@ uv sync --extra openai
 Create a file `my_agent.py`:
 
 ```python
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 from tinygent.core.factory import build_agent
 
 @tool

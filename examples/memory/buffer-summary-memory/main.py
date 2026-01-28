@@ -1,7 +1,7 @@
 from tinygent.core.datamodels.messages import TinyChatMessage
 from tinygent.core.datamodels.messages import TinyHumanMessage
 from tinygent.core.datamodels.messages import TinyPlanMessage
-from tinygent.core.factory.llm import build_llm
+from tinygent.core.factory import build_llm
 from tinygent.memory import BufferSummaryChatMemory
 
 

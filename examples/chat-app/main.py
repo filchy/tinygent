@@ -8,17 +8,17 @@ from tiny_brave import NewsSearchApiResponse
 from tiny_brave import NewsSearchRequest
 from tiny_brave import brave_news_search
 import tiny_chat as tc
-from tinygent.agents.middleware.base import TinyBaseMiddleware
-from tinygent.agents.react_agent import ReActPromptTemplate
-from tinygent.agents.react_agent import TinyReActAgent
+from tinygent.agents import TinyReActAgent
+from tinygent.agents.middleware import TinyBaseMiddleware
 from tinygent.cli.utils import discover_and_register_components
 from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.factory import build_llm
-from tinygent.core.types.base import TinyModel
+from tinygent.core.types import TinyModel
 from tinygent.logging import setup_logger
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
-from tinygent.tools.tool import register_tool
-from tinygent.utils.yaml import tiny_yaml_load
+from tinygent.memory import BufferChatMemory
+from tinygent.prompts import ReActPromptTemplate
+from tinygent.tools import register_tool
+from tinygent.utils import tiny_yaml_load
 
 logger = setup_logger('debug')
 
@@ -37,13 +37,17 @@ async def brave_news(data: BraveNewsConfig):
 
 
 class ChatClientMiddleware(TinyBaseMiddleware):
-    async def on_answer(self, *, run_id: str, answer: str) -> None:
+    async def on_answer(
+        self, *, run_id: str, answer: str, kwargs: dict[str, Any]
+    ) -> None:
         await tc.AgentMessage(
             id=run_id,
             content=answer,
         ).send()
 
-    async def on_answer_chunk(self, *, run_id: str, chunk: str, idx: str) -> None:
+    async def on_answer_chunk(
+        self, *, run_id: str, chunk: str, idx: str, kwargs: dict[str, Any]
+    ) -> None:
         await tc.AgentMessageChunk(
             id=run_id,
             content=chunk,
@@ -56,6 +60,7 @@ class ChatClientMiddleware(TinyBaseMiddleware):
         tool: AbstractTool,
         args: dict[str, Any],
         result: Any,
+        kwargs: dict[str, Any],
     ) -> None:
         await tc.AgentToolCallMessage(
             id=str(uuid.uuid4()),

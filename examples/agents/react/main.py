@@ -3,18 +3,18 @@ from typing import Any
 
 from pydantic import Field
 
-from tinygent.agents.middleware.base import TinyBaseMiddleware
-from tinygent.agents.middleware.base import register_middleware
-from tinygent.agents.react_agent import ReActPromptTemplate
-from tinygent.agents.react_agent import TinyReActAgent
+from tinygent.agents import TinyReActAgent
+from tinygent.agents.middleware import TinyBaseMiddleware
+from tinygent.agents.middleware import register_middleware
 from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.factory import build_llm
-from tinygent.core.types.base import TinyModel
+from tinygent.core.types import TinyModel
 from tinygent.logging import setup_logger
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
-from tinygent.tools.tool import register_tool
-from tinygent.utils.color_printer import TinyColorPrinter
-from tinygent.utils.yaml import tiny_yaml_load
+from tinygent.memory import BufferChatMemory
+from tinygent.prompts import ReActPromptTemplate
+from tinygent.tools import register_tool
+from tinygent.utils import TinyColorPrinter
+from tinygent.utils import tiny_yaml_load
 
 logger = setup_logger('debug')
 

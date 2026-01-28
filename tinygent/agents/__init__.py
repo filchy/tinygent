@@ -1,3 +1,22 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tinygent.prompts.map import MapPromptTemplate
+    from tinygent.prompts.multistep import MultiStepPromptTemplate
+    from tinygent.prompts.react import ReActPromptTemplate
+    from tinygent.prompts.squad import SquadPromptTemplate
+
+    from .base_agent import TinyBaseAgent
+    from .base_agent import TinyBaseAgentConfig
+    from .map_agent import TinyMAPAgent
+    from .map_agent import TinyMAPAgentConfig
+    from .multi_step_agent import TinyMultiStepAgent
+    from .multi_step_agent import TinyMultiStepAgentConfig
+    from .react_agent import TinyReActAgent
+    from .react_agent import TinyReActAgentConfig
+    from .squad_agent import TinySquadAgent
+    from .squad_agent import TinySquadAgentConfig
+
 __all__ = [
     'TinyBaseAgent',
     'TinyBaseAgentConfig',
@@ -9,6 +28,10 @@ __all__ = [
     'TinySquadAgentConfig',
     'TinyMAPAgent',
     'TinyMAPAgentConfig',
+    'ReActPromptTemplate',
+    'MultiStepPromptTemplate',
+    'SquadPromptTemplate',
+    'MapPromptTemplate',
 ]
 
 
@@ -62,5 +85,25 @@ def __getattr__(name):
         from .map_agent import TinyMAPAgentConfig
 
         return TinyMAPAgentConfig
+
+    if name == 'ReActPromptTemplate':
+        from tinygent.prompts.react import ReActPromptTemplate
+
+        return ReActPromptTemplate
+
+    if name == 'MultiStepPromptTemplate':
+        from tinygent.prompts.multistep import MultiStepPromptTemplate
+
+        return MultiStepPromptTemplate
+
+    if name == 'SquadPromptTemplate':
+        from tinygent.prompts.squad import SquadPromptTemplate
+
+        return SquadPromptTemplate
+
+    if name == 'MapPromptTemplate':
+        from tinygent.prompts.map import MapPromptTemplate
+
+        return MapPromptTemplate
 
     raise AttributeError(name)

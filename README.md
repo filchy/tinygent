@@ -21,7 +21,7 @@ Tinygent is a tiny agentic framework - lightweight, easy to use (hopefully), and
 ```python
 # uv sync --extra openai
 
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 from tinygent.core.factory import build_agent
 
 @tool
