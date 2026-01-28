@@ -6,12 +6,16 @@ on:
       - master
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
+
+    env:
+      VERSION_PREFIX: "0.1"
+      VERSION_OFFSET: 1000
 
     steps:
       - name: Checkout repository
@@ -22,6 +26,31 @@ jobs:
 
       - name: Set up Python
         run: uv python install 3.12
+
+      - name: Update versions with build number
+        run: |
+          BUILD_NUMBER=$(printf "%04d" $(($VERSION_OFFSET + ${{ github.run_number }})))
+          VERSION="${VERSION_PREFIX}.${BUILD_NUMBER}"
+
+          # Update main package version
+          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" pyproject.toml
+
+          # Update all workspace package versions
+          for pkg in packages/*/pyproject.toml; do
+            sed -i "s/^version = \".*\"/version = \"$VERSION\"/" "$pkg"
+          done
+
+          echo "Updated versions to $VERSION"
+
+      - name: Commit version changes
+        run: |
+          BUILD_NUMBER=$(printf "%04d" $(($VERSION_OFFSET + ${{ github.run_number }})))
+          VERSION="${VERSION_PREFIX}.${BUILD_NUMBER}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml packages/*/pyproject.toml
+          git commit -m "Bump version to $VERSION [skip ci]" || echo "No changes to commit"
+          git push origin master
 
       - name: Build all packages
         run: uv build --all-packages
