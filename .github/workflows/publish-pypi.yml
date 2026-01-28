@@ -6,7 +6,7 @@ on:
       - master
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   publish:
@@ -40,17 +40,7 @@ jobs:
             sed -i "s/^version = \".*\"/version = \"$VERSION\"/" "$pkg"
           done
 
-          echo "Updated versions to $VERSION"
-
-      - name: Commit version changes
-        run: |
-          BUILD_NUMBER=$(printf "%04d" $(($VERSION_OFFSET + ${{ github.run_number }})))
-          VERSION="${VERSION_PREFIX}.${BUILD_NUMBER}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add pyproject.toml packages/*/pyproject.toml
-          git commit -m "Bump version to $VERSION [skip ci]" || echo "No changes to commit"
-          git push origin master
+          echo "Publishing version $VERSION to PyPI"
 
       - name: Build all packages
         run: uv build --all-packages
