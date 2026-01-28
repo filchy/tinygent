@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "tiny-voyageai"
-version = "0.1.0"
+name = "tinygent-voyageai"
+version = "0.1.1"
 dependencies = [
     "tinygent",
     "voyageai>=0.3.7",

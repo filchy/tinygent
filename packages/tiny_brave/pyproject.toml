@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "tiny-brave"
-version = "0.1.0"
+name = "tinygent-brave"
+version = "0.1.1"
 dependencies = [
     "httpx>=0.28.1",
     "pydantic>=2.11.7",

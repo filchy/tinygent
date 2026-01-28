@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "tiny-mistralai"
-version = "0.1.0"
+name = "tinygent-mistralai"
+version = "0.1.1"
 dependencies = [
     "mistral-common>=1.8.5",
     "mistralai>=1.9.11",

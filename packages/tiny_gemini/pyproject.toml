@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "tiny-gemini"
-version = "0.1.0"
+name = "tinygent-gemini"
+version = "0.1.1"
 dependencies = [
     "google-genai>=1.49.0",
     "tinygent",
