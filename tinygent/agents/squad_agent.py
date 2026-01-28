@@ -25,14 +25,14 @@ from tinygent.core.datamodels.messages import TinySystemMessage
 from tinygent.core.datamodels.middleware import AbstractMiddleware
 from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.factory.agent import build_agent
-from tinygent.core.prompts.agents.factory.squad_agent import get_prompt_template
-from tinygent.core.prompts.agents.template.squad_agent import SquadPromptTemplate
 from tinygent.core.runtime.executors import run_async_in_executor
 from tinygent.core.telemetry.decorators import tiny_trace
 from tinygent.core.telemetry.otel import set_tiny_attributes
 from tinygent.core.telemetry.otel import tiny_trace_span
 from tinygent.core.types.base import TinyModel
 from tinygent.core.types.io.llm_io_input import TinyLLMInput
+from tinygent.prompts.squad import SquadPromptTemplate
+from tinygent.prompts.squad import get_prompt_template
 from tinygent.utils.jinja_utils import render_template
 
 logger = logging.getLogger(__name__)

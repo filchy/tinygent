@@ -21,7 +21,7 @@ agent.run("What is my name?")
 With memory, agents remember context:
 
 ```python
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.memory import BufferChatMemory
 
 agent = build_agent(
     'react',
@@ -50,7 +50,7 @@ Tinygent provides 4 built-in memory types:
 Stores all messages in a list:
 
 ```python
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.memory import BufferChatMemory
 
 memory = BufferChatMemory()
 
@@ -97,7 +97,7 @@ print(memory.load_variables())
 Summarizes old messages to save tokens:
 
 ```python
-from tinygent.memory.summary_buffer_memory import SummaryBufferMemory
+from tinygent.memory import SummaryBufferMemory
 
 memory = SummaryBufferMemory(
     llm=build_llm('openai:gpt-4o-mini'),
@@ -147,7 +147,7 @@ print(memory.load_variables())
 Keeps only the last N messages:
 
 ```python
-from tinygent.memory.window_buffer_memory import WindowBufferMemory
+from tinygent.memory import WindowBufferMemory
 
 memory = WindowBufferMemory(window_size=4)  # Keep last 4 messages
 
@@ -191,9 +191,9 @@ agent.run("Message 5")
 Combine different memory types:
 
 ```python
-from tinygent.memory.combined_memory import CombinedMemory
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
-from tinygent.memory.window_buffer_memory import WindowBufferMemory
+from tinygent.memory import CombinedMemory
+from tinygent.memory import BufferChatMemory
+from tinygent.memory import WindowBufferMemory
 
 # Full history + recent window
 combined = CombinedMemory(
@@ -342,7 +342,7 @@ memory._chat_history.remove_filter('only_human')
 Create custom memory classes:
 
 ```python
-from tinygent.memory.base import BaseMemory
+from tinygent.memory import BaseMemory
 
 class KeywordMemory(BaseMemory):
     """Memory that only saves messages containing keywords."""
@@ -428,7 +428,7 @@ MultiStep agents benefit from memory:
 
 ```python
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.memory import BufferChatMemory
 
 agent = TinyMultiStepAgent(
     llm=build_llm('openai:gpt-4o'),
@@ -502,7 +502,7 @@ memory = WindowBufferMemory(window_size=4)
 Track memory changes with middleware:
 
 ```python
-from tinygent.agents.middleware.base import TinyBaseMiddleware
+from tinygent.agents.middleware import TinyBaseMiddleware
 
 class MemoryMonitorMiddleware(TinyBaseMiddleware):
     def on_answer(self, *, run_id: str, answer: str) -> None:

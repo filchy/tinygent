@@ -1,11 +1,11 @@
 from pydantic import Field
 
 from tinygent.core.runtime.tool_catalog import GlobalToolCatalog
-from tinygent.core.types.base import TinyModel
-from tinygent.tools.jit_tool import jit_tool
-from tinygent.tools.reasoning_tool import register_reasoning_tool
-from tinygent.tools.tool import register_tool
-from tinygent.tools.tool import tool
+from tinygent.core.types import TinyModel
+from tinygent.tools import jit_tool
+from tinygent.tools import register_reasoning_tool
+from tinygent.tools import register_tool
+from tinygent.tools import tool
 
 
 class AddInput(TinyModel):

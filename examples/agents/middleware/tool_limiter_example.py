@@ -1,8 +1,8 @@
 from pydantic import Field
 
-from tinygent.agents.middleware.tool_limiter import TinyToolCallLimiterMiddleware
-from tinygent.core.factory.agent import build_agent
-from tinygent.core.types.base import TinyModel
+from tinygent.agents.middleware import TinyToolCallLimiterMiddleware
+from tinygent.core.factory import build_agent
+from tinygent.core.types import TinyModel
 from tinygent.logging import setup_logger
 from tinygent.tools import reasoning_tool
 

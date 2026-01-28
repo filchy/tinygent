@@ -2,9 +2,9 @@ from pydantic import Field
 
 from tinygent.core.datamodels.messages import TinyHumanMessage
 from tinygent.core.factory import build_llm
-from tinygent.core.types.base import TinyModel  # Only needed for Variant 1
-from tinygent.core.types.io.llm_io_input import TinyLLMInput
-from tinygent.tools.tool import tool
+from tinygent.core.types import TinyLLMInput
+from tinygent.core.types import TinyModel  # Only needed for Variant 1
+from tinygent.tools import tool
 
 
 # Variant 1: TinyModel descriptor (explicit schema with field descriptions)

@@ -9,7 +9,7 @@ Explore practical examples of Tinygent in action.
 ### Simple Weather Agent
 
 ```python
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 from tinygent.core.factory import build_agent
 
 @tool

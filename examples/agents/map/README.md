@@ -168,10 +168,11 @@ tiny \
 
 ```python
 from pathlib import Path
-from tinygent.agents.map_agent import MapPromptTemplate, TinyMAPAgent
+from tinygent.agents import TinyMAPAgent
+from tinygent.agents.map_agent import MapPromptTemplate
 from tinygent.core.factory import build_llm
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
-from tinygent.utils.yaml import tiny_yaml_load
+from tinygent.memory import BufferChatMemory
+from tinygent.utils import tiny_yaml_load
 
 # Load prompt templates
 map_agent_prompt = tiny_yaml_load(str(Path(__file__).parent / 'prompts.yaml'))

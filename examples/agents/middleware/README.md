@@ -17,7 +17,7 @@ Middleware in TinyGent follows a class-based pattern. You create custom middlewa
 ### Creating Custom Middleware
 
 ```python
-from tinygent.agents.middleware.base import TinyBaseMiddleware
+from tinygent.agents.middleware import TinyBaseMiddleware
 
 class LoggingMiddleware(TinyBaseMiddleware):
     def before_llm_call(self, *, run_id: str, llm_input: TinyLLMInput):
@@ -52,8 +52,8 @@ class LoggingMiddleware(TinyBaseMiddleware):
 Use `TinyMiddlewareAgent` to combine multiple middleware instances:
 
 ```python
-from tinygent.agents.middleware.agent import TinyMiddlewareAgent
-from tinygent.agents.middleware.base import TinyBaseMiddleware
+from tinygent.agents.middleware import TinyMiddlewareAgent
+from tinygent.agents.middleware import TinyBaseMiddleware
 
 class LoggingMiddleware(TinyBaseMiddleware):
     def on_answer(self, *, run_id: str, answer: str):

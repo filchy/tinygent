@@ -316,7 +316,7 @@ LLMs can call functions (tools):
 
 ```python
 from tinygent.core.factory import build_llm
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 
 @tool
 def get_weather(location: str) -> str:

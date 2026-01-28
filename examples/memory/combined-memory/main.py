@@ -3,7 +3,7 @@ from tinygent.core.datamodels.messages import TinyHumanMessage
 from tinygent.core.datamodels.messages import TinyPlanMessage
 from tinygent.memory import BufferChatMemory
 from tinygent.memory import BufferWindowChatMemory
-from tinygent.memory.combined_memory import CombinedMemory
+from tinygent.memory import CombinedMemory
 
 
 def build_memory() -> CombinedMemory:

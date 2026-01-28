@@ -16,7 +16,7 @@ A tool is a **Python function** that:
 **Example:**
 
 ```python
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 
 @tool
 def get_weather(location: str) -> str:
@@ -50,7 +50,7 @@ Tinygent provides 4 tool decorators for different use cases:
 **Best for**: Quick local tools, no global registration needed
 
 ```python
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 
 @tool
 def calculator(expression: str) -> float:
@@ -81,7 +81,7 @@ agent = build_agent('react', llm='openai:gpt-4o-mini', tools=[calculator])
 **Best for**: Reusable tools, CLI usage, multi-agent systems
 
 ```python
-from tinygent.tools.tool import register_tool
+from tinygent.tools import register_tool
 
 @register_tool(use_cache=True)
 def search_web(query: str) -> str:
@@ -136,7 +136,7 @@ expensive_api_call.clear_cache()
 Reasoning tools require the agent to provide a rationale before calling:
 
 ```python
-from tinygent.tools.reasoning_tool import register_reasoning_tool
+from tinygent.tools import register_reasoning_tool
 
 @register_reasoning_tool(
     reasoning_prompt='Explain why you are performing this search.'
@@ -170,7 +170,7 @@ Observation: Found user record for John Doe
 JIT tools generate and execute code at runtime based on agent instructions:
 
 ```python
-from tinygent.tools.jit_tool import jit_tool
+from tinygent.tools import jit_tool
 
 @jit_tool(jit_instruction='Generate code to count from 1 to n, yielding each number.')
 def count(n: int):
@@ -200,7 +200,7 @@ Tools can accept two input styles:
 
 ```python
 from pydantic import Field
-from tinygent.core.types.base import TinyModel
+from tinygent.core.types import TinyModel
 
 class WeatherInput(TinyModel):
     location: str = Field(..., description='The city or location')

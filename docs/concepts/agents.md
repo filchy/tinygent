@@ -251,7 +251,7 @@ All agents support common configuration options:
 
 ```python
 from tinygent.agents.react_agent import ReactAgentConfig
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.memory import BufferChatMemory
 
 config = ReactAgentConfig(
     llm='openai:gpt-4o-mini',
@@ -285,7 +285,7 @@ agent = build_agent(
 Agents can remember conversation history using memory:
 
 ```python
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.memory import BufferChatMemory
 
 agent = build_agent(
     'react',
@@ -310,7 +310,7 @@ See [Memory](memory.md) for more details.
 Customize agent behavior with middleware hooks:
 
 ```python
-from tinygent.agents.middleware.base import TinyBaseMiddleware
+from tinygent.agents.middleware import TinyBaseMiddleware
 
 class LoggingMiddleware(TinyBaseMiddleware):
     def on_reasoning(self, *, run_id: str, reasoning: str) -> None:

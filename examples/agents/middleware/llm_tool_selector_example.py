@@ -1,12 +1,10 @@
 from pydantic import Field
 
-from tinygent.agents.middleware.llm_tool_selector import (
-    TinyLLMToolSelectorMiddlewareConfig,
-)
-from tinygent.core.factory.agent import build_agent
-from tinygent.core.factory.llm import build_llm
-from tinygent.core.factory.middleware import build_middleware
-from tinygent.core.types.base import TinyModel
+from tinygent.agents.middleware import TinyLLMToolSelectorMiddlewareConfig
+from tinygent.core.factory import build_agent
+from tinygent.core.factory import build_llm
+from tinygent.core.factory import build_middleware
+from tinygent.core.types import TinyModel
 from tinygent.logging import setup_logger
 from tinygent.tools import reasoning_tool
 

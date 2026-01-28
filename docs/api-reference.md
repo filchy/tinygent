@@ -219,7 +219,7 @@ agent = TinyMAPAgent(
 Create a simple tool.
 
 ```python
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 
 @tool
 def my_function(param: str) -> str:
@@ -234,7 +234,7 @@ def my_function(param: str) -> str:
 Create and globally register a tool.
 
 ```python
-from tinygent.tools.tool import register_tool
+from tinygent.tools import register_tool
 
 @register_tool(use_cache: bool = False, hidden: bool = False)
 def my_function(param: str) -> str:
@@ -254,7 +254,7 @@ def my_function(param: str) -> str:
 Create a tool requiring reasoning.
 
 ```python
-from tinygent.tools.reasoning_tool import register_reasoning_tool
+from tinygent.tools import register_reasoning_tool
 
 @register_reasoning_tool(reasoning_prompt: str)
 def my_function(param: str) -> str:
@@ -273,7 +273,7 @@ def my_function(param: str) -> str:
 Create a just-in-time code generation tool.
 
 ```python
-from tinygent.tools.jit_tool import jit_tool
+from tinygent.tools import jit_tool
 
 @jit_tool(jit_instruction: str)
 def my_function(param: str):
@@ -292,7 +292,7 @@ def my_function(param: str):
 ### BufferChatMemory
 
 ```python
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.memory import BufferChatMemory
 
 memory = BufferChatMemory()
 ```
@@ -308,7 +308,7 @@ memory = BufferChatMemory()
 ### SummaryBufferMemory
 
 ```python
-from tinygent.memory.summary_buffer_memory import SummaryBufferMemory
+from tinygent.memory import SummaryBufferMemory
 
 memory = SummaryBufferMemory(
     llm: BaseLLM,
@@ -321,7 +321,7 @@ memory = SummaryBufferMemory(
 ### WindowBufferMemory
 
 ```python
-from tinygent.memory.window_buffer_memory import WindowBufferMemory
+from tinygent.memory import WindowBufferMemory
 
 memory = WindowBufferMemory(
     window_size: int = 4,
@@ -333,7 +333,7 @@ memory = WindowBufferMemory(
 ### CombinedMemory
 
 ```python
-from tinygent.memory.combined_memory import CombinedMemory
+from tinygent.memory import CombinedMemory
 
 memory = CombinedMemory(
     memories: dict[str, BaseMemory],
@@ -347,7 +347,7 @@ memory = CombinedMemory(
 ### Base Middleware
 
 ```python
-from tinygent.agents.middleware.base import TinyBaseMiddleware
+from tinygent.agents.middleware import TinyBaseMiddleware
 
 class CustomMiddleware(TinyBaseMiddleware):
     def on_start(self, *, run_id: str, task: str) -> None:
@@ -386,7 +386,7 @@ class CustomMiddleware(TinyBaseMiddleware):
 ### Register Middleware
 
 ```python
-from tinygent.agents.middleware.base import TinyBaseMiddleware
+from tinygent.agents.middleware import TinyBaseMiddleware
 
 @register_middleware('my_middleware')
 class MyMiddleware(TinyBaseMiddleware):
@@ -424,7 +424,7 @@ Base class for Pydantic models.
 
 ```python
 from pydantic import Field
-from tinygent.core.types.base import TinyModel
+from tinygent.core.types import TinyModel
 
 class MyInput(TinyModel):
     name: str = Field(..., description='User name')
@@ -523,7 +523,7 @@ logger.error("Error message")
 ### Color Printer
 
 ```python
-from tinygent.utils.color_printer import TinyColorPrinter
+from tinygent.utils import TinyColorPrinter
 
 # Predefined colors
 print(TinyColorPrinter.success("Success!"))
@@ -540,7 +540,7 @@ print(TinyColorPrinter.custom("Label", "Message", color="CYAN"))
 ### YAML Loader
 
 ```python
-from tinygent.utils.yaml import tiny_yaml_load
+from tinygent.utils import tiny_yaml_load
 
 config = tiny_yaml_load('config.yaml')
 ```
@@ -553,11 +553,11 @@ config = tiny_yaml_load('config.yaml')
 
 ```python
 from typing import List, Dict, Optional, Any
-from tinygent.core.types.base import TinyModel
+from tinygent.core.types import TinyModel
 from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.datamodels.messages import TinyMessage
 from tinygent.agents.base import BaseAgent
-from tinygent.memory.base import BaseMemory
+from tinygent.memory import BaseMemory
 from tinygent.llms.base import BaseLLM
 ```
 

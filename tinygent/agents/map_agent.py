@@ -19,13 +19,13 @@ from tinygent.core.datamodels.messages import TinyHumanMessage
 from tinygent.core.datamodels.messages import TinySystemMessage
 from tinygent.core.datamodels.middleware import AbstractMiddleware
 from tinygent.core.datamodels.tool import AbstractTool
-from tinygent.core.prompts.agents.factory.map_agent import get_prompt_template
-from tinygent.core.prompts.agents.template.map_agent import MapPromptTemplate
 from tinygent.core.runtime.executors import run_async_in_executor
 from tinygent.core.telemetry.decorators import tiny_trace
 from tinygent.core.telemetry.otel import set_tiny_attributes
 from tinygent.core.types.base import TinyModel
 from tinygent.core.types.io.llm_io_input import TinyLLMInput
+from tinygent.prompts.map import MapPromptTemplate
+from tinygent.prompts.map import get_prompt_template
 from tinygent.utils.jinja_utils import render_template
 
 logger = logging.getLogger(__name__)

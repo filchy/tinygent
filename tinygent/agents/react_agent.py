@@ -21,8 +21,6 @@ from tinygent.core.datamodels.messages import TinySystemMessage
 from tinygent.core.datamodels.messages import TinyToolCall
 from tinygent.core.datamodels.middleware import AbstractMiddleware
 from tinygent.core.datamodels.tool import AbstractTool
-from tinygent.core.prompts.agents.factory.react_agent import get_prompt_template
-from tinygent.core.prompts.agents.template.react_agent import ReActPromptTemplate
 from tinygent.core.runtime.executors import run_async_in_executor
 from tinygent.core.telemetry.decorators import tiny_trace
 from tinygent.core.telemetry.otel import set_tiny_attributes
@@ -30,6 +28,8 @@ from tinygent.core.telemetry.otel import tiny_trace_span
 from tinygent.core.types.base import TinyModel
 from tinygent.core.types.io.llm_io_chunks import TinyLLMResultChunk
 from tinygent.core.types.io.llm_io_input import TinyLLMInput
+from tinygent.prompts.react import ReActPromptTemplate
+from tinygent.prompts.react import get_prompt_template
 from tinygent.tools.reasoning_tool import ReasoningTool
 from tinygent.utils import render_template
 

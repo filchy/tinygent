@@ -132,7 +132,7 @@ Let's build a simple weather assistant.
 Tools are functions that agents can call. Use the `@tool` decorator:
 
 ```python
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 
 @tool
 def get_weather(location: str) -> str:
@@ -184,7 +184,7 @@ asyncio.run(main())
 
 ```python
 # weather_agent.py
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 from tinygent.core.factory import build_agent
 
 @tool

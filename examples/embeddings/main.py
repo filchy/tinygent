@@ -1,4 +1,4 @@
-from tinygent.core.factory.embedder import build_embedder
+from tinygent.core.factory import build_embedder
 
 
 def _print_res(embeddings: list[float], n: int = 3) -> str:

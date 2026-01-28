@@ -11,7 +11,7 @@ A comprehensive guide to building agents with Tinygent.
 The fastest way to create an agent:
 
 ```python
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 from tinygent.core.factory import build_agent
 
 @tool
@@ -39,8 +39,8 @@ Let's build a complete travel planning agent.
 
 ```python
 from pydantic import Field
-from tinygent.core.types.base import TinyModel
-from tinygent.tools.tool import register_tool
+from tinygent.core.types import TinyModel
+from tinygent.tools import register_tool
 
 class WeatherInput(TinyModel):
     location: str = Field(..., description='City or location name')
@@ -80,7 +80,7 @@ def search_hotels(data: HotelInput) -> str:
 
 ```python
 from tinygent.core.factory import build_agent
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.memory import BufferChatMemory
 
 agent = build_agent(
     'react',
@@ -94,7 +94,7 @@ agent = build_agent(
 ### Step 3: Add Middleware for Logging
 
 ```python
-from tinygent.agents.middleware.base import TinyBaseMiddleware
+from tinygent.agents.middleware import TinyBaseMiddleware
 
 class TravelAgentMiddleware(TinyBaseMiddleware):
     def on_reasoning(self, *, run_id: str, reasoning: str) -> None:
@@ -141,7 +141,7 @@ For complex workflows, use MultiStep agent:
 ```python
 from tinygent.agents.multi_step_agent import TinyMultiStepAgent
 from tinygent.core.factory import build_llm
-from tinygent.core.prompts.agents.template.multi_agent import (
+from tinygent.prompts.multistep import (
     MultiStepPromptTemplate,
     PlanPromptTemplate,
     ActionPromptTemplate,
@@ -331,7 +331,7 @@ Before deploying to production:
 ### Pattern 1: Conversational Agent
 
 ```python
-from tinygent.memory.buffer_chat_memory import BufferChatMemory
+from tinygent.memory import BufferChatMemory
 
 agent = build_agent(
     'react',

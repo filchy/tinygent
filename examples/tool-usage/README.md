@@ -17,8 +17,8 @@ Pass a single `TinyModel` subclass as the only argument. This gives you full con
 
 ```python
 from pydantic import Field
-from tinygent.core.types.base import TinyModel
-from tinygent.tools.tool import tool
+from tinygent.core.types import TinyModel
+from tinygent.tools import tool
 
 class AddInput(TinyModel):
     a: int = Field(..., description='First number to add')
@@ -35,7 +35,7 @@ def add(data: AddInput) -> int:
 Pass parameters directly like any normal function. TinyGent **auto-generates** a `TinyModel` schema from your type hints.
 
 ```python
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 
 @tool
 def multiply(a: int, b: int) -> int:
@@ -104,7 +104,7 @@ Creates a `Tool` instance but does **not** register it.
 
 **Using TinyModel:**
 ```python
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 
 @tool
 def local_add(data: AddInput) -> int:
@@ -116,7 +116,7 @@ print(local_add(AddInput(a=1, b=2)))  # works directly
 
 **Using regular parameters:**
 ```python
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 
 @tool
 def multiply(a: int, b: int) -> int:
@@ -163,7 +163,7 @@ print(add_tool(a=1, b=2))
 Wraps an existing tool and augments every result with a lightweight instruction payload. This is useful when you want the LLM to receive inline guidance about how to interpret or execute the tool outcome.
 
 ```python
-from tinygent.tools.jit_tool import jit_tool
+from tinygent.tools import jit_tool
 
 @jit_tool(jit_instruction='Count from 1 to n, yielding each number.')
 def count(data: CountInput):

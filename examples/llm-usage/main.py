@@ -3,8 +3,8 @@ from pydantic import Field
 from tinygent.core.datamodels.messages import TinyHumanMessage
 from tinygent.core.datamodels.messages import TinySystemMessage
 from tinygent.core.factory import build_llm
-from tinygent.core.types.base import TinyModel
-from tinygent.core.types.io.llm_io_input import TinyLLMInput
+from tinygent.core.types import TinyLLMInput
+from tinygent.core.types import TinyModel
 from tinygent.tools import reasoning_tool
 from tinygent.tools import tool
 

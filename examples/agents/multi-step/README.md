@@ -88,8 +88,8 @@ tiny \
 ## Example Tools
 
 ```python
-from tinygent.tools.tool import tool
-from tinygent.core.types.base import TinyModel
+from tinygent.tools import tool
+from tinygent.core.types import TinyModel
 from pydantic import Field
 
 class WeatherInput(TinyModel):
@@ -116,16 +116,16 @@ def get_best_destination(data: GetBestDestinationInput) -> list[str]:
 
 ```python
 from pathlib import Path
+from tinygent.agents import TinyMultiStepAgent
 from tinygent.agents.multi_step_agent import (
     ActionPromptTemplate,
     FinalAnswerPromptTemplate,
     PlanPromptTemplate,
     MultiStepPromptTemplate,
-    TinyMultiStepAgent,
 )
 from tinygent.llms import OpenAILLM
 from tinygent.memory import BufferChatMemory
-from tinygent.utils.yaml import tiny_yaml_load
+from tinygent.utils import tiny_yaml_load
 
 multi_step_agent_prompt = tiny_yaml_load(str(Path(__file__).parent / "agent.yaml"))
 

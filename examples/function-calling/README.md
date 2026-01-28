@@ -29,8 +29,8 @@ Pass a single `TinyModel` subclass for full control over field descriptions:
 
 ```python
 from pydantic import Field
-from tinygent.core.types.base import TinyModel
-from tinygent.tools.tool import tool
+from tinygent.core.types import TinyModel
+from tinygent.tools import tool
 
 
 class GetWeatherInput(TinyModel):
@@ -48,7 +48,7 @@ def get_weather(data: GetWeatherInput) -> str:
 Pass parameters directly like any normal function — TinyGent auto-generates the schema:
 
 ```python
-from tinygent.tools.tool import tool
+from tinygent.tools import tool
 
 
 @tool
@@ -66,7 +66,7 @@ Both variants work identically with LLM function calling — the schema is gener
 Ask the model a question and provide a list of tools it can choose from. The model may return plain chat content or one or more tool calls.
 
 ```python
-from tinygent.core.types.io.llm_io_input import TinyLLMInput
+from tinygent.core.types import TinyLLMInput
 from tinygent.core.datamodels.messages import TinyHumanMessage
 from tinygent.llms import OpenAILLM
 
