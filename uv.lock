@@ -3,15 +3,15 @@ requires-python = "==3.12.*"
 
 [manifest]
 members = [
-    "tiny-anthropic",
-    "tiny-brave",
-    "tiny-chat",
-    "tiny-gemini",
-    "tiny-graph",
-    "tiny-mistralai",
-    "tiny-openai",
-    "tiny-voyageai",
     "tinygent",
+    "tinygent-anthropic",
+    "tinygent-brave",
+    "tinygent-chat",
+    "tinygent-gemini",
+    "tinygent-graph",
+    "tinygent-mistralai",
+    "tinygent-openai",
+    "tinygent-voyageai",
 ]
 
 [[package]]
@@ -1639,8 +1639,83 @@ wheels = [
 ]
 
 [[package]]
-name = "tiny-anthropic"
-version = "0.1.0"
+name = "tinygent"
+version = "0.1.1"
+source = { editable = "." }
+dependencies = [
+    { name = "async-lru" },
+    { name = "jinja2" },
+    { name = "langchain-core" },
+    { name = "opentelemetry-exporter-otlp" },
+    { name = "opentelemetry-sdk" },
+    { name = "pydantic" },
+    { name = "pyyaml" },
+    { name = "typer" },
+]
+
+[package.optional-dependencies]
+anthropic = [
+    { name = "tinygent-anthropic" },
+]
+brave = [
+    { name = "tinygent-brave" },
+]
+chat = [
+    { name = "tinygent-chat" },
+]
+dev = [
+    { name = "mypy" },
+    { name = "ruff" },
+]
+docs = [
+    { name = "mkdocs" },
+    { name = "mkdocs-material" },
+    { name = "mkdocstrings", extra = ["python"] },
+]
+gemini = [
+    { name = "tinygent-gemini" },
+]
+graph = [
+    { name = "tinygent-graph" },
+]
+mistralai = [
+    { name = "tinygent-mistralai" },
+]
+openai = [
+    { name = "tinygent-openai" },
+]
+voyageai = [
+    { name = "tinygent-voyageai" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "async-lru", specifier = ">=2.0.5" },
+    { name = "jinja2", specifier = ">=3.1.6" },
+    { name = "langchain-core", specifier = ">=0.3.74" },
+    { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.6.1" },
+    { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.7.1" },
+    { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'", specifier = ">=1.0.2" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.17.1" },
+    { name = "opentelemetry-exporter-otlp", specifier = ">=1.38.0" },
+    { name = "opentelemetry-sdk", specifier = ">=1.38.0" },
+    { name = "pydantic", specifier = ">=2.11.7" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12.11" },
+    { name = "tinygent-anthropic", marker = "extra == 'anthropic'", editable = "packages/tiny_anthropic" },
+    { name = "tinygent-brave", marker = "extra == 'brave'", editable = "packages/tiny_brave" },
+    { name = "tinygent-chat", marker = "extra == 'chat'", editable = "packages/tiny_chat" },
+    { name = "tinygent-gemini", marker = "extra == 'gemini'", editable = "packages/tiny_gemini" },
+    { name = "tinygent-graph", marker = "extra == 'graph'", editable = "packages/tiny_graph" },
+    { name = "tinygent-mistralai", marker = "extra == 'mistralai'", editable = "packages/tiny_mistralai" },
+    { name = "tinygent-openai", marker = "extra == 'openai'", editable = "packages/tiny_openai" },
+    { name = "tinygent-voyageai", marker = "extra == 'voyageai'", editable = "packages/tiny_voyageai" },
+    { name = "typer", specifier = ">=0.19.2" },
+]
+
+[[package]]
+name = "tinygent-anthropic"
+version = "0.1.1"
 source = { editable = "packages/tiny_anthropic" }
 dependencies = [
     { name = "anthropic" },
@@ -1654,8 +1729,8 @@ requires-dist = [
 ]
 
 [[package]]
-name = "tiny-brave"
-version = "0.1.0"
+name = "tinygent-brave"
+version = "0.1.1"
 source = { editable = "packages/tiny_brave" }
 dependencies = [
     { name = "httpx" },
@@ -1671,8 +1746,8 @@ requires-dist = [
 ]
 
 [[package]]
-name = "tiny-chat"
-version = "0.1.0"
+name = "tinygent-chat"
+version = "0.1.1"
 source = { editable = "packages/tiny_chat" }
 dependencies = [
     { name = "fastapi" },
@@ -1692,8 +1767,8 @@ requires-dist = [
 ]
 
 [[package]]
-name = "tiny-gemini"
-version = "0.1.0"
+name = "tinygent-gemini"
+version = "0.1.1"
 source = { editable = "packages/tiny_gemini" }
 dependencies = [
     { name = "google-genai" },
@@ -1707,8 +1782,8 @@ requires-dist = [
 ]
 
 [[package]]
-name = "tiny-graph"
-version = "0.1.0"
+name = "tinygent-graph"
+version = "0.1.1"
 source = { editable = "packages/tiny_graph" }
 dependencies = [
     { name = "neo4j" },
@@ -1722,8 +1797,8 @@ requires-dist = [
 ]
 
 [[package]]
-name = "tiny-mistralai"
-version = "0.1.0"
+name = "tinygent-mistralai"
+version = "0.1.1"
 source = { editable = "packages/tiny_mistralai" }
 dependencies = [
     { name = "mistral-common" },
@@ -1741,8 +1816,8 @@ requires-dist = [
 ]
 
 [[package]]
-name = "tiny-openai"
-version = "0.1.0"
+name = "tinygent-openai"
+version = "0.1.1"
 source = { editable = "packages/tiny_openai" }
 dependencies = [
     { name = "langchain-core" },
@@ -1760,8 +1835,8 @@ requires-dist = [
 ]
 
 [[package]]
-name = "tiny-voyageai"
-version = "0.1.0"
+name = "tinygent-voyageai"
+version = "0.1.1"
 source = { editable = "packages/tiny_voyageai" }
 dependencies = [
     { name = "tinygent" },
@@ -1772,81 +1847,6 @@ dependencies = [
 requires-dist = [
     { name = "tinygent", editable = "." },
     { name = "voyageai", specifier = ">=0.3.7" },
-]
-
-[[package]]
-name = "tinygent"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "async-lru" },
-    { name = "jinja2" },
-    { name = "langchain-core" },
-    { name = "opentelemetry-exporter-otlp" },
-    { name = "opentelemetry-sdk" },
-    { name = "pydantic" },
-    { name = "pyyaml" },
-    { name = "typer" },
-]
-
-[package.optional-dependencies]
-anthropic = [
-    { name = "tiny-anthropic" },
-]
-brave = [
-    { name = "tiny-brave" },
-]
-chat = [
-    { name = "tiny-chat" },
-]
-dev = [
-    { name = "mypy" },
-    { name = "ruff" },
-]
-docs = [
-    { name = "mkdocs" },
-    { name = "mkdocs-material" },
-    { name = "mkdocstrings", extra = ["python"] },
-]
-gemini = [
-    { name = "tiny-gemini" },
-]
-graph = [
-    { name = "tiny-graph" },
-]
-mistralai = [
-    { name = "tiny-mistralai" },
-]
-openai = [
-    { name = "tiny-openai" },
-]
-voyageai = [
-    { name = "tiny-voyageai" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "async-lru", specifier = ">=2.0.5" },
-    { name = "jinja2", specifier = ">=3.1.6" },
-    { name = "langchain-core", specifier = ">=0.3.74" },
-    { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.6.1" },
-    { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.7.1" },
-    { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'", specifier = ">=1.0.2" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.17.1" },
-    { name = "opentelemetry-exporter-otlp", specifier = ">=1.38.0" },
-    { name = "opentelemetry-sdk", specifier = ">=1.38.0" },
-    { name = "pydantic", specifier = ">=2.11.7" },
-    { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12.11" },
-    { name = "tiny-anthropic", marker = "extra == 'anthropic'", editable = "packages/tiny_anthropic" },
-    { name = "tiny-brave", marker = "extra == 'brave'", editable = "packages/tiny_brave" },
-    { name = "tiny-chat", marker = "extra == 'chat'", editable = "packages/tiny_chat" },
-    { name = "tiny-gemini", marker = "extra == 'gemini'", editable = "packages/tiny_gemini" },
-    { name = "tiny-graph", marker = "extra == 'graph'", editable = "packages/tiny_graph" },
-    { name = "tiny-mistralai", marker = "extra == 'mistralai'", editable = "packages/tiny_mistralai" },
-    { name = "tiny-openai", marker = "extra == 'openai'", editable = "packages/tiny_openai" },
-    { name = "tiny-voyageai", marker = "extra == 'voyageai'", editable = "packages/tiny_voyageai" },
-    { name = "typer", specifier = ">=0.19.2" },
 ]
 
 [[package]]

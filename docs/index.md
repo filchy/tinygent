@@ -16,7 +16,7 @@ Built with modern Python best practices, Tinygent provides:
 
 ## Why Tinygent?
 
-### **Easy to Learn, Hard to Master**
+### **Start Simple, Scale Your Way**
 
 Tinygent follows the principle of progressive disclosure - start simple, grow complex only when needed.
 

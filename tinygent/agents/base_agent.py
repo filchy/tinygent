@@ -103,9 +103,9 @@ class TinyBaseAgent(AbstractAgent, AbstractMiddleware):
         middleware: Sequence[AbstractMiddleware] = [],
     ) -> None:
         self.llm = llm
-        self.memory = memory
         self.middleware = middleware
 
+        self._memory = memory
         self._tools = tools
         self._final_answer: str | None = None
 
@@ -114,6 +114,10 @@ class TinyBaseAgent(AbstractAgent, AbstractMiddleware):
 
         self.memory.clear()
         self._final_answer = None
+
+    @property
+    def memory(self) -> AbstractMemory:
+        return self._memory
 
     @property
     def tools(self) -> Sequence[AbstractTool]:
