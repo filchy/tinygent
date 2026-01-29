@@ -83,7 +83,7 @@ Before you begin using tinygent, ensure that you meet the following software pre
 ## 🎬 See It In Action
 
 <div align="center">
-  <img alt="TinyChat Demo" src=".github/resources/gifs/demo.gif" width="80%">
+  <img alt="TinyChat Demo" src=".github/resources/gifs/demo.gif" width="100%">
 </div>
 
 ## 🏗️ Architecture
