@@ -8,6 +8,7 @@ from typing import Generic
 from typing import TypeVar
 
 from tinygent.agents.middleware.agent import TinyMiddlewareAgent
+from tinygent.core.datamodels.memory import AbstractMemory
 from tinygent.core.datamodels.messages import AllTinyMessages
 from tinygent.core.types.builder import TinyModelBuildable
 
@@ -26,6 +27,12 @@ class AbstractAgentConfig(TinyModelBuildable[AgentType], Generic[AgentType]):
 
 class AbstractAgent(TinyMiddlewareAgent, ABC):
     """Abstract base class for agents."""
+
+    @property
+    @abstractmethod
+    def memory(self) -> AbstractMemory:
+        """Get agents memory instance."""
+        raise NotImplementedError('Subclasses must implement this method.')
 
     @abstractmethod
     def reset(self) -> None:

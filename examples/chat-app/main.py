@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Any
 import uuid
 
@@ -6,37 +5,71 @@ from pydantic import Field
 
 from tiny_brave import NewsSearchApiResponse
 from tiny_brave import NewsSearchRequest
+from tiny_brave import WebSearchApiResponse
+from tiny_brave import WebSearchRequest
 from tiny_brave import brave_news_search
+from tiny_brave import brave_web_search
 import tiny_chat as tc
-from tinygent.agents import TinyReActAgent
 from tinygent.agents.middleware import TinyBaseMiddleware
+from tinygent.agents.middleware import TinyToolCallLimiterMiddleware
 from tinygent.cli.utils import discover_and_register_components
 from tinygent.core.datamodels.tool import AbstractTool
-from tinygent.core.factory import build_llm
+from tinygent.core.factory import build_agent
 from tinygent.core.types import TinyModel
 from tinygent.logging import setup_logger
 from tinygent.memory import BufferChatMemory
-from tinygent.prompts import ReActPromptTemplate
 from tinygent.tools import register_tool
-from tinygent.utils import tiny_yaml_load
 
 logger = setup_logger('debug')
 
 discover_and_register_components()
 
 
-class BraveNewsConfig(TinyModel):
+class BraveConfig(TinyModel):
     query: str = Field(..., description='The search query string.')
 
 
 @register_tool
-async def brave_news(data: BraveNewsConfig):
-    result = await brave_news_search(NewsSearchRequest(q=data.query))
+async def brave_news(data: BraveConfig):
+    """Search recent news articles from news publishers (headlines, journalism, press, media coverage)."""
+    raw = await brave_news_search(NewsSearchRequest(q=data.query))
 
-    return result
+    return NewsSearchApiResponse.model_validate(raw)
+
+
+@register_tool
+async def brave_web(data: BraveConfig):
+    """Search general web pages (blogs, docs, forums, websites, informational pages)."""
+    raw = await brave_web_search(WebSearchRequest(q=data.query))
+
+    return WebSearchApiResponse.model_validate(raw)
 
 
 class ChatClientMiddleware(TinyBaseMiddleware):
+    @staticmethod
+    async def _send_sources(run_id: str, result: Any) -> bool:
+        if not isinstance(result, (NewsSearchApiResponse, WebSearchApiResponse)):
+            return False
+
+        items = (
+            result.results
+            if isinstance(result, NewsSearchApiResponse)
+            else result.web.results
+            if result.web
+            else []
+        )
+
+        for item in items:
+            await tc.AgentSourceMessage(
+                parent_id=run_id,
+                name=item.title,
+                url=item.url,
+                favicon=item.meta_url.favicon if item.meta_url else None,
+                description=item.description,
+            ).send()
+
+        return True
+
     async def on_answer(
         self, *, run_id: str, answer: str, kwargs: dict[str, Any]
     ) -> None:
@@ -70,31 +103,19 @@ class ChatClientMiddleware(TinyBaseMiddleware):
             content=result,
         ).send()
 
-        try:
-            news_response = NewsSearchApiResponse.model_validate(result)
-            for article in news_response.results:
-                await tc.AgentSourceMessage(
-                    parent_id=run_id,
-                    name=article.title,
-                    url=article.url,
-                    favicon=article.meta_url.favicon if article.meta_url else None,
-                    description=article.description,
-                ).send()
-
-        except Exception:
+        if not await self._send_sources(run_id, result):
             logger.exception('Failed to parse tool call.')
 
 
-agent = TinyReActAgent(
-    llm=build_llm('openai:gpt-4o'),
-    tools=[brave_news],
+agent = build_agent(
+    'react',
+    llm='openai:gpt-4o',
+    tools=[brave_news, brave_web],
     memory=BufferChatMemory(),
-    prompt_template=ReActPromptTemplate(
-        **tiny_yaml_load(
-            str(Path(__file__).parent.parent / 'agents' / 'react' / 'prompts.yaml')
-        )
-    ),
-    middleware=[ChatClientMiddleware()],
+    middleware=[
+        ChatClientMiddleware(),
+        TinyToolCallLimiterMiddleware(tool_name='brave_web', max_tool_calls=1),
+    ],
 )
 
 
