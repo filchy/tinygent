@@ -93,7 +93,7 @@ class MistralAIEmbedder(AbstractEmbedder):
         self._client = Mistral(api_key=self.api_key, timeout_ms=int(self.timeout) * 1000)
         return self._client
 
-    @tiny_trace('embed')
+    @tiny_trace()
     def embed(self, query: str) -> list[float]:
         res = self.__get_client().embeddings.create(
             model=self.model,
@@ -113,7 +113,7 @@ class MistralAIEmbedder(AbstractEmbedder):
         )
         return embedding
 
-    @tiny_trace('embed_batch')
+    @tiny_trace()
     def embed_batch(self, queries: list[str]) -> list[list[float]]:
         res = self.__get_client().embeddings.create(
             model=self.model,
@@ -135,7 +135,7 @@ class MistralAIEmbedder(AbstractEmbedder):
         )
         return embeddings
 
-    @tiny_trace('aembed')
+    @tiny_trace()
     async def aembed(self, query: str) -> list[float]:
         res = await self.__get_client().embeddings.create_async(
             model=self.model,
@@ -155,7 +155,7 @@ class MistralAIEmbedder(AbstractEmbedder):
         )
         return embedding
 
-    @tiny_trace('aembed_batch')
+    @tiny_trace()
     async def aembed_batch(self, queries: list[str]) -> list[list[float]]:
         res = await self.__get_client().embeddings.create_async(
             model=self.model,

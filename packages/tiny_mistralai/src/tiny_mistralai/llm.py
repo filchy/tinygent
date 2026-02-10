@@ -170,7 +170,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
     def _count_tokens(model: str, text: str) -> int:
         return len(MistralAILLM._get_encoding(model).encode(text))
 
-    @tiny_trace('generate_text')
+    @tiny_trace()
     def generate_text(
         self,
         llm_input: TinyLLMInput,
@@ -191,7 +191,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         )
         return tiny_res
 
-    @tiny_trace('agenerate_text')
+    @tiny_trace()
     async def agenerate_text(
         self,
         llm_input: TinyLLMInput,
@@ -212,7 +212,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         )
         return tiny_res
 
-    @tiny_trace('stream_text')
+    @tiny_trace()
     async def stream_text(
         self, llm_input: TinyLLMInput
     ) -> AsyncIterator[TinyLLMResultChunk]:
@@ -243,7 +243,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
                 group_chunks_for_telemetry(accumulated_chunks),
             )
 
-    @tiny_trace('generate_structured')
+    @tiny_trace()
     def generate_structured(
         self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
@@ -270,7 +270,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         )
         return parsed
 
-    @tiny_trace('agenerate_structured')
+    @tiny_trace()
     async def agenerate_structured(
         self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
@@ -297,7 +297,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         )
         return parsed
 
-    @tiny_trace('generate_with_tools')
+    @tiny_trace()
     def generate_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult:
@@ -320,7 +320,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         )
         return tiny_res
 
-    @tiny_trace('agenerate_with_tools')
+    @tiny_trace()
     async def agenerate_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult:
@@ -343,7 +343,7 @@ class MistralAILLM(AbstractLLM[MistralAILLMConfig]):
         )
         return tiny_res
 
-    @tiny_trace('stream_with_tools')
+    @tiny_trace()
     async def stream_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> AsyncIterator[TinyLLMResultChunk]:

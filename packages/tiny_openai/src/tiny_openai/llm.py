@@ -188,7 +188,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
         self.__async_client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
         return self.__async_client
 
-    @tiny_trace('generate_text')
+    @tiny_trace()
     def generate_text(
         self,
         llm_input: TinyLLMInput,
@@ -206,7 +206,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
         )
         return tiny_res
 
-    @tiny_trace('agenerate_text')
+    @tiny_trace()
     async def agenerate_text(self, llm_input: TinyLLMInput) -> TinyLLMResult:
         messages = tiny_prompt_to_openai_params(llm_input)
 
@@ -221,7 +221,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
         )
         return tiny_res
 
-    @tiny_trace('stream_text')
+    @tiny_trace()
     async def stream_text(
         self, llm_input: TinyLLMInput
     ) -> AsyncIterator[TinyLLMResultChunk]:
@@ -249,7 +249,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
                     group_chunks_for_telemetry(accumulated_chunks),
                 )
 
-    @tiny_trace('generate_structured')
+    @tiny_trace()
     def generate_structured(
         self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
@@ -274,7 +274,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
         )
         return message.parsed
 
-    @tiny_trace('agenerate_structured')
+    @tiny_trace()
     async def agenerate_structured(
         self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
@@ -297,7 +297,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
         )
         return message.parsed
 
-    @tiny_trace('generate_with_tools')
+    @tiny_trace()
     def generate_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult:
@@ -317,7 +317,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
         )
         return tiny_res
 
-    @tiny_trace('agenerate_with_tools')
+    @tiny_trace()
     async def agenerate_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult:
@@ -337,7 +337,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
         )
         return tiny_res
 
-    @tiny_trace('stream_with_tools')
+    @tiny_trace()
     async def stream_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> AsyncIterator[TinyLLMResultChunk]:
@@ -368,7 +368,7 @@ class OpenAILLM(AbstractLLM[OpenAILLMConfig]):
                     group_chunks_for_telemetry(accumulated_chunks),
                 )
 
-    @tiny_trace('count_tokens_in_messages')
+    @tiny_trace()
     def count_tokens_in_messages(self, messages: Iterable[AllTinyMessages]) -> int:
         set_llm_telemetry_attributes(self.config, messages)
 

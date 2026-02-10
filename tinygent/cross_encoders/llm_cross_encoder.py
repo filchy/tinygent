@@ -143,7 +143,7 @@ class LLMCrossEncoder(AbstractCrossEncoder):
         )
         return ((query, text), result.score)
 
-    @tiny_trace('rank')
+    @tiny_trace()
     async def rank(
         self, query: str, texts: Iterable[str]
     ) -> list[tuple[tuple[str, str], float]]:
@@ -160,7 +160,7 @@ class LLMCrossEncoder(AbstractCrossEncoder):
 
         return result
 
-    @tiny_trace('predict')
+    @tiny_trace()
     async def predict(
         self, pairs: Iterable[tuple[str, str]]
     ) -> list[tuple[tuple[str, str], float]]:

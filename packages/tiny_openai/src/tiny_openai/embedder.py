@@ -114,7 +114,7 @@ class OpenAIEmbedder(AbstractEmbedder):
         )
         return self.__async_client
 
-    @tiny_trace('embed')
+    @tiny_trace()
     def embed(self, query: str) -> list[float]:
         res = self.__get_sync_client().embeddings.create(
             input=query,
@@ -130,7 +130,7 @@ class OpenAIEmbedder(AbstractEmbedder):
         )
         return embedding
 
-    @tiny_trace('embed_batch')
+    @tiny_trace()
     def embed_batch(self, queries: list[str]) -> list[list[float]]:
         res = self.__get_sync_client().embeddings.create(
             input=queries,
@@ -146,7 +146,7 @@ class OpenAIEmbedder(AbstractEmbedder):
         )
         return embeddings
 
-    @tiny_trace('aembed')
+    @tiny_trace()
     async def aembed(self, query: str) -> list[float]:
         res = await self.__get_async_client().embeddings.create(
             input=query,
@@ -162,7 +162,7 @@ class OpenAIEmbedder(AbstractEmbedder):
         )
         return embedding
 
-    @tiny_trace('aembed_batch')
+    @tiny_trace()
     async def aembed_batch(self, queries: list[str]) -> list[list[float]]:
         res = await self.__get_async_client().embeddings.create(
             input=queries,

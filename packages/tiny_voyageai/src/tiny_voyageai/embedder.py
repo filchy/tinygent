@@ -115,7 +115,7 @@ class VoyageAIEmbedder(AbstractEmbedder):
         )
         return self._async_client
 
-    @tiny_trace('embed')
+    @tiny_trace()
     def embed(self, query: str) -> list[float]:
         results = self.__get_sync_client().embed(
             texts=[query],
@@ -132,7 +132,7 @@ class VoyageAIEmbedder(AbstractEmbedder):
         )
         return list(map(float, embedding))
 
-    @tiny_trace('embed_batch')
+    @tiny_trace()
     def embed_batch(self, queries: list[str]) -> list[list[float]]:
         results = self.__get_sync_client().embed(
             texts=queries,
@@ -149,7 +149,7 @@ class VoyageAIEmbedder(AbstractEmbedder):
         )
         return embeddings
 
-    @tiny_trace('aembed')
+    @tiny_trace()
     async def aembed(self, query: str) -> list[float]:
         results = await self.__get_async_client().embed(
             texts=[query],
@@ -166,7 +166,7 @@ class VoyageAIEmbedder(AbstractEmbedder):
         )
         return list(map(float, embedding))
 
-    @tiny_trace('aembed_batch')
+    @tiny_trace()
     async def aembed_batch(self, queries: list[str]) -> list[list[float]]:
         results = await self.__get_async_client().embed(
             texts=queries,

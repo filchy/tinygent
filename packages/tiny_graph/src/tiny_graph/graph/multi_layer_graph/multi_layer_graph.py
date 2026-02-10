@@ -144,7 +144,7 @@ class TinyMultiLayerGraph(BaseGraph):
     async def build_constraints_and_indices(self):
         await build_indices(self.driver, self.clients)
 
-    @tiny_trace('add_record')
+    @tiny_trace()
     async def add_record(
         self,
         name: str,

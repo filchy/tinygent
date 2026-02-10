@@ -145,7 +145,7 @@ class TinyBaseAgent(AbstractAgent, AbstractMiddleware):
             logger.warning('Tool %s not found.', name)
         return tool
 
-    @tiny_trace('run_llm')
+    @tiny_trace()
     async def run_llm(
         self, run_id: str, fn: Callable, llm_input: TinyLLMInput, **kwargs
     ) -> Any:
@@ -164,7 +164,7 @@ class TinyBaseAgent(AbstractAgent, AbstractMiddleware):
             await self.on_error(run_id=run_id, e=e, kwargs=kwargs_dict)
             raise
 
-    @tiny_trace('run_llm_stream')
+    @tiny_trace()
     async def run_llm_stream(
         self,
         run_id: str,
@@ -200,7 +200,7 @@ class TinyBaseAgent(AbstractAgent, AbstractMiddleware):
             await self.on_error(run_id=run_id, e=e, kwargs=kwargs_dict)
             raise
 
-    @tiny_trace('run_tool')
+    @tiny_trace()
     async def run_tool(
         self, run_id: str, tool: AbstractTool, call: TinyToolCall, **kwargs: Any
     ) -> TinyToolResult:
