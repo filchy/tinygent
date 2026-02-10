@@ -35,7 +35,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name):
+def __getattr__(name: str):
     if name == 'TinyBaseAgent':
         from .base_agent import TinyBaseAgent
 

@@ -91,7 +91,7 @@ class GeminiEmbedder(AbstractEmbedder):
         cli = self.__get_sync_client()
         return cli.aio
 
-    @tiny_trace('embed')
+    @tiny_trace()
     def embed(self, query: str) -> list[float]:
         res = self.__get_sync_client().models.embed_content(
             model=self.model, contents=query
@@ -108,7 +108,7 @@ class GeminiEmbedder(AbstractEmbedder):
         )
         return embedding
 
-    @tiny_trace('embed_batch')
+    @tiny_trace()
     def embed_batch(self, queries: list[str]) -> list[list[float]]:
         res = self.__get_sync_client().models.embed_content(
             model=self.model,
@@ -129,7 +129,7 @@ class GeminiEmbedder(AbstractEmbedder):
         )
         return embeddings
 
-    @tiny_trace('aembed')
+    @tiny_trace()
     async def aembed(self, query: str) -> list[float]:
         res = await self.__get_async_client().models.embed_content(
             model=self.model, contents=query
@@ -146,7 +146,7 @@ class GeminiEmbedder(AbstractEmbedder):
         )
         return embedding
 
-    @tiny_trace('aembed_batch')
+    @tiny_trace()
     async def aembed_batch(self, queries: list[str]) -> list[list[float]]:
         res = await self.__get_async_client().models.embed_content(
             model=self.model,

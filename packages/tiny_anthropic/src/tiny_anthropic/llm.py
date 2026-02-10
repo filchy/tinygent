@@ -179,7 +179,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
             kwargs['system'] = system
         return kwargs
 
-    @tiny_trace('generate_text')
+    @tiny_trace()
     def generate_text(self, llm_input: TinyLLMInput) -> TinyLLMResult:
         kwargs = self.__create_client_kwargs(llm_input)
 
@@ -191,7 +191,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         )
         return tiny_res
 
-    @tiny_trace('agenerate_text')
+    @tiny_trace()
     async def agenerate_text(self, llm_input: TinyLLMInput) -> TinyLLMResult:
         kwargs = self.__create_client_kwargs(llm_input)
 
@@ -203,7 +203,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         )
         return tiny_res
 
-    @tiny_trace('stream_text')
+    @tiny_trace()
     async def stream_text(
         self, llm_input: TinyLLMInput
     ) -> AsyncIterator[TinyLLMResultChunk]:
@@ -226,7 +226,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
                 group_chunks_for_telemetry(accumulated_chunks),
             )
 
-    @tiny_trace('generate_structured')
+    @tiny_trace()
     def generate_structured(
         self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
@@ -246,7 +246,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         )
         return p
 
-    @tiny_trace('agenerate_structured')
+    @tiny_trace()
     async def agenerate_structured(
         self, llm_input: TinyLLMInput, output_schema: type[LLMStructuredT]
     ) -> LLMStructuredT:
@@ -266,7 +266,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         )
         return p
 
-    @tiny_trace('generate_with_tools')
+    @tiny_trace()
     def generate_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult:
@@ -282,7 +282,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         )
         return tiny_res
 
-    @tiny_trace('agenerate_with_tools')
+    @tiny_trace()
     async def agenerate_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> TinyLLMResult:
@@ -298,7 +298,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
         )
         return tiny_res
 
-    @tiny_trace('stream_with_tools')
+    @tiny_trace()
     async def stream_with_tools(
         self, llm_input: TinyLLMInput, tools: list[AbstractTool]
     ) -> AsyncIterator[TinyLLMResultChunk]:
@@ -336,7 +336,7 @@ class ClaudeLLM(AbstractLLM[ClaudeLLMConfig]):
                     group_chunks_for_telemetry(accumulated_chunks),
                 )
 
-    @tiny_trace('count_tokens_in_messages')
+    @tiny_trace()
     def count_tokens_in_messages(self, messages: Iterable[AllTinyMessages]) -> int:
         set_llm_telemetry_attributes(self.config, messages)
 
