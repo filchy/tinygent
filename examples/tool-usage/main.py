@@ -132,8 +132,8 @@ if __name__ == '__main__':
 
     header_print('Local Tool Executions')
 
-    classic_print(list(count(n=5)))
-    classic_print(list(async_count({'n': 6})))
+    classic_print(count(n=5))
+    classic_print(async_count({'n': 6}))
 
     # Cache info
     header_print('Cache Info')
