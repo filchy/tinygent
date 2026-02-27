@@ -31,12 +31,8 @@ class ToolConfig(AbstractToolConfig['Tool[R]'], Generic[R]):
     type: Literal['simple'] = Field(default='simple', frozen=True)
 
     def build(self) -> 'Tool[R]':
-        raw_tool = GlobalToolCatalog().get_active_catalog().get_tool(self.name)
-
-        return Tool(
-            raw_tool.raw,
-            use_cache=raw_tool.info.use_cache,
-            cache_size=raw_tool.info.cache_size,
+        return cast(
+            'Tool[R]', GlobalToolCatalog().get_active_catalog().get_tool(self.name)
         )
 
 
@@ -231,14 +227,13 @@ def register_tool(
     hidden: bool = False,
 ) -> Tool[Any] | Callable[[Callable[..., Any]], Tool[Any]]:
     def wrapper(f: Callable[..., Any]) -> Tool[Any]:
-        GlobalToolCatalog().get_active_catalog().register(
-            f, use_cache=use_cache, cache_size=cache_size, hidden=hidden
-        )
-        return Tool(
-            f,
-            use_cache=use_cache,
-            cache_size=cache_size,
-        )
+        name = ToolInfo.from_callable(f, use_cache=use_cache, cache_size=cache_size).name
+
+        def factory() -> Tool[Any]:
+            return Tool(f, use_cache=use_cache, cache_size=cache_size)
+
+        GlobalToolCatalog().get_active_catalog().register(name, factory, hidden=hidden)
+        return Tool(f, use_cache=use_cache, cache_size=cache_size)
 
     if fn is None:
         return wrapper

@@ -13,6 +13,7 @@ from tinygent.logging import setup_logger
 from tinygent.memory import BufferChatMemory
 from tinygent.prompts import ReActPromptTemplate
 from tinygent.tools import register_tool
+from tinygent.tools.reasoning_tool import register_reasoning_tool
 from tinygent.utils import TinyColorPrinter
 from tinygent.utils import tiny_yaml_load
 
@@ -141,7 +142,7 @@ class GetBestDestinationInput(TinyModel):
     top_k: int = Field(..., description='The number of top destinations to return.')
 
 
-@register_tool
+@register_reasoning_tool
 def get_best_destination(data: GetBestDestinationInput) -> list[str]:
     """Get the best travel destinations."""
     destinations = {'Paris', 'New York', 'Tokyo', 'Barcelona', 'Rome'}

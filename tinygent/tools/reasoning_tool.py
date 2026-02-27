@@ -13,6 +13,7 @@ from pydantic import create_model
 
 from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.datamodels.tool import AbstractToolConfig
+from tinygent.core.datamodels.tool_info import ToolInfo
 from tinygent.core.runtime.tool_catalog import GlobalToolCatalog
 from tinygent.core.types.base import TinyModel
 from tinygent.tools.tool import Tool
@@ -28,10 +29,8 @@ class ReasoningToolConfig(AbstractToolConfig['ReasoningTool'], Generic[T]):
     prompt: str = Field(...)
 
     def build(self) -> 'ReasoningTool':
-        raw_tool = GlobalToolCatalog().get_active_catalog().get_tool(self.name)
-        return ReasoningTool(
-            raw_tool,
-            reasoning_prompt=self.prompt,
+        return cast(
+            'ReasoningTool', GlobalToolCatalog().get_active_catalog().get_tool(self.name)
         )
 
 
@@ -73,11 +72,11 @@ class ReasoningTool(AbstractTool):
             raise TypeError('Tool must have an input schema')
 
         fields = {
-            **{k: (v.annotation, v) for k, v in original_input.model_fields.items()},
             self.__reasoning_field_name: (
                 str,
                 Field(..., description=self._reasoning_prompt),
             ),
+            **{k: (v.annotation, v) for k, v in original_input.model_fields.items()},
         }
 
         self._input_model = create_model(  # type: ignore[call-overload]
@@ -211,12 +210,17 @@ def register_reasoning_tool(
     hidden: bool = False,
 ) -> ReasoningTool | Callable[[Callable[[T], Any]], ReasoningTool]:
     def wrapper(f: Callable[[T], Any]) -> ReasoningTool:
-        GlobalToolCatalog().get_active_catalog().register(
-            f, use_cache=use_cache, cache_size=cache_size, hidden=hidden
-        )
-        raw_tool = Tool(f, use_cache=use_cache, cache_size=cache_size)
+        name = ToolInfo.from_callable(f, use_cache=use_cache, cache_size=cache_size).name
+
+        def factory() -> ReasoningTool:
+            return ReasoningTool(
+                Tool(f, use_cache=use_cache, cache_size=cache_size),
+                reasoning_prompt=reasoning_prompt,
+            )
+
+        GlobalToolCatalog().get_active_catalog().register(name, factory, hidden=hidden)
         return ReasoningTool(
-            raw_tool,
+            Tool(f, use_cache=use_cache, cache_size=cache_size),
             reasoning_prompt=reasoning_prompt,
         )
 

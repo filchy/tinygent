@@ -7,6 +7,7 @@ from typing import Callable
 from typing import Generic
 from typing import Literal
 from typing import TypeVar
+from typing import cast
 from typing import overload
 
 from pydantic import Field
@@ -29,10 +30,9 @@ class JITInstructionToolConfig(AbstractToolConfig['JITInstructionTool'], Generic
     instruction: str = Field(...)
 
     def build(self) -> 'JITInstructionTool':
-        raw_tool = GlobalToolCatalog().get_active_catalog().get_tool(self.name)
-        return JITInstructionTool(
-            raw_tool,
-            jit_instruction=self.instruction,
+        return cast(
+            'JITInstructionTool',
+            GlobalToolCatalog().get_active_catalog().get_tool(self.name),
         )
 
 
@@ -188,9 +188,15 @@ def register_jit_tool(
     hidden: bool = False,
 ) -> JITInstructionTool | Callable[[Callable[[T], Any]], JITInstructionTool]:
     def wrapper(f: Callable[[T], Any]) -> JITInstructionTool:
-        GlobalToolCatalog().get_active_catalog().register(
-            f, use_cache=use_cache, cache_size=cache_size, hidden=hidden
-        )
+        name = ToolInfo.from_callable(f, use_cache=use_cache, cache_size=cache_size).name
+
+        def factory() -> JITInstructionTool:
+            return JITInstructionTool(
+                Tool(f, use_cache=use_cache, cache_size=cache_size),
+                jit_instruction=jit_instruction,
+            )
+
+        GlobalToolCatalog().get_active_catalog().register(name, factory, hidden=hidden)
         return jit_tool(
             f,
             jit_instruction=jit_instruction,
