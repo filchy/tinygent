@@ -16,7 +16,7 @@
 
 Tinygent is a tiny agentic framework - lightweight, easy to use (hopefully), and efficient (also hopefully ;-0) library for building and deploying generative AI applications. It provides a simple interface for working with various models and tools, making it ideal for developers who want to quickly prototype and deploy AI solutions.
 
-## 🎯 Create an agent
+## Create an agent
 
 ```python
 # uv sync --extra openai
@@ -38,7 +38,7 @@ agent = build_agent(
 print(agent.run('What is the weather like in Prague?'))
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -80,13 +80,13 @@ Before you begin using tinygent, ensure that you meet the following software pre
     uv pip install -e .
     ```
 
-## 🎬 See It In Action
+## See It In Action
 
 <div align="center">
   <img alt="TinyChat Demo" src=".github/resources/gifs/demo.gif" width="100%">
 </div>
 
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#e1f5ff', 'primaryTextColor': '#0d47a1', 'primaryBorderColor': '#42a5f5', 'lineColor': '#1976d2', 'secondaryColor': '#fff4e1', 'tertiaryColor': '#f0e1ff'}}}%%
@@ -121,7 +121,7 @@ flowchart LR
 
 Tinygent uses a registry-based plugin architecture: **Packages** register components into the **Runtime**. **Factories** query the Runtime to build **Components** for your code.
 
-## 💡 Examples (Quick Start)
+## Examples (Quick Start)
 
 1. Ensure you have set the `OPENAI_API_KEY` environment variable to allow the example to use OpenAI's API. An API key can be obtained from [`openai.com`](https://openai.com/).
     ```bash
@@ -135,7 +135,7 @@ Tinygent uses a registry-based plugin architecture: **Packages** register compon
 
 3. Explore more examples below:
 
-### 📚 Features & Examples
+### Features & Examples
 
 | Name | Type | Description |
 |------|------|-------------|
@@ -163,7 +163,7 @@ Tinygent uses a registry-based plugin architecture: **Packages** register compon
 | [Tiny Chat](packages/tiny_chat) | Package | FastAPI-based chat interface |
 | [Tiny Graph](packages/tiny_graph) | Package | Neo4j knowledge graph integration |
 
-## ✅ Linting & Formatting
+## Linting & Formatting
 
 To ensure code quality, formatting consistency, and type safety, run:
 
