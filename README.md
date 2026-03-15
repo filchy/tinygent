@@ -7,14 +7,14 @@
 </div>
 
 <div align="center">
-  <h3>✨ Tiny platform for amazing agents ✨</h3>
+  <h3>Tiny platform for amazing agents</h3>
 
   <h4>
-    🏠 <a href="https://github.com/filchy/tinygent">Homepage</a> | 📚 <a href="https://filchy.github.io/tinygent">Documentation</a> | 💡 <a href="https://filchy.github.io/tinygent/examples">Examples</a> | 🚀 <a href="https://filchy.github.io/tinygent/examples/quick-start/">Quick Start</a>
+    <a href="https://github.com/filchy/tinygent">Homepage</a> | <a href="https://filchy.github.io/tinygent">Documentation</a> | <a href="https://filchy.github.io/tinygent/examples">Examples</a> | <a href="https://filchy.github.io/tinygent/examples/quick-start/">Quick Start</a>
   </h4>
 </div>
 
-🤖 Tinygent is a tiny agentic framework - lightweight, easy to use (hopefully), and efficient (also hopefully ;-0) library for building and deploying generative AI applications. It provides a simple interface for working with various models and tools, making it ideal for developers who want to quickly prototype and deploy AI solutions.
+Tinygent is a tiny agentic framework - lightweight, easy to use (hopefully), and efficient (also hopefully ;-0) library for building and deploying generative AI applications. It provides a simple interface for working with various models and tools, making it ideal for developers who want to quickly prototype and deploy AI solutions.
 
 ## 🎯 Create an agent
 
@@ -40,14 +40,14 @@ print(agent.run('What is the weather like in Prague?'))
 
 ## 🚀 Getting Started
 
-### 📋 Prerequisites
+### Prerequisites
 
 Before you begin using tinygent, ensure that you meet the following software prerequisites.
 
 - Install [Git](https://git-scm.com/)
 - Install [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
-### 💻 Install From Source
+### Install From Source
 
 1. Clone the tinygent repository to your local machine.
     ```bash
@@ -123,17 +123,17 @@ Tinygent uses a registry-based plugin architecture: **Packages** register compon
 
 ## 💡 Examples (Quick Start)
 
-1. 🔑 Ensure you have set the `OPENAI_API_KEY` environment variable to allow the example to use OpenAI's API. An API key can be obtained from [`openai.com`](https://openai.com/).
+1. Ensure you have set the `OPENAI_API_KEY` environment variable to allow the example to use OpenAI's API. An API key can be obtained from [`openai.com`](https://openai.com/).
     ```bash
     export OPENAI_API_KEY="your_openai_api_key"
     ```
 
-2. ▶️ Run the examples using `uv`:
+2. Run the examples using `uv`:
     ```bash
     uv run examples/agents/multi-step/main.py
     ```
 
-3. 🔍 Explore more examples below:
+3. Explore more examples below:
 
 ### 📚 Features & Examples
 
