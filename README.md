@@ -137,31 +137,10 @@ Tinygent uses a registry-based plugin architecture: **Packages** register compon
 
 ### Features & Examples
 
-| Name | Type | Description |
-|------|------|-------------|
-| [Tool Usage](examples/tool-usage) | Basics | Basic tool creation and usage |
-| [LLM Usage](examples/llm-usage) | Basics | Direct LLM interaction patterns |
-| [Function Calling](examples/function-calling) | Basics | Function calling with LLMs |
-| [Chat Buffer Memory](examples/memory/basic-chat-memory) | Memory | Store complete conversation history |
-| [Summary Buffer Memory](examples/memory/buffer-summary-memory) | Memory | Summarize older messages to save tokens |
-| [Window Buffer Memory](examples/memory/buffer-window-chat-memory) | Memory | Keep only recent N messages |
-| [Combined Memory](examples/memory/combined-memory) | Memory | Combine multiple memory strategies |
-| [Basic Tools](examples/tool-usage/main.py) | Tools | Simple tool definitions with `@tool` |
-| [Reasoning Tools](examples/tool-usage/main.py) | Tools | Tools that provide reasoning traces |
-| [JIT Tools](examples/tool-usage/main.py) | Tools | Just-in-time compiled tools |
-| [Middlewares in Agents](examples/agents/middleware/) | Agents | Add custom processing layers to agents |
-| [ReAct Agent](examples/agents/react/) | Agents | Reasoning and acting pattern |
-| [Multi-Step Agent](examples/agents/multi-step/) | Agents | Break down complex tasks into steps |
-| [Squad Agent](examples/agents/squad/) | Agents | Coordinate multiple specialized agents |
-| [Modular Agentic Planner](examples/agents/map/) | Agents | Advanced planning with modular architecture |
-| [Tiny OpenAI](packages/tiny_openai) | Package | OpenAI LLMs and embeddings |
-| [Tiny Anthropic](packages/tiny_anthropic) | Package | Anthropic Claude LLMs |
-| [Tiny MistralAI](packages/tiny_mistralai) | Package | Mistral AI LLMs |
-| [Tiny Gemini](packages/tiny_gemini) | Package | Google Gemini LLMs |
-| [Tiny VoyageAI](packages/tiny_voyageai) | Package | VoyageAI embedding models |
-| [Brave Tools](packages/tiny_brave/) | Package | Brave search integration |
-| [Tiny Chat](packages/tiny_chat) | Package | FastAPI-based chat interface |
-| [Tiny Graph](packages/tiny_graph) | Package | Neo4j knowledge graph integration |
+- **Basics** — [Tool Usage](examples/tool-usage), [LLM Usage](examples/llm-usage), [Function Calling](examples/function-calling)
+- **Memory** — [Chat Buffer](examples/memory/basic-chat-memory), [Summary Buffer](examples/memory/buffer-summary-memory), [Window Buffer](examples/memory/buffer-window-chat-memory), [Combined](examples/memory/combined-memory)
+- **Agents** — [ReAct](examples/agents/react/), [Multi-Step](examples/agents/multi-step/), [Squad](examples/agents/squad/), [MAP](examples/agents/map/), [Middlewares](examples/agents/middleware/)
+- **Packages** — [OpenAI](packages/tiny_openai), [Anthropic](packages/tiny_anthropic), [Mistral](packages/tiny_mistralai), [Gemini](packages/tiny_gemini), [VoyageAI](packages/tiny_voyageai), [Brave](packages/tiny_brave/), [Chat](packages/tiny_chat), [Graph](packages/tiny_graph)
 
 ## Linting & Formatting
 
