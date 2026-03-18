@@ -25,6 +25,7 @@ from tinygent.core.datamodels.messages import TinyReasoningMessage
 from tinygent.core.datamodels.messages import TinySystemMessage
 from tinygent.core.datamodels.messages import TinyToolCall
 from tinygent.core.datamodels.messages import TinyToolResult
+from tinygent.core.datamodels.messages import TinyUserMessage
 from tinygent.core.types.io.llm_io_chunks import TinyLLMResultChunk
 from tinygent.core.types.io.llm_io_chunks import TinyToolCallChunk
 from tinygent.core.types.io.llm_io_result import TinyLLMResult
@@ -49,7 +50,7 @@ def tiny_prompt_to_mistralai_params(
     params: list[ChatCompletionMessageParams] = []
 
     for msg in prompt.messages:
-        if isinstance(msg, TinyHumanMessage):
+        if isinstance(msg, TinyHumanMessage) or isinstance(msg, TinyUserMessage):
             params.append(UserMessage(role='user', content=str(msg.content)))
 
         elif isinstance(msg, TinySystemMessage):

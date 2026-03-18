@@ -159,6 +159,13 @@ if __name__ == '__main__':
     header_print('Reasoning Tool Execution')
 
     global_registry_search = registry.get_tool('search')
-    global_registry_print(global_registry_search({'query': 'TinyGent query', 'reasoning': 'Model-generated reasoning for this tool invocation'}))
+    global_registry_print(
+        global_registry_search(
+            {
+                'query': 'TinyGent query',
+                'reasoning': 'Model-generated reasoning for this tool invocation',
+            }
+        )
+    )
 
     # NOTE: count and async_count are not cachable, so their cache_info will be None

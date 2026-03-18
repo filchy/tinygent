@@ -17,6 +17,7 @@ from tinygent.core.datamodels.messages import AllTinyMessages
 from tinygent.core.datamodels.messages import TinyChatMessage
 from tinygent.core.datamodels.messages import TinyHumanMessage
 from tinygent.core.datamodels.messages import TinySystemMessage
+from tinygent.core.datamodels.messages import TinyUserMessage
 from tinygent.core.datamodels.middleware import AbstractMiddleware
 from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.runtime.executors import run_async_in_executor
@@ -203,7 +204,7 @@ class TinyMAPAgent(TinyBaseAgent):
 
         messages = TinyLLMInput(messages=[*self.memory.copy_chat_messages()])
         messages.add_at_end(
-            TinyHumanMessage(
+            TinyUserMessage(
                 content=render_template(
                     self.prompt_template.task_decomposer.user,
                     {'question': input_txt, 'max_subquestions': self.max_plan_length},
@@ -258,7 +259,7 @@ class TinyMAPAgent(TinyBaseAgent):
         formatted_proposals = [p.sum for p in prev_proposals]
         messages = TinyLLMInput(messages=[*self.memory.copy_chat_messages()])
         messages.add_at_end(
-            TinyHumanMessage(
+            TinyUserMessage(
                 content=render_template(
                     prompt_templ.user,
                     {
@@ -282,7 +283,7 @@ class TinyMAPAgent(TinyBaseAgent):
                 )
             )
             messages.add_at_end(
-                TinyHumanMessage(
+                TinyUserMessage(
                     content=render_template(
                         fix_prompt_templ.user,
                         {'question': subgoal, 'validation': '\n'.join(feedback)},
@@ -340,7 +341,7 @@ class TinyMAPAgent(TinyBaseAgent):
         formatted_proposals = [p.sum for p in prev_proposals]
         messages = TinyLLMInput()
         messages.add_at_end(
-            TinyHumanMessage(
+            TinyUserMessage(
                 content=render_template(
                     prompt_templ.user,
                     {
@@ -483,7 +484,7 @@ class TinyMAPAgent(TinyBaseAgent):
 
         messages = TinyLLMInput()
         messages.add_at_end(
-            TinyHumanMessage(
+            TinyUserMessage(
                 content=render_template(
                     self.prompt_template.predictor.user,
                     {'state': state.next_state, 'proposed_action': action.sum},
@@ -591,7 +592,7 @@ class TinyMAPAgent(TinyBaseAgent):
 
         messages = TinyLLMInput()
         messages.add_at_end(
-            TinyHumanMessage(
+            TinyUserMessage(
                 content=render_template(
                     self.prompt_template.action_proposal.actor.evaluator.user,
                     {'state': state.next_state, 'subgoal': subgoal},
@@ -634,7 +635,7 @@ class TinyMAPAgent(TinyBaseAgent):
 
         messages = TinyLLMInput()
         messages.add_at_end(
-            TinyHumanMessage(
+            TinyUserMessage(
                 content=render_template(
                     self.prompt_template.orchestrator.user,
                     {'question': subgoal, 'answer': state.next_state},

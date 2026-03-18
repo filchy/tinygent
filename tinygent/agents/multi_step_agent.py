@@ -21,6 +21,7 @@ from tinygent.core.datamodels.messages import TinyPlanMessage
 from tinygent.core.datamodels.messages import TinyReasoningMessage
 from tinygent.core.datamodels.messages import TinySystemMessage
 from tinygent.core.datamodels.messages import TinyToolCall
+from tinygent.core.datamodels.messages import TinyUserMessage
 from tinygent.core.datamodels.middleware import AbstractMiddleware
 from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.runtime.executors import run_async_in_executor
@@ -179,7 +180,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
         messages = TinyLLMInput(
             messages=[
                 *self.memory.copy_chat_messages(),
-                TinyHumanMessage(
+                TinyUserMessage(
                     content=render_template(
                         self.acter_prompt.final_answer,
                         {
@@ -215,7 +216,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
             ]
         )
         messages.add_at_beginning(
-            TinyHumanMessage(
+            TinyUserMessage(
                 content=render_template(
                     self.fallback_prompt.fallback_answer,
                     {

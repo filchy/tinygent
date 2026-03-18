@@ -108,7 +108,9 @@ def example_1_basic_selection() -> None:
         middleware=[selector],
     )
 
-    result = agent.run('Greet Alice and then add 5 and 7')
+    result = agent.run(
+        'Greet Alice and then tell her what is weather like in San Francisco'
+    )
     print(f'Result: {result}\n')
 
 
@@ -151,7 +153,7 @@ def example_3_always_include() -> None:
     selector = build_middleware(
         'llm_tool_selector',
         llm=build_llm('openai:gpt-4o-mini'),
-        always_include=['greet'],
+        always_include=[greet],
     )
 
     agent = build_agent(
@@ -182,7 +184,7 @@ def example_4_combined_constraints() -> None:
     selector = TinyLLMToolSelectorMiddlewareConfig(
         llm=build_llm('openai:gpt-4o-mini'),
         max_tools=4,
-        always_include=['greet'],
+        always_include=[greet],
     )
 
     agent = build_agent(

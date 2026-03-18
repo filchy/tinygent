@@ -323,6 +323,66 @@ Three custom middleware examples:
 uv run examples/agents/middleware/main.py
 ```
 
+---
+
+#### 6. LLM Tool Selector Middleware
+
+**Location**: `examples/agents/middleware/llm_tool_selector_example.py`
+
+Demonstrates intelligent tool selection using a secondary LLM before each agent call.
+
+**Run:**
+
+```bash
+uv run examples/agents/middleware/llm_tool_selector_example.py
+```
+
+---
+
+#### 7. Vector Tool Selector Middleware
+
+**Location**: `examples/agents/middleware/vector_tool_selector_example.py`
+
+Demonstrates tool selection using semantic similarity (embeddings + cosine similarity) — no secondary LLM call needed.
+
+**Run:**
+
+```bash
+uv run examples/agents/middleware/vector_tool_selector_example.py
+```
+
+**Highlights:**
+
+```python
+from tinygent.agents.middleware import TinyVectorToolSelectorMiddlewareConfig
+from tinygent.core.factory import build_embedder
+
+# Basic: embed query, rank tools by cosine similarity
+selector = TinyVectorToolSelectorMiddlewareConfig(
+    embedder=build_embedder('openai:text-embedding-3-small'),
+    max_tools=4,
+)
+
+# Always include a critical tool regardless of similarity
+selector = TinyVectorToolSelectorMiddlewareConfig(
+    embedder=build_embedder('openai:text-embedding-3-small'),
+    max_tools=4,
+    always_include=[greet],
+)
+
+# Custom transform functions for fine-grained embedding control
+from tinygent.agents.middleware.vector_tool_selector import TinyVectorToolSelectorMiddleware
+
+selector = TinyVectorToolSelectorMiddleware(
+    embedder=build_embedder('openai:text-embedding-3-small'),
+    max_tools=4,
+    query_transform_fn=lambda llm_input: ' '.join(
+        m.content for m in llm_input.messages[-3:] if hasattr(m, 'content')
+    ),
+    tool_transform_fn=lambda tool: f'{tool.info.name}: {tool.info.description}',
+)
+```
+
 **Highlights:**
 
 ```python

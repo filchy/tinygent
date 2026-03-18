@@ -401,6 +401,7 @@ class MyMiddleware(TinyBaseMiddleware):
 
 ```python
 from tinygent.core.datamodels.messages import (
+    TinyUserMessage,
     TinyHumanMessage,
     TinyChatMessage,
     TinySystemMessage,

@@ -8,6 +8,8 @@ This example demonstrates how to use **middleware** in TinyGent agents. Middlewa
 uv sync --extra openai
 
 uv run examples/agents/middleware/main.py
+uv run examples/agents/middleware/llm_tool_selector_example.py
+uv run examples/agents/middleware/vector_tool_selector_example.py
 ```
 
 ## Concept

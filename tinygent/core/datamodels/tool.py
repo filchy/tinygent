@@ -60,3 +60,6 @@ class AbstractTool(ABC):
     def cache_info(self) -> Any:
         """Get information about the tool's cache."""
         pass
+
+    def __repr__(self) -> str:
+        return self.__str__()
