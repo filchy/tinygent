@@ -5,6 +5,8 @@ from .llm_tool_selector import TinyLLMToolSelectorMiddlewareConfig
 from .tool_limiter import TinyToolCallLimiterMiddleware
 from .tool_limiter import TinyToolCallLimiterMiddlewareConfig
 from .tool_limiter import ToolCallBlockedException
+from .vector_tool_selector import TinyVectorToolSelectorMiddleware
+from .vector_tool_selector import TinyVectorToolSelectorMiddlewareConfig
 
 __all__ = [
     'TinyBaseMiddleware',
@@ -14,4 +16,6 @@ __all__ = [
     'TinyLLMToolSelectorMiddlewareConfig',
     'TinyToolCallLimiterMiddleware',
     'TinyToolCallLimiterMiddlewareConfig',
+    'TinyVectorToolSelectorMiddleware',
+    'TinyVectorToolSelectorMiddlewareConfig',
 ]

@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 TinyMessageType = TypeVar(
     'TinyMessageType',
     Literal['system'],
+    Literal['user'],
     Literal['squad_member'],
     Literal['chat'],
     Literal['tool'],
@@ -55,7 +56,7 @@ class BaseMessage(ABC, TinyModel, Generic[TinyMessageType]):
 
 
 class TinySystemMessage(BaseMessage[Literal['system']]):
-    """Message representing system-level instructions."""
+    """Message representing system-level instruction."""
 
     type: Literal['system'] = 'system'
     """The type of the message."""
@@ -65,7 +66,21 @@ class TinySystemMessage(BaseMessage[Literal['system']]):
 
     @property
     def tiny_str(self) -> str:
-        return f'SYSTEM: {self.content}'
+        return f'SYSTEM (instruction): {self.content}'
+
+
+class TinyUserMessage(BaseMessage[Literal['user']]):
+    """Message representing user-level instruction."""
+
+    type: Literal['user'] = 'user'
+    """The type of the message."""
+
+    content: str
+    """The content of the human message."""
+
+    @property
+    def tiny_str(self) -> str:
+        return f'USER (instruction): {self.content}'
 
 
 class TinyPlanMessage(BaseMessage[Literal['plan']]):
@@ -283,6 +298,7 @@ AllTinyMessages = Annotated[
         | TinySquadMemberMessage
         | TinyHumanMessage
         | TinySystemMessage
+        | TinyUserMessage
         | TinyToolResult
         | TinySummaryMessage
     ),

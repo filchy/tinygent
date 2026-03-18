@@ -286,9 +286,10 @@ Tinygent supports multiple message types:
 
 ```python
 from tinygent.core.datamodels.messages import (
-    TinyHumanMessage,      # User messages
+    TinyHumanMessage,      # Human messages
     TinyChatMessage,       # AI responses
     TinySystemMessage,     # System prompts
+    TinyUserMessage,       # User prompts
     TinyPlanMessage,       # Planning messages
     TinyToolMessage,       # Tool results
 )

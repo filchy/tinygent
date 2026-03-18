@@ -19,6 +19,7 @@ from tinygent.core.datamodels.agent import AbstractAgentConfig
 from tinygent.core.datamodels.llm import AbstractLLM
 from tinygent.core.datamodels.memory import AbstractMemory
 from tinygent.core.datamodels.messages import AllTinyMessages
+from tinygent.core.datamodels.messages import TinyChatMessage
 from tinygent.core.datamodels.messages import TinyHumanMessage
 from tinygent.core.datamodels.messages import TinySquadMemberMessage
 from tinygent.core.datamodels.messages import TinySystemMessage
@@ -281,7 +282,7 @@ class TinySquadAgent(TinyBaseAgent):
                         result=final_answer,
                     )
                 )
-                self.memory.save_context(TinyHumanMessage(content=final_answer))
+                self.memory.save_context(TinyChatMessage(content=final_answer))
         except Exception as e:
             await self.on_error(run_id=run_id, e=e, kwargs={})
             raise e

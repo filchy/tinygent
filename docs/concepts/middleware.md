@@ -801,6 +801,126 @@ agent = TinyMultiStepAgent(
 
 ---
 
+### TinyVectorToolSelectorMiddleware
+
+Selects the most relevant tools for each LLM call using semantic similarity between the user query and tool descriptions. No secondary LLM call required — selection is done purely via vector embeddings and cosine similarity.
+
+**Features:**
+- Uses an embedder to compute cosine similarity between the query and each tool description
+- Ranks tools by similarity and selects the top candidates
+- Supports always-include list for critical tools
+- Configurable maximum tools limit and minimum similarity threshold
+- Customizable query and tool transform functions for fine-grained embedding control
+
+**How It Works:**
+1. Before each LLM call, the last `TinyHumanMessage` is embedded as the query
+2. Each tool's name and description is embedded
+3. Cosine similarity is computed between the query and every tool embedding
+4. Tools are ranked by similarity; only those above `similarity_threshold` (up to `max_tools`) are passed to the main agent
+
+**Basic Usage:**
+
+```python
+from tinygent.agents.middleware import TinyVectorToolSelectorMiddleware
+from tinygent.agents import TinyMultiStepAgent
+from tinygent.core.factory import build_embedder, build_llm
+
+selector = TinyVectorToolSelectorMiddleware(
+    embedder=build_embedder('openai:text-embedding-3-small'),
+    similarity_threshold=0.5,
+    max_tools=5,
+)
+
+agent = TinyMultiStepAgent(
+    llm=build_llm('openai:gpt-4o'),
+    tools=[search, calculator, weather, database, email, calendar, notes],
+    middleware=[selector],
+)
+```
+
+**Always Include Critical Tools:**
+
+```python
+selector = TinyVectorToolSelectorMiddleware(
+    embedder=build_embedder('openai:text-embedding-3-small'),
+    similarity_threshold=0.4,
+    max_tools=5,
+    always_include=[search],
+)
+```
+
+**Custom Transform Functions:**
+
+```python
+from tinygent.core.datamodels.tool import AbstractTool
+from tinygent.core.types.io.llm_io_input import TinyLLMInput
+
+def query_transform(llm_input: TinyLLMInput) -> str:
+    # Embed the last 3 messages combined for richer context
+    recent = llm_input.messages[-3:]
+    return ' '.join(m.content for m in recent if hasattr(m, 'content'))
+
+def tool_transform(tool: AbstractTool) -> str:
+    # Repeat name to increase its weight in the embedding
+    return f'{tool.info.name} {tool.info.name}: {tool.info.description}'
+
+selector = TinyVectorToolSelectorMiddleware(
+    embedder=build_embedder('openai:text-embedding-3-small'),
+    similarity_threshold=0.45,
+    max_tools=4,
+    query_transform_fn=query_transform,
+    tool_transform_fn=tool_transform,
+)
+```
+
+**Using Config Factory:**
+
+Transform functions and the similarity threshold can also be set directly on the config:
+
+```python
+from tinygent.agents.middleware import TinyVectorToolSelectorMiddlewareConfig
+
+config = TinyVectorToolSelectorMiddlewareConfig(
+    embedder='openai:text-embedding-3-small',
+    similarity_threshold=0.5,
+    max_tools=5,
+    always_include=['search'],
+    query_transform_fn=query_transform,
+    tool_transform_fn=tool_transform,
+)
+
+selector = config.build()
+```
+
+**Factory Configuration Options:**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `type` | `Literal['vector_tool_classifier']` | `'vector_tool_classifier'` | Type identifier (frozen) |
+| `embedder` | `AbstractEmbedderConfig \| AbstractEmbedder` | Required | Embedder used to compute similarity. Can be a string like `'openai:text-embedding-3-small'` or an embedder instance |
+| `similarity_threshold` | `float \| None` | `None` | Minimum cosine similarity score for a tool to be selected. `None` = no threshold |
+| `max_tools` | `int \| None` | `None` | Maximum number of tools to select. `None` = no limit |
+| `always_include` | `list[str] \| None` | `None` | List of tool names to always include regardless of similarity score |
+| `query_transform_fn` | `Callable[[TinyLLMInput], str] \| None` | `None` | Custom function to extract the query string from the LLM input. Defaults to last `TinyHumanMessage` found |
+| `tool_transform_fn` | `Callable[[AbstractTool], str] \| None` | `None` | Custom function to produce the text embedded for each tool. Defaults to `"name - description"` |
+
+**LLM vs. Vector Tool Selector:**
+
+| | `TinyLLMToolSelectorMiddleware` | `TinyVectorToolSelectorMiddleware` |
+|---|---|---|
+| Selection method | Secondary LLM call | Cosine similarity |
+| Extra API cost | Yes (LLM tokens) | Yes (embeddings, cheaper) |
+| Latency | Higher | Lower |
+| Accuracy | Higher (understands context) | Good (semantic similarity) |
+| Custom logic | Via prompt template | Via transform functions |
+
+**When to Use:**
+- You have 10+ tools and want lower latency/cost than the LLM selector
+- Tool descriptions are semantically distinct
+- You want deterministic, reproducible selection behavior
+
+---
+
 ## Next Steps
 
 - **[Agents](agents.md)**: Use middleware with agents
