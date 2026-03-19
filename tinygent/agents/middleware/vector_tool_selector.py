@@ -54,6 +54,30 @@ class TinyVectorToolSelectorMiddlewareConfig(
 
 
 class TinyVectorToolSelectorMiddleware(TinyBaseToolSelectorMiddleware):
+    """Middleware that selects relevant tools using vector similarity search.
+
+    Before each LLM call, this middleware embeds the latest human message and all
+    candidate tool descriptions, then ranks tools by cosine similarity to the query.
+    Only the most relevant tools are forwarded to the main agent, reducing token usage
+    and focusing the model on applicable capabilities.
+
+    An optional similarity threshold can further filter out low-relevance tools.
+    Tools in ``always_include`` bypass the ranking and are always forwarded.
+
+    Args:
+        embedder: Embedder used to produce dense vector representations.
+        max_tools: Maximum number of tools to select (None = no limit).
+        always_include: Tools to always include regardless of similarity score.
+        similarity_threshold: Minimum cosine similarity score for a tool to be
+            selected. When None, all tools up to ``max_tools`` are included.
+        query_transform_fn: Callable that extracts a query string from the
+            incoming ``TinyLLMInput``. Defaults to the content of the last
+            human message.
+        tool_transform_fn: Callable that converts an ``AbstractTool`` to the
+            string that will be embedded and compared against the query.
+            Defaults to ``"<name> - <description>"``.
+    """
+
     def __init__(
         self,
         *,
