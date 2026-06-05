@@ -7,13 +7,17 @@ from tinygent.core.runtime.global_registry import GlobalRegistry
 
 
 def build_llm(
-    llm: str | dict | AbstractLLMConfig,
+    llm: str | dict | AbstractLLM | AbstractLLMConfig,
     *,
     provider: str | None = None,
     temperature: float | None = None,
     **kwargs,
 ) -> AbstractLLM:
     """Build tiny llm."""
+
+    if isinstance(llm, AbstractLLM):
+        return llm
+
     check_modules()
 
     if isinstance(llm, str):

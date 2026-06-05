@@ -11,6 +11,7 @@ from pydantic import Field
 
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
+from tinygent.core.datamodels.checkpointer import AbstractCheckpointer
 from tinygent.core.datamodels.llm import AbstractLLM
 from tinygent.core.datamodels.memory import AbstractMemory
 from tinygent.core.datamodels.messages import AllTinyMessages
@@ -56,6 +57,7 @@ class TinyMultiStepAgentConfig(TinyBaseAgentConfig['TinyMultiStepAgent']):
             llm=self.build_llm_instance(),
             tools=self.build_tools_list(),
             memory=self.build_memory_instance(),
+            checkpointer=self.build_checkpointer_instance(),
             prompt_template=self.prompt_template,
             max_iterations=self.max_iterations,
             plan_interval=self.plan_interval,
@@ -102,12 +104,15 @@ class TinyMultiStepAgent(TinyBaseAgent):
         max_iterations: int = 15,
         plan_interval: int = 5,
         middleware: Sequence[AbstractMiddleware] = [],
+        checkpointer: AbstractCheckpointer | None = None,
     ) -> None:
-        super().__init__(llm=llm, tools=tools, memory=memory, middleware=middleware)
-
-        self._iteration_number: int = 1
-        self._planned_steps: list[TinyPlanMessage] = []
-        self._tool_calls: list[TinyToolCall] = []
+        super().__init__(
+            llm=llm,
+            tools=tools,
+            memory=memory,
+            middleware=middleware,
+            checkpointer=checkpointer,
+        )
 
         self.max_iterations = max_iterations
         self.plan_interval = plan_interval
@@ -115,6 +120,11 @@ class TinyMultiStepAgent(TinyBaseAgent):
         self.acter_prompt = prompt_template.acter
         self.plan_prompt = prompt_template.plan
         self.fallback_prompt = prompt_template.fallback
+
+    def _init_state(self) -> None:
+        self._checkpointer.setdefault('_iteration_number', 1)
+        self._checkpointer.setdefault('_planned_steps', [])
+        self._checkpointer.setdefault('_tool_calls', [])
 
     @tiny_trace('multi_step_agent_steps_creation')
     async def _stream_steps(
@@ -127,7 +137,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
         variables: dict[str, Any]
 
         # Initial plan
-        if self._iteration_number == 1:
+        if self._checkpointer['_iteration_number'] == 1:
             template = self.plan_prompt.init_plan
             variables = {'task': task, 'tools': self.tools}
         else:
@@ -136,8 +146,10 @@ class TinyMultiStepAgent(TinyBaseAgent):
                 'task': task,
                 'tools': self.tools,
                 'history': self.memory.load_variables(),
-                'steps': self._planned_steps,
-                'remaining_steps': self.max_iterations - self._iteration_number + 1,
+                'steps': self._checkpointer['_planned_steps'],
+                'remaining_steps': self.max_iterations
+                - self._checkpointer['_iteration_number']
+                + 1,
             }
 
         messages = TinyLLMInput(
@@ -186,9 +198,9 @@ class TinyMultiStepAgent(TinyBaseAgent):
                         {
                             'task': task,
                             'tools': self.tools,
-                            'tool_calls': self._tool_calls,
+                            'tool_calls': self._checkpointer['_tool_calls'],
                             'history': self.memory.load_variables(),
-                            'steps': self._planned_steps,
+                            'steps': self._checkpointer['_planned_steps'],
                         },
                     )
                 ),
@@ -222,7 +234,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                     {
                         'task': task,
                         'history': self.memory.load_variables(),
-                        'steps': self._planned_steps,
+                        'steps': self._checkpointer['_planned_steps'],
                     },
                 )
             ),
@@ -248,43 +260,47 @@ class TinyMultiStepAgent(TinyBaseAgent):
 
         logger.debug('[%s] Running agent with input %s', run_id, input_text)
 
-        self._iteration_number = 1
+        self._checkpointer['_iteration_number'] = 1
         returned_final_answer: bool = False
         yielded_final_answer: str = ''
 
         self.memory.save_context(TinyHumanMessage(content=input_text))
 
         while not returned_final_answer and (
-            self._iteration_number <= self.max_iterations
+            self._checkpointer['_iteration_number'] <= self.max_iterations
         ):
             with tiny_trace_span(
-                'multi_step_agent_single_iteration', iteration=self._iteration_number
+                'multi_step_agent_single_iteration',
+                iteration=self._checkpointer['_iteration_number'],
             ):
-                logger.debug('--- ITERATION %d ---', self._iteration_number)
+                logger.debug(
+                    '--- ITERATION %d ---', self._checkpointer['_iteration_number']
+                )
 
-                if self._iteration_number == 1 or (
-                    (self._iteration_number - 1) % self.plan_interval == 0
+                if self._checkpointer['_iteration_number'] == 1 or (
+                    (self._checkpointer['_iteration_number'] - 1) % self.plan_interval
+                    == 0
                 ):
                     # Create new plan
                     plan_generator = self._stream_steps(run_id=run_id, task=input_text)
-                    self._planned_steps = []
+                    self._checkpointer['_planned_steps'] = []
 
                     async for planner_msg in plan_generator:
                         if isinstance(planner_msg, TinyPlanMessage):
                             logger.debug(
                                 '[%d. ITERATION - Plan]: %s',
-                                self._iteration_number,
+                                self._checkpointer['_iteration_number'],
                                 planner_msg.content,
                             )
                             await self.on_plan(
                                 run_id=run_id, plan=planner_msg.content, kwargs={}
                             )
-                            self._planned_steps.append(planner_msg)
+                            self._checkpointer['_planned_steps'].append(planner_msg)
 
                         if isinstance(planner_msg, TinyReasoningMessage):
                             logger.debug(
                                 '[%d. ITERATION - Reasoning]: %s',
-                                self._iteration_number,
+                                self._checkpointer['_iteration_number'],
                                 planner_msg.content,
                             )
                             await self.on_reasoning(
@@ -316,7 +332,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                                         run_id=run_id, tool=called_tool, call=tool_call
                                     )
                                 )
-                                self._tool_calls.append(tool_call)
+                                self._checkpointer['_tool_calls'].append(tool_call)
                             else:
                                 logger.error(
                                     'Tool %s not found. Skipping tool call.',
@@ -327,7 +343,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                                 reasoning = tool_call.arguments.get('reasoning', '')
                                 logger.debug(
                                     '[%d. ITERATION - Tool Reasoning]: %s',
-                                    self._iteration_number,
+                                    self._checkpointer['_iteration_number'],
                                     reasoning,
                                 )
                                 await self.on_tool_reasoning(
@@ -336,7 +352,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
 
                             logger.debug(
                                 '[%s. ITERATION - Tool Call]: %s(%s) = %s',
-                                self._iteration_number,
+                                self._checkpointer['_iteration_number'],
                                 tool_call.tool_name,
                                 tool_call.arguments,
                                 tool_call.result,
@@ -352,7 +368,7 @@ class TinyMultiStepAgent(TinyBaseAgent):
                     await self.on_error(run_id=run_id, e=e, kwargs={})
                     raise e
                 finally:
-                    self._iteration_number += 1
+                    self._checkpointer['_iteration_number'] += 1
 
         if not returned_final_answer:
             logger.warning(
@@ -385,29 +401,37 @@ class TinyMultiStepAgent(TinyBaseAgent):
 
         logger.debug('[AGENT RESET]')
 
-        self._iteration_number = 1
-        self._planned_steps = []
-        self._tool_calls = []
+        self._checkpointer.clear()
+        self._init_state()
 
-    def setup(self, reset: bool, history: list[AllTinyMessages] | None) -> None:
+    def setup(
+        self,
+        reset: bool,
+        history: list[AllTinyMessages] | None,
+        checkpoint_id: str | None,
+    ) -> None:
         if reset:
             self.reset()
 
         if history:
             self.memory.save_multiple_context(history)
 
+        if checkpoint_id:
+            self.checkpointer.load(checkpoint_id)
+
     def run(
         self,
         input_text: str,
         *,
         run_id: str | None = None,
+        checkpoint_id: str | None = None,
         reset: bool = True,
         history: list[AllTinyMessages] | None = None,
     ) -> str:
         logger.debug('[USER INPUT] %s', input_text)
 
         run_id = run_id or str(uuid.uuid4())
-        self.setup(reset=reset, history=history)
+        self.setup(reset=reset, history=history, checkpoint_id=checkpoint_id)
 
         async def _run() -> str:
             final_answer: str = ''
@@ -424,13 +448,14 @@ class TinyMultiStepAgent(TinyBaseAgent):
         input_text: str,
         *,
         run_id: str | None = None,
+        checkpoint_id: str | None = None,
         reset: bool = True,
         history: list[AllTinyMessages] | None = None,
     ) -> AsyncGenerator[str, None]:
         logger.debug('[USER INPUT] %s', input_text)
 
         run_id = run_id or str(uuid.uuid4())
-        self.setup(reset=reset, history=history)
+        self.setup(reset=reset, history=history, checkpoint_id=checkpoint_id)
 
         async def _generator():
             idx = 0

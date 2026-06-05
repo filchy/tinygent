@@ -10,6 +10,7 @@ from pydantic import Field
 
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
+from tinygent.core.datamodels.checkpointer import AbstractCheckpointer
 from tinygent.core.datamodels.llm import AbstractLLM
 from tinygent.core.datamodels.memory import AbstractMemory
 from tinygent.core.datamodels.messages import AllTinyMessages
@@ -53,6 +54,7 @@ class TinyReActAgentConfig(TinyBaseAgentConfig['TinyReActAgent']):
             llm=self.build_llm_instance(),
             tools=self.build_tools_list(),
             memory=self.build_memory_instance(),
+            checkpointer=self.build_checkpointer_instance(),
             max_iterations=self.max_iterations,
         )
 
@@ -86,6 +88,19 @@ class TinyReActAgent(TinyBaseAgent):
         middleware: List of middleware to apply during execution
     """
 
+    class TinyReactIteration(TinyModel):
+        iteration_number: int
+        tool_calls: list[TinyToolCall]
+        reasoning: str
+
+        @property
+        def summary(self) -> str:
+            return (
+                f'Iteration {self.iteration_number}:\n'
+                f'Reasoning: {self.reasoning}\n'
+                f'Tool Calls: {", ".join(call.tool_name for call in self.tool_calls)}\n'
+            )
+
     def __init__(
         self,
         llm: AbstractLLM,
@@ -94,29 +109,24 @@ class TinyReActAgent(TinyBaseAgent):
         tools: list[AbstractTool] = [],
         max_iterations: int = 10,
         middleware: Sequence[AbstractMiddleware] = [],
+        checkpointer: AbstractCheckpointer | None = None,
     ) -> None:
-        super().__init__(llm=llm, tools=tools, memory=memory, middleware=middleware)
-
-        class TinyReactIteration(TinyModel):
-            iteration_number: int
-            tool_calls: list[TinyToolCall]
-            reasoning: str
-
-            @property
-            def summary(self) -> str:
-                return (
-                    f'Iteration {self.iteration_number}:\n'
-                    f'Reasoning: {self.reasoning}\n'
-                    f'Tool Calls: {", ".join(call.tool_name for call in self.tool_calls)}\n'
-                )
-
-        self.TinyReactIteration = TinyReactIteration
-
-        self._iteration_number: int = 1
-        self._react_iterations: list[TinyReactIteration] = []
+        super().__init__(
+            llm=llm,
+            tools=tools,
+            memory=memory,
+            middleware=middleware,
+            checkpointer=checkpointer,
+        )
 
         self.prompt_template = prompt_template
         self.max_iterations = max_iterations
+
+    def _init_state(self) -> None:
+        self.checkpointer.setdefault('iteration_number', 1)
+        self.checkpointer.setdefault('react_iterations', [])
+        self.checkpointer.setdefault('returned_final_answer', False)
+        self.checkpointer.setdefault('yielded_final_answer', '')
 
     @tiny_trace('react_agent_reasoning')
     async def _stream_reasoning(
@@ -126,7 +136,7 @@ class TinyReActAgent(TinyBaseAgent):
             type: Literal['reasoning'] = 'reasoning'
             content: str
 
-        if self._iteration_number == 1:
+        if self.checkpointer['iteration_number'] == 1:
             template = self.prompt_template.reason.init
             variables = {'task': task}
         else:
@@ -134,7 +144,8 @@ class TinyReActAgent(TinyBaseAgent):
             variables = {
                 'task': task,
                 'overview': '\n'.join(
-                    iteration.summary for iteration in self._react_iterations
+                    iteration.summary
+                    for iteration in self.checkpointer['react_iterations']
                 ),
             }
 
@@ -211,7 +222,8 @@ class TinyReActAgent(TinyBaseAgent):
                     {
                         'task': task,
                         'overview': '\n'.join(
-                            iteration.summary for iteration in self._react_iterations
+                            iteration.summary
+                            for iteration in self.checkpointer['react_iterations']
                         ),
                     },
                 )
@@ -241,19 +253,20 @@ class TinyReActAgent(TinyBaseAgent):
         )
         logger.debug('Running agent with task: %s', input_text)
 
-        self._iteration_number = 1
-        returned_final_answer: bool = False
-        yielded_final_answer: str = ''
+        self._init_state()
 
         self.memory.save_context(TinyHumanMessage(content=input_text))
 
-        while not returned_final_answer and (
-            self._iteration_number <= self.max_iterations
+        while not self.checkpointer['returned_final_answer'] and (
+            self.checkpointer['iteration_number'] <= self.max_iterations
         ):
             with tiny_trace_span(
-                'react_agent_single_iteration', iteration=self._iteration_number
+                'react_agent_single_iteration',
+                iteration=self.checkpointer['iteration_number'],
             ):
-                logger.debug('--- ITERATION %d ---', self._iteration_number)
+                logger.debug(
+                    '--- ITERATION %d ---', self.checkpointer['iteration_number']
+                )
 
                 try:
                     reasoning_result = await self._stream_reasoning(
@@ -261,17 +274,17 @@ class TinyReActAgent(TinyBaseAgent):
                     )
                     logger.debug(
                         '[%d. ITERATION - Reasoning Result]: %s',
-                        self._iteration_number,
+                        self.checkpointer['iteration_number'],
                         reasoning_result.content,
                     )
 
                     if isinstance(reasoning_result, TinyChatMessage):
                         logger.debug(
                             '[%d. ITERATION - Reasoning Final Answer]: %s',
-                            self._iteration_number,
+                            self.checkpointer['iteration_number'],
                             reasoning_result.content,
                         )
-                        returned_final_answer = True
+                        self.checkpointer['returned_final_answer'] = True
 
                         self.memory.save_context(reasoning_result)
 
@@ -279,7 +292,8 @@ class TinyReActAgent(TinyBaseAgent):
 
                     else:
                         logger.debug(
-                            '[%d. ITERATION - Streaming Action]', self._iteration_number
+                            '[%d. ITERATION - Streaming Action]',
+                            self.checkpointer['iteration_number'],
                         )
 
                         tool_calls: list[TinyToolCall] = []
@@ -289,8 +303,10 @@ class TinyReActAgent(TinyBaseAgent):
                             if msg.is_message and isinstance(
                                 msg.message, TinyChatMessageChunk
                             ):
-                                returned_final_answer = True
-                                yielded_final_answer += msg.message.content
+                                self.checkpointer['returned_final_answer'] = True
+                                self.checkpointer['yielded_final_answer'] += (
+                                    msg.message.content
+                                )
 
                                 yield msg.message.content
 
@@ -315,7 +331,7 @@ class TinyReActAgent(TinyBaseAgent):
                                         )
                                         logger.debug(
                                             '[%d. ITERATION - Tool Reasoning]: %s',
-                                            self._iteration_number,
+                                            self.checkpointer['iteration_number'],
                                             reasoning,
                                         )
                                         await self.on_tool_reasoning(
@@ -329,20 +345,22 @@ class TinyReActAgent(TinyBaseAgent):
 
                                 logger.debug(
                                     '[%s. ITERATION - Tool Call]: %s(%s) = %s',
-                                    self._iteration_number,
+                                    self.checkpointer['iteration_number'],
                                     full_tc.tool_name,
                                     full_tc.arguments,
                                     full_tc.result,
                                 )
 
-                        if yielded_final_answer:
+                        if self.checkpointer['yielded_final_answer']:
                             self.memory.save_context(
-                                TinyChatMessage(content=yielded_final_answer)
+                                TinyChatMessage(
+                                    content=self.checkpointer['yielded_final_answer']
+                                )
                             )
 
-                        self._react_iterations.append(
+                        self.checkpointer['react_iterations'].append(
                             self.TinyReactIteration(
-                                iteration_number=self._iteration_number,
+                                iteration_number=self.checkpointer['iteration_number'],
                                 tool_calls=tool_calls,
                                 reasoning=reasoning_result.content,
                             )
@@ -352,9 +370,9 @@ class TinyReActAgent(TinyBaseAgent):
                     await self.on_error(run_id=run_id, e=e, kwargs={})
                     raise e
                 finally:
-                    self._iteration_number += 1
+                    self.checkpointer['iteration_number'] += 1
 
-        if not returned_final_answer:
+        if not self.checkpointer['returned_final_answer']:
             logger.warning(
                 'Max iterations reached without final answer. Using fallback.'
                 'Returning fallback answer.'
@@ -372,8 +390,9 @@ class TinyReActAgent(TinyBaseAgent):
                 yield fallback_chunk
 
             if not yielded_fallback:
-                final_yielded_answer = 'I have completed my reasoning and tool usage but did not arrive at a final answer.'
-                yield final_yielded_answer
+                raise RuntimeError(
+                    'Something went wrong, cannot return answer from react agent.'
+                )
 
             self.memory.save_context(TinyChatMessage(content=final_yielded_answer))
 
@@ -382,28 +401,36 @@ class TinyReActAgent(TinyBaseAgent):
 
         logger.debug('[AGENT RESET]')
 
-        self._iteration_number = 1
-        self._react_iterations = []
+        self._init_state()
 
-    def setup(self, reset: bool, history: list[AllTinyMessages] | None) -> None:
+    def setup(
+        self,
+        reset: bool,
+        history: list[AllTinyMessages] | None,
+        checkpoint_id: str | None,
+    ) -> None:
         if reset:
             self.reset()
 
         if history:
             self.memory.save_multiple_context(history)
 
+        if checkpoint_id:
+            self.checkpointer.load(checkpoint_id)
+
     def run(
         self,
         input_text: str,
         *,
         run_id: str | None = None,
+        checkpoint_id: str | None = None,
         reset: bool = True,
         history: list[AllTinyMessages] | None = None,
     ) -> str:
         logger.debug('[USER INPUT] %s', input_text)
 
         run_id = run_id or str(uuid.uuid4())
-        self.setup(reset=reset, history=history)
+        self.setup(reset=reset, history=history, checkpoint_id=checkpoint_id)
 
         async def _run() -> str:
             final_answer = ''
@@ -420,13 +447,14 @@ class TinyReActAgent(TinyBaseAgent):
         input_text: str,
         *,
         run_id: str | None = None,
+        checkpoint_id: str | None = None,
         reset: bool = True,
         history: list[AllTinyMessages] | None = None,
     ) -> AsyncGenerator[str, None]:
         logger.debug('[USER INPUT] %s', input_text)
 
         run_id = run_id or str(uuid.uuid4())
-        self.setup(reset=reset, history=history)
+        self.setup(reset=reset, history=history, checkpoint_id=checkpoint_id)
 
         async def _generator():
             idx = 0

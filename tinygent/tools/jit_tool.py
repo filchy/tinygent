@@ -29,6 +29,8 @@ class JITInstructionToolConfig(AbstractToolConfig['JITInstructionTool'], Generic
 
     instruction: str = Field(...)
 
+    # TODO: add here custom instruction field name
+
     def build(self) -> 'JITInstructionTool':
         return cast(
             'JITInstructionTool',

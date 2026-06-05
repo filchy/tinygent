@@ -8,9 +8,11 @@ from typing import Literal
 import uuid
 
 from pydantic import Field
+from pydantic import PrivateAttr
 
 from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
+from tinygent.core.datamodels.checkpointer import AbstractCheckpointer
 from tinygent.core.datamodels.llm import AbstractLLM
 from tinygent.core.datamodels.memory import AbstractMemory
 from tinygent.core.datamodels.messages import AllTinyMessages
@@ -100,6 +102,26 @@ class TinyMAPMonitorValidity(TinyModel):
         return 'Valid response' if self.is_valid else 'NOT-Valid response'
 
 
+class DecomposedTask(TinyModel):
+    class subgoal(TinyModel):
+        index: int
+        question: str
+        _finished: bool = PrivateAttr(default=False)
+
+        @property
+        def description(self) -> str:
+            return f'{self.index}. {self.question}'
+
+        @property
+        def finished(self) -> bool:
+            return self._finished
+
+        def marked_finished(self) -> None:
+            self._finished = True
+
+    subgoals: list[subgoal]
+
+
 class TinyMAPAgentConfig(TinyBaseAgentConfig['TinyMAPAgent']):
     """Configuration for the TinyMAPAgent."""
 
@@ -180,8 +202,15 @@ class TinyMAPAgent(TinyBaseAgent):
         max_recurrsion: int = 5,
         tools: list[AbstractTool] = [],
         middleware: Sequence[AbstractMiddleware] = [],
+        checkpointer: AbstractCheckpointer | None = None,
     ) -> None:
-        super().__init__(llm=llm, tools=tools, memory=memory, middleware=middleware)
+        super().__init__(
+            llm=llm,
+            tools=tools,
+            memory=memory,
+            middleware=middleware,
+            checkpointer=checkpointer,
+        )
 
         self.max_plan_length = max_plan_length
         self.max_branches_per_layer = max_branches_per_layer
@@ -191,16 +220,13 @@ class TinyMAPAgent(TinyBaseAgent):
             prompt_template if prompt_template else self.default_prompt_template()
         )
 
+    def _init_state(self) -> None:
+        self.checkpointer.setdefault('decomposed_task', None)
+        self.checkpointer.setdefault('final_plan', [])
+
     @tiny_trace('map_agent_task_decomposer')
-    async def _task_decomposer(self, run_id: str, input_txt: str) -> list[str]:
+    async def _task_decomposer(self, run_id: str, input_txt: str) -> DecomposedTask:
         logger.debug('[TASK DECOMPOSER] task: %s', input_txt)
-
-        class DecomposedTask(TinyModel):
-            class subgoal(TinyModel):
-                index: int
-                question: str
-
-            subgoals: list[subgoal]
 
         messages = TinyLLMInput(messages=[*self.memory.copy_chat_messages()])
         messages.add_at_end(
@@ -222,7 +248,7 @@ class TinyMAPAgent(TinyBaseAgent):
             output_schema=DecomposedTask,
         )
 
-        all_subgoals = [f'{sq.index}. {sq.question}' for sq in result.subgoals]
+        all_subgoals = [sb.description for sb in result]
 
         set_tiny_attributes(
             {
@@ -233,7 +259,7 @@ class TinyMAPAgent(TinyBaseAgent):
         logger.debug(
             '[TASK DECOMPOSER] decomposed task (%s): %s', input_txt, all_subgoals
         )
-        return all_subgoals
+        return result
 
     @tiny_trace('map_agent_actor')
     async def _actor(
@@ -665,14 +691,20 @@ class TinyMAPAgent(TinyBaseAgent):
     @tiny_trace('map_agent_map')
     async def _map(self, run_id: str, question: str) -> list[TinyMAPActionProposal]:
         logger.debug('[MAP] Running MAP module with task: %s', question)
-        subgoals = await self._task_decomposer(run_id, question)
-        subgoals.append(
-            question
-        )  # INFO: Last and final subgoal is original user question
 
-        final_plan: list[TinyMAPActionProposal] = []
+        if self.checkpointer['decomposed_task'] is None:
+            decomposed_task = await self._task_decomposer(run_id, question)
+            decomposed_task.subgoals.append(
+                DecomposedTask.subgoal(
+                    index=max(s.index for s in decomposed_task.subgoals) + 1,
+                    question=question,
+                )
+            )  # INFO: Last and final subgoal is original user question
+            self.checkpointer['decomposed_task'] = decomposed_task
 
-        for subgoal in subgoals:
+        for subgoal in filter(
+            lambda x: x.finished, self.checkpointer['decomposed_task'].subgoals
+        ):
             logger.debug('[MAP] current subgoal: %s', subgoal)
             current_state = TinyMAPState(
                 is_valid=True,
@@ -681,26 +713,39 @@ class TinyMAPAgent(TinyBaseAgent):
                 metadata='',
             )
 
-            validity = await self._orchestrator(run_id, current_state, subgoal)
+            validity = await self._orchestrator(run_id, current_state, subgoal.question)
 
             while (
-                not validity.fully_satisfies and len(final_plan) < self.max_plan_length
+                not validity.fully_satisfies
+                and len(self.checkpointer['final_plan']) < self.max_plan_length
             ):
-                search_res = await self._search(run_id, 0, current_state, subgoal)
+                search_res = await self._search(
+                    run_id, 0, current_state, subgoal.question
+                )
 
-                final_plan.append(search_res.action)
+                self.checkpointer['final_plan'].append(search_res.action)
                 current_state = search_res.next_state
-                validity = await self._orchestrator(run_id, current_state, subgoal)
+                validity = await self._orchestrator(
+                    run_id, current_state, subgoal.question
+                )
 
                 await self.on_plan(run_id=run_id, plan=search_res.action.sum, kwargs={})
 
+            subgoal.marked_finished()
+
         set_tiny_attributes(
-            {'agent.map.final_plan': '\n'.join([p.sum for p in final_plan])}
+            {
+                'agent.map.final_plan': '\n'.join(
+                    [p.sum for p in self.checkpointer['final_plan']]
+                )
+            }
         )
         logger.debug(
-            '[MAP] task: %s final plan: %s', question, [p.sum for p in final_plan]
+            '[MAP] task: %s final plan: %s',
+            question,
+            [p.sum for p in self.checkpointer['final_plan']],
         )
-        return final_plan
+        return self.checkpointer['final_plan']
 
     @tiny_trace('agent_run')
     async def _run_agent(self, input_text: str, run_id: str) -> str:
@@ -729,25 +774,36 @@ class TinyMAPAgent(TinyBaseAgent):
 
         logger.debug('[AGENT RESET]')
 
-    def setup(self, reset: bool, history: list[AllTinyMessages] | None) -> None:
+        self._init_state()
+
+    def setup(
+        self,
+        reset: bool,
+        history: list[AllTinyMessages] | None,
+        checkpoint_id: str | None,
+    ) -> None:
         if reset:
             self.reset()
 
         if history:
             self.memory.save_multiple_context(history)
 
+        if checkpoint_id:
+            self.checkpointer.load(checkpoint_id)
+
     def run(
         self,
         input_text: str,
         *,
         run_id: str | None = None,
+        checkpoint_id: str | None = None,
         reset: bool = True,
         history: list[AllTinyMessages] | None = None,
     ) -> str:
         logger.debug('[USER INPUT] %s', input_text)
 
         run_id = run_id or str(uuid.uuid4())
-        self.setup(reset=reset, history=history)
+        self.setup(reset=reset, history=history, checkpoint_id=checkpoint_id)
 
         async def _run() -> str:
             plan = await self._run_agent(run_id=run_id, input_text=input_text)
@@ -762,13 +818,14 @@ class TinyMAPAgent(TinyBaseAgent):
         input_text: str,
         *,
         run_id: str | None = None,
+        checkpoint_id: str | None = None,
         reset: bool = True,
         history: list[AllTinyMessages] | None = None,
     ) -> AsyncGenerator[str, None]:
         logger.debug('[USER INPUT] %s', input_text)
 
         run_id = run_id or str(uuid.uuid4())
-        self.setup(reset=reset, history=history)
+        self.setup(reset=reset, history=history, checkpoint_id=checkpoint_id)
 
         async def _generator():
             plan = await self._run_agent(run_id=run_id, input_text=input_text)

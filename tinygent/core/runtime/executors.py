@@ -11,8 +11,8 @@ from typing import Callable
 P = typing.ParamSpec('P')
 T = typing.TypeVar('T')
 
-_bg_loop = None
-_bg_thread = None
+_bg_loop: asyncio.AbstractEventLoop | None = None
+_bg_thread: threading.Thread | None = None
 
 _DEFAULT_SEMAPHORE_LIMIT = int(os.getenv('TINY_SEMPATHORE_DEFAULT_LIMIT', 5))
 

@@ -16,6 +16,7 @@ from tinygent.agents.base_agent import TinyBaseAgent
 from tinygent.agents.base_agent import TinyBaseAgentConfig
 from tinygent.core.datamodels.agent import AbstractAgent
 from tinygent.core.datamodels.agent import AbstractAgentConfig
+from tinygent.core.datamodels.checkpointer import AbstractCheckpointer
 from tinygent.core.datamodels.llm import AbstractLLM
 from tinygent.core.datamodels.memory import AbstractMemory
 from tinygent.core.datamodels.messages import AllTinyMessages
@@ -90,11 +91,12 @@ class TinySquadAgentConfig(TinyBaseAgentConfig['TinySquadAgent']):
     def build(self) -> TinySquadAgent:
         return TinySquadAgent(
             middleware=self.build_middleware_list(),
-            prompt_template=self.prompt_template,
             llm=self.build_llm_instance(),
             tools=self.build_tools_list(),
             memory=self.build_memory_instance(),
             squad=[AgentSquadMember.from_config(agent_cfg) for agent_cfg in self.squad],
+            checkpointer=self.build_checkpointer_instance(),
+            prompt_template=self.prompt_template,
         )
 
     @model_validator(mode='after')
@@ -147,12 +149,23 @@ class TinySquadAgent(TinyBaseAgent):
         tools: list[AbstractTool] = [],
         squad: list[AgentSquadMember] = [],
         middleware: Sequence[AbstractMiddleware] = [],
+        checkpointer: AbstractCheckpointer | None = None,
     ) -> None:
-        super().__init__(llm=llm, tools=tools, memory=memory, middleware=middleware)
+        super().__init__(
+            llm=llm,
+            tools=tools,
+            memory=memory,
+            middleware=middleware,
+            checkpointer=checkpointer,
+        )
 
         self._squad = [self._normalize_squad_member(member) for member in squad]
 
         self.prompt_template = prompt_template
+
+    @property
+    def members(self) -> list[AbstractAgent]:
+        return [m.agent for m in self._squad]
 
     @staticmethod
     def _normalize_squad_member(member: AgentSquadMember) -> AgentSquadMember:
@@ -296,25 +309,34 @@ class TinySquadAgent(TinyBaseAgent):
         for member in self._squad:
             member.agent.reset()
 
-    def setup(self, reset: bool, history: list[AllTinyMessages] | None) -> None:
+    def setup(
+        self,
+        reset: bool,
+        history: list[AllTinyMessages] | None,
+        checkpoint_id: str | None,
+    ) -> None:
         if reset:
             self.reset()
 
         if history:
             self.memory.save_multiple_context(history)
 
+        if checkpoint_id:
+            self.checkpointer.load(checkpoint_id)
+
     def run(
         self,
         input_text: str,
         *,
         run_id: str | None = None,
+        checkpoint_id: str | None = None,
         reset: bool = True,
         history: list[AllTinyMessages] | None = None,
     ) -> str:
         logger.debug('[USER INPUT] %s', input_text)
 
         run_id = run_id or str(uuid.uuid4())
-        self.setup(reset=reset, history=history)
+        self.setup(reset=reset, history=history, checkpoint_id=checkpoint_id)
 
         async def _run() -> str:
             final_answer = ''
@@ -331,13 +353,14 @@ class TinySquadAgent(TinyBaseAgent):
         input_text: str,
         *,
         run_id: str | None = None,
+        checkpoint_id: str | None = None,
         reset: bool = True,
         history: list[AllTinyMessages] | None = None,
     ) -> AsyncGenerator[str, None]:
         logger.debug('[USER INPUT] %s', input_text)
 
         run_id = run_id or str(uuid.uuid4())
-        self.setup(reset=reset, history=history)
+        self.setup(reset=reset, history=history, checkpoint_id=checkpoint_id)
 
         async def _generator():
             idx = 0

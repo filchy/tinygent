@@ -164,7 +164,7 @@ class ToolInfo(Generic[R]):
         return cls(
             name=name,
             description=description,
-            arg_count=1,
+            arg_count=1,  # TODO: its not always 1 right now, tool accepts normal params as well so repair it here
             is_coroutine=is_coroutine,
             is_generator=is_generator,
             is_async_generator=is_async_generator,
