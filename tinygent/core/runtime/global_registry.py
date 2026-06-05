@@ -3,6 +3,9 @@ from __future__ import annotations
 import logging
 import typing
 
+from tinygent.core.datamodels.checkpointer import AbstractCheckpointer
+from tinygent.core.datamodels.checkpointer import AbstractCheckpointerConfig
+
 if typing.TYPE_CHECKING:
     from tinygent.core.datamodels.agent import AbstractAgent
     from tinygent.core.datamodels.agent import AbstractAgentConfig
@@ -49,6 +52,11 @@ class Registry:
             str, tuple[type[AbstractMemoryConfig], type[AbstractMemory]]
         ] = {}
 
+        # checkpointers
+        self._registered_checkpointers: dict[
+            str, tuple[type[AbstractCheckpointerConfig], type[AbstractCheckpointer]]
+        ] = {}
+
         # tools
         self._registered_tools: dict[
             str, tuple[type[AbstractToolConfig], type[AbstractTool]]
@@ -68,6 +76,7 @@ class Registry:
         configs.extend(cfg for cfg, _ in self._registered_embedders.values())
         configs.extend(cfg for cfg, _ in self._registered_crossencoders.values())
         configs.extend(cfg for cfg, _ in self._registered_memories.values())
+        configs.extend(cfg for cfg, _ in self._registered_checkpointers.values())
         configs.extend(cfg for cfg, _ in self._registered_tools.values())
 
         for config_cls in configs:
@@ -218,6 +227,35 @@ class Registry:
     ) -> dict[str, tuple[type[AbstractMemoryConfig], type[AbstractMemory]]]:
         logger.debug('Getting all registered memories')
         return self._registered_memories
+
+    # checkpointers
+    def register_checkpointer(
+        self,
+        name: str,
+        config_class: type[AbstractCheckpointerConfig],
+        checkpointer_class: type[AbstractCheckpointer],
+    ) -> None:
+        logger.debug('Registering checkpointer %s', name)
+        if name in self._registered_checkpointers:
+            raise ValueError(f'Checkpointer {name} already registered.')
+
+        self._registered_checkpointers[name] = (config_class, checkpointer_class)
+        self._registration_changed()
+
+    def get_checkpointer(
+        self, name: str
+    ) -> tuple[type[AbstractCheckpointerConfig], type[AbstractCheckpointer]]:
+        logger.debug('Getting checkpointer %s', name)
+        if name not in self._registered_checkpointers:
+            raise ValueError(f'Checkpointer {name} not registered.')
+
+        return self._registered_checkpointers[name]
+
+    def get_checkpointers(
+        self,
+    ) -> dict[str, tuple[type[AbstractCheckpointerConfig], type[AbstractCheckpointer]]]:
+        logger.debug('Getting all registered checkpointers')
+        return self._registered_checkpointers
 
     # tools
     def register_tool(

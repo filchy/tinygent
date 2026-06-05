@@ -15,8 +15,13 @@ def build_memory(memory: dict | AbstractMemoryConfig) -> AbstractMemory: ...
 def build_memory(memory: str, **kwargs) -> AbstractMemory: ...
 
 
-def build_memory(memory: dict | AbstractMemoryConfig | str, **kwargs) -> AbstractMemory:
+def build_memory(
+    memory: dict | AbstractMemory | AbstractMemoryConfig | str, **kwargs
+) -> AbstractMemory:
     """Build tiny memory."""
+    if isinstance(memory, AbstractMemory):
+        return memory
+
     check_modules()
 
     if isinstance(memory, str):

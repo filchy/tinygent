@@ -11,7 +11,6 @@ from tinygent.agents.middleware.base import TinyBaseMiddleware
 from tinygent.agents.middleware.base import TinyBaseMiddlewareConfig
 from tinygent.core.datamodels.tool import AbstractTool
 from tinygent.core.datamodels.tool import AbstractToolConfig
-from tinygent.core.factory import build_tool
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +39,8 @@ class TinyBaseToolSelectorMiddlewareConfig(
     )
 
     def build_base_kwargs(self) -> dict:
+        from tinygent.core.factory import build_tool
+
         always_include: list[AbstractTool] | None = None
 
         if self.always_include:

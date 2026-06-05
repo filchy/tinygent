@@ -5,6 +5,7 @@ from collections.abc import AsyncIterator
 from io import StringIO
 import logging
 import textwrap
+import typing
 from typing import Any
 from typing import Awaitable
 from typing import Callable
@@ -17,6 +18,8 @@ from pydantic import Field
 from tinygent.agents.middleware.tool_limiter import ToolCallBlockedException
 from tinygent.core.datamodels.agent import AbstractAgent
 from tinygent.core.datamodels.agent import AbstractAgentConfig
+from tinygent.core.datamodels.checkpointer import AbstractCheckpointer
+from tinygent.core.datamodels.checkpointer import AbstractCheckpointerConfig
 from tinygent.core.datamodels.llm import AbstractLLM
 from tinygent.core.datamodels.llm import AbstractLLMConfig
 from tinygent.core.datamodels.memory import AbstractMemory
@@ -34,10 +37,18 @@ from tinygent.core.types.io.llm_io_chunks import TinyLLMResultChunk
 from tinygent.core.types.io.llm_io_input import TinyLLMInput
 from tinygent.memory.buffer_chat_memory import BufferChatMemoryConfig
 
+if typing.TYPE_CHECKING:
+    from tinygent.agents.checkpointer.default_checkpointer import TinyDefaultCheckpointer
+
 T = TypeVar('T', bound='AbstractAgent')
 
-
 logger = logging.getLogger(__name__)
+
+
+def _create_default_checkpointer() -> 'TinyDefaultCheckpointer':
+    from tinygent.agents.checkpointer.default_checkpointer import TinyDefaultCheckpointer
+
+    return TinyDefaultCheckpointer({})
 
 
 class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
@@ -48,11 +59,13 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
     middleware: Sequence[AbstractMiddlewareConfig | AbstractMiddleware] = Field(
         default_factory=list
     )
-
     llm: AbstractLLMConfig | AbstractLLM = Field(...)
     tools: Sequence[AbstractToolConfig | AbstractTool] = Field(default_factory=list)
     memory: AbstractMemoryConfig | AbstractMemory = Field(
         default_factory=BufferChatMemoryConfig
+    )
+    checkpointer: AbstractCheckpointer | AbstractCheckpointerConfig | None = Field(
+        default=None
     )
 
     def build(self) -> T:
@@ -84,6 +97,18 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
 
         return build_memory(self.memory)
 
+    def build_checkpointer_instance(self) -> AbstractCheckpointer:
+        """Build checkpointer instance from config if checkpointer is set."""
+        if isinstance(self.checkpointer, AbstractCheckpointer):
+            return self.checkpointer
+
+        if self.checkpointer is None:
+            return _create_default_checkpointer()
+
+        from tinygent.core.factory.checkpointer import build_checkpointer
+
+        return build_checkpointer(self.checkpointer)
+
     def build_middleware_list(self) -> list[AbstractMiddleware]:
         """Build list of middleware instances from configs or return existing instances."""
         from tinygent.core.factory.middleware import build_middleware
@@ -99,20 +124,26 @@ class TinyBaseAgent(AbstractAgent, AbstractMiddleware):
         self,
         llm: AbstractLLM,
         memory: AbstractMemory,
-        tools: Sequence[AbstractTool] = (),
+        tools: Sequence[AbstractTool] = [],
         middleware: Sequence[AbstractMiddleware] = [],
+        checkpointer: AbstractCheckpointer | None = None,
     ) -> None:
         self.llm = llm
         self.middleware = middleware
 
         self._memory = memory
         self._tools = tools
+        self._checkpointer = (
+            _create_default_checkpointer() if checkpointer is None else checkpointer
+        )
         self._final_answer: str | None = None
 
     def reset(self) -> None:
         logger.debug('[BASE AGENT RESET]')
 
         self.memory.clear()
+        self.checkpointer.clear()
+
         self._final_answer = None
 
     @property

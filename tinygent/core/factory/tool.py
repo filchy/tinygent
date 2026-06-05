@@ -8,7 +8,7 @@ from tinygent.core.runtime.global_registry import GlobalRegistry
 
 
 @overload
-def build_tool(tool: dict | AbstractToolConfig) -> AbstractTool: ...
+def build_tool(tool: dict | AbstractTool | AbstractToolConfig) -> AbstractTool: ...
 
 
 @overload
@@ -20,9 +20,15 @@ def build_tool(tool: str, *, tool_type: str) -> AbstractTool: ...
 
 
 def build_tool(
-    tool: dict | AbstractToolConfig | str, *, tool_type: str | None = None, **tool_kargs
+    tool: dict | AbstractTool | AbstractToolConfig | str,
+    *,
+    tool_type: str | None = None,
+    **tool_kargs,
 ) -> AbstractTool:
     """Build tiny tool."""
+    if isinstance(tool, AbstractTool):
+        return tool
+
     check_modules()
 
     if isinstance(tool, str):

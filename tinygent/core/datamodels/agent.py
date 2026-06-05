@@ -8,6 +8,7 @@ from typing import Generic
 from typing import TypeVar
 
 from tinygent.agents.middleware.agent import TinyMiddlewareAgent
+from tinygent.core.datamodels.checkpointer import AbstractCheckpointer
 from tinygent.core.datamodels.memory import AbstractMemory
 from tinygent.core.datamodels.messages import AllTinyMessages
 from tinygent.core.types.builder import TinyModelBuildable
@@ -34,6 +35,11 @@ class AbstractAgent(TinyMiddlewareAgent, ABC):
         """Get agents memory instance."""
         raise NotImplementedError('Subclasses must implement this method.')
 
+    @property
+    def checkpointer(self) -> AbstractCheckpointer:
+        """Get agents checkpointer instance."""
+        raise NotImplementedError('Subclasses must implement this method.')
+
     @abstractmethod
     def reset(self) -> None:
         """Reset the agent's internal state."""
@@ -45,6 +51,7 @@ class AbstractAgent(TinyMiddlewareAgent, ABC):
         input_text: str,
         *,
         run_id: str | None = None,
+        checkpoint_id: str | None = None,
         reset: bool = True,
         history: list[AllTinyMessages] | None = None,
     ) -> str:
@@ -57,6 +64,7 @@ class AbstractAgent(TinyMiddlewareAgent, ABC):
         input_text: str,
         *,
         run_id: str | None = None,
+        checkpoint_id: str | None = None,
         reset: bool = True,
         history: list[AllTinyMessages] | None = None,
     ) -> AsyncGenerator[str, None]:
