@@ -72,50 +72,73 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
         """Build the BaseAgent instance from the configuration."""
         raise NotImplementedError('Subclasses must implement this method.')
 
-    def build_llm_instance(self) -> AbstractLLM:
+    def build_llm_instance(
+        self, llm: AbstractLLMConfig | AbstractLLM | None = None
+    ) -> AbstractLLM:
         """Build LLM instance from config or return existing instance."""
-        if isinstance(self.llm, AbstractLLM):
-            return self.llm
+        llm = self.llm if llm is None else llm
+
+        if isinstance(llm, AbstractLLM):
+            return llm
         from tinygent.core.factory.llm import build_llm
 
-        return build_llm(self.llm)
+        return build_llm(llm)
 
-    def build_tools_list(self) -> list[AbstractTool]:
+    def build_tools_list(
+        self, tools: Sequence[AbstractToolConfig | AbstractTool] | None = None
+    ) -> list[AbstractTool]:
         """Build list of tool instances from configs or return existing instances."""
+        tools = self.tools if tools is None else tools
+
         from tinygent.core.factory.tool import build_tool
 
         return [
             tool if isinstance(tool, AbstractTool) else build_tool(tool)
-            for tool in self.tools
+            for tool in tools
         ]
 
-    def build_memory_instance(self) -> AbstractMemory:
+    def build_memory_instance(
+        self, memory: AbstractMemoryConfig | AbstractMemory | None = None
+    ) -> AbstractMemory:
         """Build memory instance from config or return existing instance."""
-        if isinstance(self.memory, AbstractMemory):
-            return self.memory
+        memory = self.memory if memory is None else memory
+
+        if isinstance(memory, AbstractMemory):
+            return memory
         from tinygent.core.factory.memory import build_memory
 
-        return build_memory(self.memory)
+        return build_memory(memory)
 
-    def build_checkpointer_instance(self) -> AbstractCheckpointer:
+    def build_checkpointer_instance(
+        self,
+        checkpointer: AbstractCheckpointer | AbstractCheckpointerConfig | None = None,
+    ) -> AbstractCheckpointer:
         """Build checkpointer instance from config if checkpointer is set."""
-        if isinstance(self.checkpointer, AbstractCheckpointer):
-            return self.checkpointer
+        checkpointer = self.checkpointer if checkpointer is None else checkpointer
 
-        if self.checkpointer is None:
+        if isinstance(checkpointer, AbstractCheckpointer):
+            return checkpointer
+
+        if checkpointer is None:
             return _create_default_checkpointer()
 
         from tinygent.core.factory.checkpointer import build_checkpointer
 
-        return build_checkpointer(self.checkpointer)
+        return build_checkpointer(checkpointer)
 
-    def build_middleware_list(self) -> list[AbstractMiddleware]:
+    def build_middleware_list(
+        self,
+        middleware: Sequence[AbstractMiddlewareConfig | AbstractMiddleware]
+        | None = None,
+    ) -> list[AbstractMiddleware]:
         """Build list of middleware instances from configs or return existing instances."""
+        middleware = self.middleware if middleware is None else middleware
+
         from tinygent.core.factory.middleware import build_middleware
 
         return [
             m if isinstance(m, AbstractMiddleware) else build_middleware(m)
-            for m in self.middleware
+            for m in middleware
         ]
 
 
@@ -153,6 +176,10 @@ class TinyBaseAgent(AbstractAgent, AbstractMiddleware):
     @property
     def tools(self) -> Sequence[AbstractTool]:
         return self._tools
+
+    @property
+    def checkpointer(self) -> AbstractCheckpointer:
+        return self._checkpointer
 
     def get_tool(self, name: str) -> AbstractTool | None:
         logger.debug('Looking for tool: %s', name)

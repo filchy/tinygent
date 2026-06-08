@@ -16,7 +16,7 @@ def main():
     agent = build_agent(
         'react',
         llm='openai:gpt-4o-mini',
-        tools=['get_best_destination'],
+        tools=['get_best_destination', 'get_weather'],
         memory='buffer',
         middleware=['react_tool_tracker', 'tool_limiter'],
     )
