@@ -29,8 +29,9 @@ class ReasoningToolConfig(AbstractToolConfig['ReasoningTool'], Generic[T]):
     prompt: str = Field(...)
 
     def build(self) -> 'ReasoningTool':
-        return cast(
-            'ReasoningTool', GlobalToolCatalog().get_active_catalog().get_tool(self.name)
+        return ReasoningTool(
+            inner_tool=GlobalToolCatalog().get_active_catalog().get_tool(self.name),
+            reasoning_prompt=self.prompt,
         )
 
 

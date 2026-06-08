@@ -7,7 +7,6 @@ from typing import Callable
 from typing import Generic
 from typing import Literal
 from typing import TypeVar
-from typing import cast
 from typing import overload
 
 from pydantic import Field
@@ -32,9 +31,9 @@ class JITInstructionToolConfig(AbstractToolConfig['JITInstructionTool'], Generic
     # TODO: add here custom instruction field name
 
     def build(self) -> 'JITInstructionTool':
-        return cast(
-            'JITInstructionTool',
-            GlobalToolCatalog().get_active_catalog().get_tool(self.name),
+        return JITInstructionTool(
+            inner_tool=GlobalToolCatalog().get_active_catalog().get_tool(self.name),
+            jit_instruction=self.instruction,
         )
 
 
