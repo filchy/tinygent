@@ -6,7 +6,8 @@ from tinygent.core.runtime.global_registry import GlobalRegistry
 
 
 def build_checkpointer(
-    checkpointer: dict | AbstractCheckpointer | AbstractCheckpointerConfig, **kwargs
+    checkpointer: str | dict | AbstractCheckpointer | AbstractCheckpointerConfig,
+    **kwargs,
 ) -> AbstractCheckpointer:
     """Build tiny checkpointer."""
     if isinstance(checkpointer, AbstractCheckpointer):

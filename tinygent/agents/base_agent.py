@@ -56,15 +56,17 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
 
     type: Any = Field(default='base')
 
-    middleware: Sequence[AbstractMiddlewareConfig | AbstractMiddleware] = Field(
+    middleware: Sequence[AbstractMiddlewareConfig | AbstractMiddleware | str] = Field(
         default_factory=list
     )
-    llm: AbstractLLMConfig | AbstractLLM = Field(...)
-    tools: Sequence[AbstractToolConfig | AbstractTool] = Field(default_factory=list)
-    memory: AbstractMemoryConfig | AbstractMemory = Field(
+    llm: AbstractLLMConfig | AbstractLLM | str = Field(...)
+    tools: Sequence[AbstractToolConfig | AbstractTool | str] = Field(
+        default_factory=list
+    )
+    memory: AbstractMemoryConfig | AbstractMemory | str = Field(
         default_factory=BufferChatMemoryConfig
     )
-    checkpointer: AbstractCheckpointer | AbstractCheckpointerConfig | None = Field(
+    checkpointer: AbstractCheckpointer | AbstractCheckpointerConfig | str | None = Field(
         default=None
     )
 
@@ -73,7 +75,7 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
         raise NotImplementedError('Subclasses must implement this method.')
 
     def build_llm_instance(
-        self, llm: AbstractLLMConfig | AbstractLLM | None = None
+        self, llm: AbstractLLMConfig | AbstractLLM | str | None = None
     ) -> AbstractLLM:
         """Build LLM instance from config or return existing instance."""
         llm = self.llm if llm is None else llm
@@ -85,7 +87,7 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
         return build_llm(llm)
 
     def build_tools_list(
-        self, tools: Sequence[AbstractToolConfig | AbstractTool] | None = None
+        self, tools: Sequence[AbstractToolConfig | AbstractTool | str] | None = None
     ) -> list[AbstractTool]:
         """Build list of tool instances from configs or return existing instances."""
         tools = self.tools if tools is None else tools
@@ -98,7 +100,7 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
         ]
 
     def build_memory_instance(
-        self, memory: AbstractMemoryConfig | AbstractMemory | None = None
+        self, memory: AbstractMemoryConfig | AbstractMemory | str | None = None
     ) -> AbstractMemory:
         """Build memory instance from config or return existing instance."""
         memory = self.memory if memory is None else memory
@@ -111,7 +113,10 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
 
     def build_checkpointer_instance(
         self,
-        checkpointer: AbstractCheckpointer | AbstractCheckpointerConfig | None = None,
+        checkpointer: AbstractCheckpointer
+        | AbstractCheckpointerConfig
+        | str
+        | None = None,
     ) -> AbstractCheckpointer:
         """Build checkpointer instance from config if checkpointer is set."""
         checkpointer = self.checkpointer if checkpointer is None else checkpointer
@@ -128,7 +133,7 @@ class TinyBaseAgentConfig(AbstractAgentConfig[T], Generic[T]):
 
     def build_middleware_list(
         self,
-        middleware: Sequence[AbstractMiddlewareConfig | AbstractMiddleware]
+        middleware: Sequence[AbstractMiddlewareConfig | AbstractMiddleware | str]
         | None = None,
     ) -> list[AbstractMiddleware]:
         """Build list of middleware instances from configs or return existing instances."""
