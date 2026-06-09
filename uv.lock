@@ -1644,6 +1644,7 @@ version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "async-lru" },
+    { name = "click" },
     { name = "jinja2" },
     { name = "langchain-core" },
     { name = "numpy" },
@@ -1692,6 +1693,7 @@ voyageai = [
 [package.metadata]
 requires-dist = [
     { name = "async-lru", specifier = ">=2.0.5" },
+    { name = "click", specifier = ">=8.2.1" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "langchain-core", specifier = ">=0.3.74" },
     { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.6.1" },
