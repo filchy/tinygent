@@ -1,0 +1,102 @@
+/* Custom styles for Tinygent documentation */
+
+:root {
+  --md-primary-fg-color: #000000;
+  --md-accent-fg-color: #00bcd4;
+}
+
+/* Improve code block styling */
+.highlight pre {
+  border-radius: 8px;
+  padding: 1em;
+}
+
+/* Better spacing for content */
+.md-content {
+  max-width: 900px;
+}
+
+/* Card-like styling for admonitions */
+.md-typeset .admonition {
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Improve table styling */
+.md-typeset table:not([class]) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Better spacing for lists */
+.md-typeset ul,
+.md-typeset ol {
+  margin: 1em 0;
+}
+
+/* Improve inline code */
+.md-typeset code {
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  background-color: rgba(0,0,0,0.05);
+}
+
+[data-md-color-scheme="slate"] .md-typeset code {
+  background-color: rgba(255,255,255,0.1);
+}
+
+/* Better header anchors */
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
+  margin-top: 2em;
+}
+
+.md-typeset h1:first-child {
+  margin-top: 0;
+}
+
+/* Grid cards for landing page */
+.grid.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin: 2em 0;
+}
+
+.grid.cards > div {
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 8px;
+  padding: 1.5em;
+  transition: box-shadow 0.2s;
+}
+
+.grid.cards > div:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+[data-md-color-scheme="slate"] .grid.cards > div {
+  border-color: rgba(255,255,255,0.1);
+}
+
+/* Better footer */
+.md-footer {
+  margin-top: 3em;
+}
+
+/* Theme-aware logo switching */
+.logo-dark-mode {
+  display: none;
+}
+
+.logo-light-mode {
+  display: inline-block;
+}
+
+[data-md-color-scheme="slate"] .logo-dark-mode {
+  display: inline-block;
+}
+
+[data-md-color-scheme="slate"] .logo-light-mode {
+  display: none;
+}
